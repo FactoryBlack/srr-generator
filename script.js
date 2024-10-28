@@ -29,10 +29,11 @@ function joinRoom(roomID) {
     // Clear any previous listener for updateNames to prevent duplicates
     socket.off('updateNames');
     socket.on('updateNames', (users) => {
-        console.log("Is creator?", isCreator); // Confirm creator status
+        console.log("Is creator inside updateNames?", isCreator);
         const nameListDiv = document.getElementById("nameList");
         nameListDiv.innerHTML = users.map(user => {
             const kickButton = isCreator ? `<button class="kick-button" onclick="kickUser('${user.id}')">Kick</button>` : '';
+            console.log(`Generated HTML for user ${user.name}: <p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`); // Log the generated HTML
             return `<p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`;
         }).join('');
     });
