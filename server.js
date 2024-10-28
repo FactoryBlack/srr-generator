@@ -34,14 +34,19 @@ function generateTeams(names, teamSize) {
     return teams;
 }
 
+// Function to broadcast the updated list of public rooms to all clients
+function broadcastPublicRooms() {
+    const publicRooms = Object.entries(rooms)
+        .filter(([_, roomData]) => roomData.public)
+        .map(([roomID, roomData]) => ({ roomID, teamSize: roomData.teamSize }));
+    io.emit('activeRooms', publicRooms);
+}
+
 io.on('connection', (socket) => {
     console.log('A user connected');
 
     // Send a list of public rooms to the user on connection
-    socket.emit('activeRooms', Object.entries(rooms)
-        .filter(([_, roomData]) => roomData.public)
-        .map(([roomID, roomData]) => ({ roomID, teamSize: roomData.teamSize }))
-    );
+    broadcastPublicRooms();
 
     // Join or create a room with visibility and team size settings
     socket.on('joinRoom', ({ roomID, isPublic, teamSize, isCreator }) => {
@@ -57,11 +62,8 @@ io.on('connection', (socket) => {
             };
             console.log(`Room created: ${roomID} (Public: ${isPublic}, Team Size: ${rooms[roomID].teamSize})`);
 
-            // Notify all users of the updated public room list
-            io.emit('activeRooms', Object.entries(rooms)
-                .filter(([_, roomData]) => roomData.public)
-                .map(([roomID, roomData]) => ({ roomID, teamSize: roomData.teamSize }))
-            );
+            // Broadcast the updated list of public rooms
+            broadcastPublicRooms();
         } else {
             isCreator = false;
         }
@@ -112,7 +114,17 @@ io.on('connection', (socket) => {
         console.log('A user disconnected');
         for (const roomID in rooms) {
             const room = rooms[roomID];
-            if (room.users[socket.id]) {
+
+            // Check if the disconnecting user is the creator
+            if (room.creator === socket.id) {
+                // Delete the room if the creator disconnects
+                delete rooms[roomID];
+                console.log(`Room ${roomID} closed because the creator disconnected.`);
+
+                // Broadcast the updated list of public rooms
+                broadcastPublicRooms();
+            } else if (room.users[socket.id]) {
+                // Otherwise, just remove the user from the room
                 delete room.users[socket.id];
                 io.to(roomID).emit('updateNames', Object.values(room.users));
                 updateMemberCount(roomID); // Update member count on disconnect
@@ -122,7 +134,7 @@ io.on('connection', (socket) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 8888;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
