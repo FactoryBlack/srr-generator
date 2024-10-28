@@ -9,8 +9,8 @@ const io = new Server(server);
 // Store room data in memory
 const rooms = {};
 
-// Serve static files
-app.use(express.static('public'));
+// Serve static files directly from the root directory
+app.use(express.static(__dirname));
 
 io.on('connection', (socket) => {
     console.log('A user connected');
