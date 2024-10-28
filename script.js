@@ -1,8 +1,8 @@
 const socket = io();
 let isCreator = false;
-let currentRoomID = null; // Track the current room ID
+let currentRoomID = null;
 
-// Hide the submit name section initially when the page loads
+// Hide the submit name section initially
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("submitNameSection").style.display = "none";
 });
@@ -11,7 +11,7 @@ socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
 });
 
-// Load active rooms on page load and display Join Room buttons
+// Load active rooms and display Join Room buttons
 socket.on('activeRooms', (publicRooms) => {
     const roomsList = document.getElementById("roomsList");
     roomsList.innerHTML = publicRooms.map(room =>
@@ -20,22 +20,20 @@ socket.on('activeRooms', (publicRooms) => {
     ).join('');
 });
 
-// Function to handle joining a room directly from the public rooms list
 function joinRoom(roomID) {
-    // Set the current room ID for reference in other functions
     currentRoomID = roomID;
     socket.emit('joinRoom', { roomID, isPublic: true, teamSize: 2, isCreator: false });
-
-    // Show the "Submit name" section once the user joins a room
     document.getElementById("submitNameSection").style.display = "block";
 
     socket.on('updateNames', (users) => {
         const nameListDiv = document.getElementById("nameList");
-        nameListDiv.innerHTML = users.map(user =>
-            `<p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""}</p>`
-        ).join('');
+        nameListDiv.innerHTML = users.map(user => {
+            const kickButton = isCreator ? `<button onclick="kickUser('${user.id}')">Kick</button>` : '';
+            return `<p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`;
+        }).join('');
     });
 
+    // Add the missing displayTeams event listener here
     socket.on('displayTeams', (teams) => {
         const teamListDiv = document.getElementById("teamList");
         teamListDiv.innerHTML = teams.map((team, i) =>
@@ -43,6 +41,19 @@ function joinRoom(roomID) {
         ).join('');
     });
 }
+
+function kickUser(userID) {
+    if (currentRoomID && isCreator) {
+        socket.emit('kickUser', { roomID: currentRoomID, userID });
+    }
+}
+
+socket.on('kicked', (message) => {
+    alert(message);
+    document.getElementById("submitNameSection").style.display = "none";
+    document.getElementById("nameList").innerHTML = "";
+    document.getElementById("teamList").innerHTML = "";
+});
 
 // Update member count display
 socket.on('memberCount', ({ total, named, unnamed }) => {
