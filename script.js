@@ -7,9 +7,9 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("submitNameSection").style.display = "none";
 });
 
-// Handle creator status (whether the current user is the room creator)
 socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
+    console.log("Creator status:", isCreator); // Debug log to check creator status
 });
 
 // Load active rooms and display Join Room buttons
@@ -21,7 +21,6 @@ socket.on('activeRooms', (publicRooms) => {
     ).join('');
 });
 
-// Function to handle joining a room directly from the public rooms list or by creating a room
 function joinRoom(roomID) {
     currentRoomID = roomID;
     socket.emit('joinRoom', { roomID, isPublic: true, teamSize: 2, isCreator: false });
@@ -29,6 +28,7 @@ function joinRoom(roomID) {
 
     // Update the list of users in the room, including the Kick button for the creator
     socket.on('updateNames', (users) => {
+        console.log("Is creator?", isCreator); // Debug log to confirm creator status on updateNames
         const nameListDiv = document.getElementById("nameList");
         nameListDiv.innerHTML = users.map(user => {
             const kickButton = isCreator ? `<button onclick="kickUser('${user.id}')">Kick</button>` : '';
@@ -45,7 +45,6 @@ function joinRoom(roomID) {
     });
 }
 
-// Function to handle kicking a user (only available to the creator)
 function kickUser(userID) {
     if (currentRoomID && isCreator) {
         socket.emit('kickUser', { roomID: currentRoomID, userID });
@@ -85,7 +84,6 @@ document.getElementById("joinRoom").addEventListener("click", () => {
         ).join('');
     });
 
-    // Display teams when generated
     socket.on('displayTeams', (teams) => {
         const teamListDiv = document.getElementById("teamList");
         teamListDiv.innerHTML = teams.map((team, i) =>
