@@ -29,7 +29,7 @@ function joinRoom(roomID) {
     // Clear any previous listener for updateNames to prevent duplicates
     socket.off('updateNames');
     socket.on('updateNames', (users) => {
-        console.log("Is creator?", isCreator); // Debug log to confirm creator status on updateNames
+        console.log("Is creator?", isCreator); // Confirm creator status
         const nameListDiv = document.getElementById("nameList");
         nameListDiv.innerHTML = users.map(user => {
             const kickButton = isCreator ? `<button onclick="kickUser('${user.id}')">Kick</button>` : '';
@@ -46,13 +46,15 @@ function joinRoom(roomID) {
     });
 }
 
+// Function to handle kicking a user
 function kickUser(userID) {
     if (currentRoomID && isCreator) {
+        console.log("Attempting to kick user:", userID); // Debugging log
         socket.emit('kickUser', { roomID: currentRoomID, userID });
     }
 }
 
-// Handle the kicked event, reset the UI for the kicked user
+// Listen for the kicked event to remove the kicked user from the UI
 socket.on('kicked', (message) => {
     alert(message);
     document.getElementById("submitNameSection").style.display = "none";
