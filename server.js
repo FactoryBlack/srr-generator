@@ -50,6 +50,8 @@ io.on('connection', (socket) => {
     broadcastPublicRooms();
 
     socket.on('joinRoom', ({ roomID, isPublic, teamSize }) => {
+        console.log(`joinRoom event received from ${socket.id} for room ${roomID}`);
+
         const room = rooms[roomID];
 
         // Prevent banned users from joining
@@ -92,10 +94,11 @@ io.on('connection', (socket) => {
 
     // Handle name submission or update with AFKQ Tool status
     socket.on('submitName', ({ roomID, name, afkq }) => {
+        console.log(`submitName event received from ${socket.id} for room ${roomID} with name ${name}`);
+
         const room = rooms[roomID];
         if (room) {
             room.users[socket.id] = { name, afkq };
-            console.log(`User ${socket.id} submitted name in room ${roomID}:`, { name, afkq });
 
             // Broadcast the updated list to all users in the room
             emitUpdateNames(roomID);
@@ -105,6 +108,8 @@ io.on('connection', (socket) => {
 
     // Kick a user from the room
     socket.on('kickUser', ({ roomID, userID }) => {
+        console.log(`kickUser event received from ${socket.id} to kick user ${userID} in room ${roomID}`);
+
         const room = rooms[roomID];
         if (room && socket.id === room.creator && room.users[userID]) {
             // Add the kicked user to the ban list
@@ -146,6 +151,8 @@ io.on('connection', (socket) => {
 
     // Handle team generation request (only the creator can generate teams)
     socket.on('generateTeams', ({ roomID }) => {
+        console.log(`generateTeams event received from ${socket.id} for room ${roomID}`);
+
         const room = rooms[roomID];
         if (room && socket.id === room.creator) { // Only the creator can generate teams
             const teams = generateTeams(Object.values(room.users).map(user => user.name), room.teamSize);
@@ -156,7 +163,7 @@ io.on('connection', (socket) => {
 
     // Handle user disconnect
     socket.on('disconnect', () => {
-        console.log('A user disconnected:', socket.id);
+        console.log(`User ${socket.id} disconnected`);
         for (const roomID in rooms) {
             const room = rooms[roomID];
 
