@@ -16,7 +16,7 @@ socket.on('activeRooms', (publicRooms) => {
 // Update member count display
 socket.on('memberCount', ({ total, named, unnamed }) => {
     document.getElementById("memberCount").textContent =
-        `Total Members: ${total}, Named: ${named}, Yet to Submit Name: ${unnamed}`;
+        `Total Members: ${total}, Named: ${named}, Unnamed: ${unnamed}`;
 });
 
 document.getElementById("joinRoom").addEventListener("click", () => {
@@ -24,6 +24,9 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     const isPublic = document.getElementById("isPublic").checked;
     const teamSize = parseInt(document.getElementById("teamSizeSelect").value) || 2;
     socket.emit('joinRoom', { roomID, isPublic, teamSize, isCreator: true });
+
+    // Make the "Submit name" section visible once the user joins a room
+    document.getElementById("submitNameSection").classList.remove("hidden");
 
     socket.on('updateNames', (users) => {
         const nameListDiv = document.getElementById("nameList");
