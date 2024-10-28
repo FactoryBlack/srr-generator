@@ -32,7 +32,7 @@ function joinRoom(roomID) {
         console.log("Is creator?", isCreator); // Confirm creator status
         const nameListDiv = document.getElementById("nameList");
         nameListDiv.innerHTML = users.map(user => {
-            const kickButton = isCreator ? `<button onclick="kickUser('${user.id}')">Kick</button>` : '';
+            const kickButton = isCreator ? `<button class="kick-button" onclick="kickUser('${user.id}')">Kick</button>` : '';
             return `<p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`;
         }).join('');
     });
