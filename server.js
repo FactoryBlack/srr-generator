@@ -40,10 +40,11 @@ function broadcastPublicRooms() {
         .filter(([_, roomData]) => roomData.public)
         .map(([roomID, roomData]) => ({ roomID, teamSize: roomData.teamSize }));
     io.emit('activeRooms', publicRooms);
+    console.log("Broadcasting public rooms:", publicRooms);
 }
 
 io.on('connection', (socket) => {
-    console.log('A user connected');
+    console.log('A user connected:', socket.id);
 
     // Send a list of public rooms to the user on connection
     broadcastPublicRooms();
@@ -65,8 +66,8 @@ io.on('connection', (socket) => {
                 users: {},
                 public: isPublic,
                 teamSize: teamSize || 2,
-                creator: socket.id, // Set creator to the initial user
-                banList: [] // Initialize ban list for the room
+                creator: socket.id,
+                banList: []
             };
             console.log(`Room created: ${roomID} (Public: ${isPublic}, Team Size: ${rooms[roomID].teamSize})`);
 
@@ -82,19 +83,23 @@ io.on('connection', (socket) => {
 
         // Add user as "Unnamed" upon joining
         rooms[roomID].users[socket.id] = { name: "Unnamed", afkq: false };
+        console.log(`User ${socket.id} joined room ${roomID}`);
+
+        // Emit updated names to everyone in the room
+        emitUpdateNames(roomID);
         updateMemberCount(roomID);
     });
-
 
     // Handle name submission or update with AFKQ Tool status
     socket.on('submitName', ({ roomID, name, afkq }) => {
         const room = rooms[roomID];
         if (room) {
             room.users[socket.id] = { name, afkq };
+            console.log(`User ${socket.id} submitted name in room ${roomID}:`, { name, afkq });
 
             // Broadcast the updated list to all users in the room
-            io.to(roomID).emit('updateNames', Object.entries(room.users).map(([id, user]) => ({ id, ...user })));
-            updateMemberCount(roomID); // Update member count
+            emitUpdateNames(roomID);
+            updateMemberCount(roomID);
         }
     });
 
@@ -110,7 +115,9 @@ io.on('connection', (socket) => {
 
             // Remove the user from the room and update the user list
             delete room.users[userID];
-            io.to(roomID).emit('updateNames', Object.entries(room.users).map(([id, user]) => ({ id, ...user })));
+            console.log(`User ${userID} was kicked from room ${roomID}`);
+
+            emitUpdateNames(roomID);
             updateMemberCount(roomID);
         }
     });
@@ -123,6 +130,17 @@ io.on('connection', (socket) => {
             const namedMembers = Object.values(room.users).filter(user => user.name !== "Unnamed").length;
             const unnamedMembers = totalMembers - namedMembers;
             io.to(roomID).emit('memberCount', { total: totalMembers, named: namedMembers, unnamed: unnamedMembers });
+            console.log(`Member count updated for room ${roomID}:`, { totalMembers, namedMembers, unnamedMembers });
+        }
+    }
+
+    // Function to emit updated names to the room
+    function emitUpdateNames(roomID) {
+        const room = rooms[roomID];
+        if (room) {
+            const userList = Object.entries(room.users).map(([id, user]) => ({ id, ...user }));
+            io.to(roomID).emit('updateNames', userList);
+            console.log(`Emitting updateNames for room ${roomID}:`, userList);
         }
     }
 
@@ -132,12 +150,13 @@ io.on('connection', (socket) => {
         if (room && socket.id === room.creator) { // Only the creator can generate teams
             const teams = generateTeams(Object.values(room.users).map(user => user.name), room.teamSize);
             io.to(roomID).emit('displayTeams', teams);
+            console.log(`Teams generated for room ${roomID}:`, teams);
         }
     });
 
     // Handle user disconnect
     socket.on('disconnect', () => {
-        console.log('A user disconnected');
+        console.log('A user disconnected:', socket.id);
         for (const roomID in rooms) {
             const room = rooms[roomID];
 
@@ -149,8 +168,9 @@ io.on('connection', (socket) => {
                 broadcastPublicRooms();
             } else if (room.users[socket.id]) {
                 delete room.users[socket.id];
-                io.to(roomID).emit('updateNames', Object.entries(room.users).map(([id, user]) => ({ id, ...user })));
+                emitUpdateNames(roomID);
                 updateMemberCount(roomID);
+                console.log(`User ${socket.id} removed from room ${roomID} on disconnect.`);
             }
         }
     });
