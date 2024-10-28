@@ -48,8 +48,7 @@ io.on('connection', (socket) => {
     // Send a list of public rooms to the user on connection
     broadcastPublicRooms();
 
-    // Join or create a room with visibility and team size settings
-    socket.on('joinRoom', ({ roomID, isPublic, teamSize, isCreator }) => {
+    socket.on('joinRoom', ({ roomID, isPublic, teamSize }) => {
         const room = rooms[roomID];
 
         // Prevent banned users from joining
@@ -66,24 +65,26 @@ io.on('connection', (socket) => {
                 users: {},
                 public: isPublic,
                 teamSize: teamSize || 2,
-                creator: socket.id,
+                creator: socket.id, // Set creator to the initial user
                 banList: [] // Initialize ban list for the room
             };
             console.log(`Room created: ${roomID} (Public: ${isPublic}, Team Size: ${rooms[roomID].teamSize})`);
 
             // Broadcast the updated list of public rooms
             broadcastPublicRooms();
+
+            // Emit creatorStatus to this user indicating they are the creator
+            socket.emit('creatorStatus', { isCreator: true });
         } else {
-            isCreator = false;
+            // For non-creators joining an existing room
+            socket.emit('creatorStatus', { isCreator: false });
         }
 
         // Add user as "Unnamed" upon joining
         rooms[roomID].users[socket.id] = { name: "Unnamed", afkq: false };
-
-        // Send creator status and initial member count to client
-        socket.emit('creatorStatus', { isCreator });
         updateMemberCount(roomID);
     });
+
 
     // Handle name submission or update with AFKQ Tool status
     socket.on('submitName', ({ roomID, name, afkq }) => {

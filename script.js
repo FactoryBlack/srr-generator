@@ -23,10 +23,11 @@ socket.on('activeRooms', (publicRooms) => {
 
 function joinRoom(roomID) {
     currentRoomID = roomID;
-    socket.emit('joinRoom', { roomID, isPublic: true, teamSize: 2, isCreator: false });
+    socket.emit('joinRoom', { roomID, isPublic: true, teamSize: 2 });
     document.getElementById("submitNameSection").style.display = "block";
 
-    // Update the list of users in the room, including the Kick button for the creator
+    // Clear any previous listener for updateNames to prevent duplicates
+    socket.off('updateNames');
     socket.on('updateNames', (users) => {
         console.log("Is creator?", isCreator); // Debug log to confirm creator status on updateNames
         const nameListDiv = document.getElementById("nameList");
