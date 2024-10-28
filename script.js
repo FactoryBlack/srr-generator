@@ -9,7 +9,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
-    console.log("Creator status:", isCreator); // Debug log to check creator status
+    console.log("Creator status:", isCreator); // Confirm creator status on the client side
 });
 
 // Load active rooms and display Join Room buttons
@@ -32,11 +32,11 @@ function joinRoom(roomID) {
 
     // Update names with Kick button functionality for the creator
     socket.on('updateNames', (users) => {
-        console.log("Is creator inside updateNames?", isCreator);
+        console.log("Is creator inside updateNames?", isCreator); // Should show true for the creator
         const nameListDiv = document.getElementById("nameList");
         nameListDiv.innerHTML = users.map(user => {
             const kickButton = isCreator ? `<button class="kick-button" onclick="kickUser('${user.id}')">Kick</button>` : '';
-            console.log(`Generated HTML for user ${user.name}: <p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`); // Debug log for HTML
+            console.log(`Generated HTML for user ${user.name}: <p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`); // Log for each user
             return `<p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`;
         }).join('');
     });
@@ -53,7 +53,7 @@ function joinRoom(roomID) {
 // Function to handle kicking a user
 function kickUser(userID) {
     if (currentRoomID && isCreator) {
-        console.log("Attempting to kick user:", userID); // Debug log
+        console.log("Attempting to kick user:", userID); // Debugging log for kicking
         socket.emit('kickUser', { roomID: currentRoomID, userID });
     }
 }
@@ -79,12 +79,10 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     const isPublic = document.getElementById("isPublic").checked;
     const teamSize = parseInt(document.getElementById("teamSizeSelect").value) || 2;
 
-    // Emit joinRoom and set creator status if creating a new room
     socket.emit('joinRoom', { roomID, isPublic, teamSize });
 
     document.getElementById("submitNameSection").style.display = "block";
 
-    // Additional listener to handle updating names when the creator creates a room
     socket.on('updateNames', (users) => {
         const nameListDiv = document.getElementById("nameList");
         nameListDiv.innerHTML = users.map(user =>
