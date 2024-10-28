@@ -26,7 +26,9 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     socket.emit('joinRoom', { roomID, isPublic, teamSize, isCreator: true });
 
     // Make the "Submit name" section visible once the user joins a room
-    document.getElementById("submitNameSection").classList.remove("hidden");
+    const submitNameSection = document.getElementById("submitNameSection");
+    submitNameSection.classList.remove("hidden");
+    console.log("Submit name section is now visible"); // Debugging log
 
     socket.on('updateNames', (users) => {
         const nameListDiv = document.getElementById("nameList");
