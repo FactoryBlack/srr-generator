@@ -1,5 +1,6 @@
 const socket = io();
 let isCreator = false;
+let currentRoomID = null; // Track the current room ID
 
 // Hide the submit name section initially when the page loads
 window.addEventListener('DOMContentLoaded', () => {
@@ -21,6 +22,8 @@ socket.on('activeRooms', (publicRooms) => {
 
 // Function to handle joining a room directly from the public rooms list
 function joinRoom(roomID) {
+    // Set the current room ID for reference in other functions
+    currentRoomID = roomID;
     socket.emit('joinRoom', { roomID, isPublic: true, teamSize: 2, isCreator: false });
 
     // Show the "Submit name" section once the user joins a room
@@ -49,8 +52,11 @@ socket.on('memberCount', ({ total, named, unnamed }) => {
 
 document.getElementById("joinRoom").addEventListener("click", () => {
     const roomID = document.getElementById("roomID").value.trim();
+    currentRoomID = roomID; // Track the room ID for submissions
     const isPublic = document.getElementById("isPublic").checked;
     const teamSize = parseInt(document.getElementById("teamSizeSelect").value) || 2;
+
+    // The creator flag should only be true here, when creating a new room
     socket.emit('joinRoom', { roomID, isPublic, teamSize, isCreator: true });
 
     // Show the "Submit name" section once the user joins a room
@@ -71,21 +77,20 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     });
 });
 
+// Name submission function that uses the current room ID
 document.getElementById("submitName").addEventListener("click", () => {
     const name = document.getElementById("nameInput").value.trim();
     const afkq = document.getElementById("afkqTool").checked;
-    const roomID = document.getElementById("roomID").value.trim();
 
-    if (name) {
-        socket.emit('submitName', { roomID, name, afkq });
+    if (name && currentRoomID) { // Ensure room ID and name are set
+        socket.emit('submitName', { roomID: currentRoomID, name, afkq });
         document.getElementById("nameInput").value = ""; // Clear the input field
     }
 });
 
 document.getElementById("generateTeams").addEventListener("click", () => {
-    const roomID = document.getElementById("roomID").value.trim();
-    if (isCreator) {
-        socket.emit('generateTeams', { roomID });
+    if (currentRoomID && isCreator) {
+        socket.emit('generateTeams', { roomID: currentRoomID });
     } else {
         alert("Only the room creator can generate teams.");
     }
