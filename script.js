@@ -3,6 +3,11 @@ const socket = io();
 // Track if the user is the creator
 let isCreator = false;
 
+// Listen for creator status from the server
+socket.on('creatorStatus', (data) => {
+    isCreator = data.isCreator;
+});
+
 // Load active rooms on page load
 socket.on('activeRooms', (publicRooms) => {
     const roomsList = document.getElementById("roomsList");
@@ -17,10 +22,8 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     const isPublic = document.getElementById("isPublic").checked;
     const teamSize = parseInt(document.getElementById("teamSizeSelect").value) || 2;
 
-    // Set this user as the room creator if they are creating the room
-    isCreator = true;
-
-    socket.emit('joinRoom', { roomID, isPublic, teamSize, isCreator });
+    // Emit joinRoom with creator flag (assumes new room if the room doesn't already exist)
+    socket.emit('joinRoom', { roomID, isPublic, teamSize, isCreator: true });
 
     // Listen for updates to the name list
     socket.on('updateNames', (names) => {

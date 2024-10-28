@@ -6,7 +6,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Store room data with visibility, names, and creator details
 const rooms = {};
 
 // Serve static files from the root directory
@@ -35,7 +34,6 @@ function generateTeams(names, teamSize) {
     return teams;
 }
 
-// Handle Socket.IO connections
 io.on('connection', (socket) => {
     console.log('A user connected');
 
@@ -49,8 +47,8 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', ({ roomID, isPublic, teamSize, isCreator }) => {
         socket.join(roomID);
 
-        if (isCreator) {
-            // If the user is the creator, initialize the room
+        if (!rooms[roomID]) {
+            // Only if the room doesn't already exist, set up the room and designate creator
             rooms[roomID] = { users: {}, public: isPublic, teamSize: teamSize || 2, creator: socket.id };
             console.log(`Room created: ${roomID} (Public: ${isPublic}, Team Size: ${rooms[roomID].teamSize})`);
 
@@ -59,7 +57,13 @@ io.on('connection', (socket) => {
                 .filter(([_, roomData]) => roomData.public)
                 .map(([roomID, roomData]) => ({ roomID, teamSize: roomData.teamSize }))
             );
+        } else {
+            // If the room exists, this user is not the creator
+            isCreator = false;
         }
+
+        // Send the creator status to the client
+        socket.emit('creatorStatus', { isCreator });
 
         // Send current names in the room to the user who joined
         socket.emit('updateNames', Object.values(rooms[roomID].users));
@@ -109,7 +113,7 @@ io.on('connection', (socket) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 8888;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
