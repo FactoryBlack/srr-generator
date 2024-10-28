@@ -48,6 +48,19 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     });
 });
 
+// Listen for roomClosed event
+socket.on('roomClosed', () => {
+    // Display an alert notifying users
+    alert("The room has been closed by the creator.");
+
+    // Hide the submit name section
+    document.getElementById("submitNameSection").style.display = "none";
+
+    // Clear room-specific data (e.g., name list)
+    document.getElementById("nameList").innerHTML = "";
+    document.getElementById("teamList").innerHTML = "";
+});
+
 document.getElementById("submitName").addEventListener("click", () => {
     const name = document.getElementById("nameInput").value.trim();
     const afkq = document.getElementById("afkqTool").checked;

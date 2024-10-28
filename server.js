@@ -117,6 +117,9 @@ io.on('connection', (socket) => {
 
             // Check if the disconnecting user is the creator
             if (room.creator === socket.id) {
+                // Notify users in the room that it has been closed
+                io.to(roomID).emit('roomClosed');
+
                 // Delete the room if the creator disconnects
                 delete rooms[roomID];
                 console.log(`Room ${roomID} closed because the creator disconnected.`);
@@ -134,7 +137,7 @@ io.on('connection', (socket) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 8888;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
