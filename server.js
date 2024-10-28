@@ -48,6 +48,7 @@ io.on('connection', (socket) => {
         socket.join(roomID);
 
         if (!rooms[roomID]) {
+            // Initialize room if it doesn't exist
             rooms[roomID] = {
                 users: {}, // Store user info with name and AFKQ status
                 public: isPublic,
@@ -65,9 +66,11 @@ io.on('connection', (socket) => {
             isCreator = false;
         }
 
-        socket.emit('creatorStatus', { isCreator });
+        // Add user as "Unnamed" upon joining
+        rooms[roomID].users[socket.id] = { name: "Unnamed", afkq: false };
 
-        // Send updated member count to all users in the room
+        // Send creator status and initial member count to client
+        socket.emit('creatorStatus', { isCreator });
         updateMemberCount(roomID);
     });
 
@@ -75,7 +78,7 @@ io.on('connection', (socket) => {
     socket.on('submitName', ({ roomID, name, afkq }) => {
         const room = rooms[roomID];
         if (room) {
-            // Add or update user's name and AFKQ status
+            // Update user's name and AFKQ status
             room.users[socket.id] = { name, afkq };
 
             // Broadcast the updated list to all users in the room
@@ -89,7 +92,7 @@ io.on('connection', (socket) => {
         const room = rooms[roomID];
         if (room) {
             const totalMembers = Object.keys(room.users).length;
-            const namedMembers = Object.values(room.users).filter(user => user.name).length;
+            const namedMembers = Object.values(room.users).filter(user => user.name !== "Unnamed").length;
             const unnamedMembers = totalMembers - namedMembers;
             io.to(roomID).emit('memberCount', { total: totalMembers, named: namedMembers, unnamed: unnamedMembers });
         }
@@ -98,7 +101,7 @@ io.on('connection', (socket) => {
     // Handle team generation request (only the creator can generate teams)
     socket.on('generateTeams', ({ roomID }) => {
         const room = rooms[roomID];
-        if (room && socket.id === room.creator) {
+        if (room && socket.id === room.creator) { // Only the creator can generate teams
             const teams = generateTeams(Object.values(room.users).map(user => user.name), room.teamSize);
             io.to(roomID).emit('displayTeams', teams);
         }
@@ -119,7 +122,7 @@ io.on('connection', (socket) => {
 });
 
 // Start the server
-const PORT = process.env.PORT || 8888;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
