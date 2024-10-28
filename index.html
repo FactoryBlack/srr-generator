@@ -8,13 +8,24 @@
 </head>
 <body>
     <div class="container">
-        <h1>Join a Random Team Room</h1>
+        <h1>Join or Create a Team Room</h1>
 
         <div class="form-group">
             <label for="roomID">Room ID:</label>
             <input type="text" id="roomID" placeholder="Enter room ID">
-            <button id="joinRoom">Join Room</button>
+            <label>
+                <input type="checkbox" id="isPublic"> Public Room
+            </label>
+            <label for="teamSizeSelect">Team Size:</label>
+            <select id="teamSizeSelect">
+                <option value="2">Teams of 2</option>
+                <option value="3">Teams of 3</option>
+            </select>
+            <button id="joinRoom">Join or Create Room</button>
         </div>
+
+        <h2>Active Public Rooms</h2>
+        <ul id="roomsList"></ul>
 
         <div class="form-group">
             <label for="nameInput">Enter Your Name:</label>
@@ -22,7 +33,11 @@
             <button id="submitName">Submit Name</button>
         </div>
 
+        <h2>Team Generation</h2>
+        <button id="generateTeams">Generate Teams</button>
+
         <div id="nameList"></div>
+        <div id="teamList"></div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
