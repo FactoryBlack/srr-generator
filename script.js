@@ -1,6 +1,11 @@
 const socket = io();
 let isCreator = false;
 
+// Hide the submit name section initially when the page loads
+window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById("submitNameSection").style.display = "none";
+});
+
 socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
 });
@@ -25,10 +30,8 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     const teamSize = parseInt(document.getElementById("teamSizeSelect").value) || 2;
     socket.emit('joinRoom', { roomID, isPublic, teamSize, isCreator: true });
 
-    // Make the "Submit name" section visible once the user joins a room
-    const submitNameSection = document.getElementById("submitNameSection");
-    submitNameSection.classList.remove("hidden");
-    console.log("Submit name section is now visible"); // Debugging log
+    // Show the "Submit name" section once the user joins a room
+    document.getElementById("submitNameSection").style.display = "block";
 
     socket.on('updateNames', (users) => {
         const nameListDiv = document.getElementById("nameList");
