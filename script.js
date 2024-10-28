@@ -17,7 +17,7 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     const isPublic = document.getElementById("isPublic").checked;
     const teamSize = parseInt(document.getElementById("teamSizeSelect").value) || 2;
 
-    // Set this user as the room creator
+    // Set this user as the room creator if they are creating the room
     isCreator = true;
 
     socket.emit('joinRoom', { roomID, isPublic, teamSize, isCreator });

@@ -51,7 +51,7 @@ io.on('connection', (socket) => {
 
         if (isCreator) {
             // If the user is the creator, initialize the room
-            rooms[roomID] = { users: [], public: isPublic, teamSize: teamSize || 2, creator: socket.id };
+            rooms[roomID] = { users: {}, public: isPublic, teamSize: teamSize || 2, creator: socket.id };
             console.log(`Room created: ${roomID} (Public: ${isPublic}, Team Size: ${rooms[roomID].teamSize})`);
 
             // Notify all users of the updated public room list
@@ -62,26 +62,33 @@ io.on('connection', (socket) => {
         }
 
         // Send current names in the room to the user who joined
-        socket.emit('updateNames', rooms[roomID].users);
+        socket.emit('updateNames', Object.values(rooms[roomID].users));
 
         console.log(`User joined room: ${roomID}`);
     });
 
-    // Handle name submission
+    // Handle name submission or update
     socket.on('submitName', ({ roomID, name }) => {
-        if (rooms[roomID]) {
-            rooms[roomID].users.push(name);
+        const room = rooms[roomID];
+        if (room) {
+            if (!room.users[socket.id]) {
+                // If the user hasn't submitted a name yet, add their name
+                room.users[socket.id] = name;
+            } else {
+                // If the user has already submitted, update their name
+                room.users[socket.id] = name;
+            }
 
             // Broadcast the updated list to all users in the room
-            io.to(roomID).emit('updateNames', rooms[roomID].users);
+            io.to(roomID).emit('updateNames', Object.values(room.users));
         }
     });
 
-    // Handle team generation request
+    // Handle team generation request (only the creator can generate teams)
     socket.on('generateTeams', ({ roomID }) => {
         const room = rooms[roomID];
         if (room && socket.id === room.creator) { // Only the creator can generate teams
-            const teams = generateTeams(room.users, room.teamSize);
+            const teams = generateTeams(Object.values(room.users), room.teamSize);
 
             // Broadcast the teams to all users in the room
             io.to(roomID).emit('displayTeams', teams);
@@ -91,11 +98,18 @@ io.on('connection', (socket) => {
     // Handle user disconnect
     socket.on('disconnect', () => {
         console.log('A user disconnected');
+        for (const roomID in rooms) {
+            const room = rooms[roomID];
+            if (room.users[socket.id]) {
+                delete room.users[socket.id];
+                io.to(roomID).emit('updateNames', Object.values(room.users)); // Update other users
+            }
+        }
     });
 });
 
 // Start the server
-const PORT = process.env.PORT || 8888;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
