@@ -48,8 +48,12 @@ io.on('connection', (socket) => {
         socket.join(roomID);
 
         if (!rooms[roomID]) {
-            // Only if the room doesn't already exist, set up the room and designate creator
-            rooms[roomID] = { users: {}, public: isPublic, teamSize: teamSize || 2, creator: socket.id };
+            rooms[roomID] = {
+                users: {}, // Store user info with name and AFKQ status
+                public: isPublic,
+                teamSize: teamSize || 2,
+                creator: socket.id
+            };
             console.log(`Room created: ${roomID} (Public: ${isPublic}, Team Size: ${rooms[roomID].teamSize})`);
 
             // Notify all users of the updated public room list
@@ -58,43 +62,44 @@ io.on('connection', (socket) => {
                 .map(([roomID, roomData]) => ({ roomID, teamSize: roomData.teamSize }))
             );
         } else {
-            // If the room exists, this user is not the creator
             isCreator = false;
         }
 
-        // Send the creator status to the client
         socket.emit('creatorStatus', { isCreator });
 
-        // Send current names in the room to the user who joined
-        socket.emit('updateNames', Object.values(rooms[roomID].users));
-
-        console.log(`User joined room: ${roomID}`);
+        // Send updated member count to all users in the room
+        updateMemberCount(roomID);
     });
 
-    // Handle name submission or update
-    socket.on('submitName', ({ roomID, name }) => {
+    // Handle name submission or update with AFKQ Tool status
+    socket.on('submitName', ({ roomID, name, afkq }) => {
         const room = rooms[roomID];
         if (room) {
-            if (!room.users[socket.id]) {
-                // If the user hasn't submitted a name yet, add their name
-                room.users[socket.id] = name;
-            } else {
-                // If the user has already submitted, update their name
-                room.users[socket.id] = name;
-            }
+            // Add or update user's name and AFKQ status
+            room.users[socket.id] = { name, afkq };
 
             // Broadcast the updated list to all users in the room
             io.to(roomID).emit('updateNames', Object.values(room.users));
+            updateMemberCount(roomID); // Update member count
         }
     });
+
+    // Function to update and broadcast member count
+    function updateMemberCount(roomID) {
+        const room = rooms[roomID];
+        if (room) {
+            const totalMembers = Object.keys(room.users).length;
+            const namedMembers = Object.values(room.users).filter(user => user.name).length;
+            const unnamedMembers = totalMembers - namedMembers;
+            io.to(roomID).emit('memberCount', { total: totalMembers, named: namedMembers, unnamed: unnamedMembers });
+        }
+    }
 
     // Handle team generation request (only the creator can generate teams)
     socket.on('generateTeams', ({ roomID }) => {
         const room = rooms[roomID];
-        if (room && socket.id === room.creator) { // Only the creator can generate teams
-            const teams = generateTeams(Object.values(room.users), room.teamSize);
-
-            // Broadcast the teams to all users in the room
+        if (room && socket.id === room.creator) {
+            const teams = generateTeams(Object.values(room.users).map(user => user.name), room.teamSize);
             io.to(roomID).emit('displayTeams', teams);
         }
     });
@@ -106,7 +111,8 @@ io.on('connection', (socket) => {
             const room = rooms[roomID];
             if (room.users[socket.id]) {
                 delete room.users[socket.id];
-                io.to(roomID).emit('updateNames', Object.values(room.users)); // Update other users
+                io.to(roomID).emit('updateNames', Object.values(room.users));
+                updateMemberCount(roomID); // Update member count on disconnect
             }
         }
     });
