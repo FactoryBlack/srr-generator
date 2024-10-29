@@ -2,44 +2,32 @@ const socket = io();
 let isCreator = false;
 let currentRoomID = null;
 
-// Hide the submit name, member info, and team generation sections initially
+// Hide sections initially without removing them from the DOM
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("submitNameSection").style.display = "none";
     document.getElementById("memberInfoSection").style.display = "none";
-    document.getElementById("teamGenerationSection").style.visibility = "hidden"; // Use visibility: hidden initially
+    document.getElementById("teamGenerationSection").style.visibility = "hidden"; // Keep team generation section hidden but accessible
 });
 
 socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
-    console.log("Creator status:", isCreator); // Confirm creator status on the client side
+    console.log("Creator status:", isCreator);
 
-    // Show the team generation button only if the user is the creator
-    if (isCreator) {
-        document.getElementById("generateTeams").style.display = "block";
-    } else {
-        document.getElementById("generateTeams").style.display = "none";
-    }
-});
-
-// Load active rooms and display Join Room buttons
-socket.on('activeRooms', (publicRooms) => {
-    const roomsList = document.getElementById("roomsList");
-    roomsList.innerHTML = publicRooms.map(room =>
-        `<li>${room.roomID} - Team Size: ${room.teamSize}
-        <button onclick="joinRoom('${room.roomID}')">Join Room</button></li>`
-    ).join('');
+    // Show the Generate Teams button only if the user is the creator
+    const generateButton = document.getElementById("generateTeams");
+    generateButton.style.visibility = isCreator ? "visible" : "hidden"; // Use visibility to keep button in layout
 });
 
 function joinRoom(roomID) {
     currentRoomID = roomID;
     socket.emit('joinRoom', { roomID, isPublic: true, teamSize: 2 });
 
-    // Show the sections upon joining the room
+    // Show the sections when the user joins a room
     document.getElementById("submitNameSection").style.display = "block";
     document.getElementById("memberInfoSection").style.display = "block";
-    document.getElementById("teamGenerationSection").style.display = "block"; // Show team generation section on join
+    document.getElementById("teamGenerationSection").style.visibility = "visible"; // Make team generation section visible
 
-    // Clear any previous listeners to prevent duplicates
+    // Clear previous listeners to prevent duplication
     socket.off('updateNames');
     socket.off('displayTeams');
 

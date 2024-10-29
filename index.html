@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Random Team Room</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .hidden { visibility: hidden; } /* Keeps elements in DOM but invisible */
+    </style>
 </head>
 <body>
     <div class="container">
@@ -33,7 +36,7 @@
             <p id="memberCount">Total Members: 0, Named: 0, Unnamed: 0</p>
         </div>
 
-        <!-- Submit Name Section - JavaScript will hide it on page load -->
+        <!-- Submit Name Section - initially hidden -->
         <div class="form-group" id="submitNameSection" style="display: none;">
             <label for="nameInput">Enter Your Name:</label>
             <input type="text" id="nameInput" placeholder="Your name">
@@ -43,13 +46,12 @@
             <button id="submitName">Submit Name</button>
         </div>
 
-        <!-- Team Generation Section - initially hidden using visibility -->
+        <!-- Team Generation Section - visibility: hidden keeps it in DOM but hidden -->
         <div id="teamGenerationSection" style="visibility: hidden;">
             <h2>Team Generation</h2>
-            <button id="generateTeams" style="display: none;">Generate Teams</button>
+            <button id="generateTeams" style="visibility: hidden;">Generate Teams</button>
             <div id="teamList"></div>
         </div>
-
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
