@@ -122,6 +122,11 @@ function resetUI() {
         currentJoinButton.textContent = 'Join Room';
         currentJoinButton = null;
     }
+    // Reset the "Join or Create Room" button
+    const joinRoomButton = document.getElementById("joinRoom");
+    joinRoomButton.disabled = false;
+    joinRoomButton.textContent = 'Join or Create Room';
+    currentJoinButton = null;
 }
 
 socket.on('activeRooms', (publicRooms) => {
@@ -148,10 +153,15 @@ socket.on('memberCount', ({ total, named, unnamed }) => {
 document.getElementById("joinRoom").addEventListener("click", () => {
     const roomIDInput = document.getElementById("roomID");
     const roomID = roomIDInput.value.trim();
-    if (roomID) {
+    if (roomID.length >= 3 && roomID.length <= 6) {
         joinRoom(roomID);
+        // Disable the "Join or Create Room" button and change its text
+        const joinRoomButton = document.getElementById("joinRoom");
+        joinRoomButton.disabled = true;
+        joinRoomButton.textContent = 'Joined';
+        currentJoinButton = joinRoomButton;
     } else {
-        alert("Please enter a Room ID.");
+        alert("Please enter a Room ID between 3 and 6 characters.");
     }
 });
 

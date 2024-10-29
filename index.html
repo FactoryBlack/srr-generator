@@ -22,20 +22,20 @@
 
         <div class="form-group">
             <div class="form-row">
-                <label for="roomID">Room ID:</label>
-                <input type="text" id="roomID" placeholder="Enter room ID">
+                <input type="text" id="roomID" placeholder="ROOM##" maxlength="6" minlength="3">
             </div>
-            <div class="form-row">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="isPublic"> Public Room
+            <div class="form-row inline-form">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="isPublic">
+                    <span class="checkbox-custom"></span>
+                    Public
                 </label>
-                <label for="teamSizeSelect">Team Size:</label>
                 <select id="teamSizeSelect">
                     <option value="2">Teams of 2</option>
                     <option value="3" selected>Teams of 3</option>
                 </select>
+                <button id="joinRoom" class="button-primary">Join or Create Room</button>
             </div>
-            <button id="joinRoom" class="button-primary">Join or Create Room</button>
         </div>
 
         <h2>Active Public Rooms</h2>
