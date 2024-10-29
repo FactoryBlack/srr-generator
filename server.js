@@ -76,10 +76,14 @@ io.on('connection', (socket) => {
         if (room && socket.id === room.creator) {
             const users = Object.values(room.users).map(user => user.name);
             const teams = [];
+
+            // Generate teams based on team size
             while (users.length) {
                 teams.push(users.splice(0, room.teamSize));
             }
+
             io.to(roomID).emit('displayTeams', teams);
+            console.log(`Teams generated for room ${roomID}:`, teams); // Logging each generation for verification
         }
     });
 

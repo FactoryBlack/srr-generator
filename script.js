@@ -100,8 +100,19 @@ document.getElementById("submitName").addEventListener("click", () => {
 
 document.getElementById("generateTeams").addEventListener("click", () => {
     if (isCreator && currentRoomID) {
+        console.log("Generating teams..."); // Optional debug log for each click
         socket.emit('generateTeams', { roomID: currentRoomID });
+    } else {
+        alert("Only the room creator can generate teams.");
     }
+});
+
+// Listener to display teams after generation
+socket.on('displayTeams', (teams) => {
+    const teamListDiv = document.getElementById("teamList");
+    teamListDiv.innerHTML = teams.map((team, i) =>
+        `<p><strong>Team ${i + 1}:</strong> ${team.join(', ')}</p>`
+    ).join('');
 });
 
 window.kickUser = kickUser; // Expose kickUser for global access
