@@ -20,18 +20,31 @@ body {
     margin-bottom: 20px;
 }
 
-label {
-    display: inline-block;
-    margin-right: 10px;
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    align-items: center;
 }
 
-input[type="text"],
-select {
+.form-row label {
+    margin-right: 10px;
+    min-width: 100px;
+}
+
+.form-row input[type="text"],
+.form-row select {
+    flex: 1;
     padding: 8px;
     font-size: 16px;
     margin-right: 10px;
+    margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
+}
+
+.form-row input[type="checkbox"] {
+    margin-right: 5px;
 }
 
 button {
@@ -84,4 +97,44 @@ h1, h2 {
 /* Visibility control classes */
 .hidden {
     display: none;
+}
+
+/* Responsive styles */
+@media (max-width: 600px) {
+    .form-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .form-row label {
+        margin-bottom: 5px;
+        min-width: auto;
+    }
+
+    .form-row input[type="text"],
+    .form-row select {
+        margin-right: 0;
+        width: 100%;
+    }
+
+    button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    button.kick-button {
+        margin-left: 0;
+        margin-top: 5px;
+        width: auto;
+    }
+
+    #roomsList li {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #roomsList li button {
+        margin-top: 5px;
+        width: 100%;
+    }
 }

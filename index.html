@@ -4,22 +4,27 @@
     <meta charset="UTF-8">
     <title>Random Team Room</title>
     <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
     <div class="container">
         <h1>Join or Create a Team Room</h1>
 
         <div class="form-group">
-            <label for="roomID">Room ID:</label>
-            <input type="text" id="roomID" placeholder="Enter room ID">
-            <label>
-                <input type="checkbox" id="isPublic"> Public Room
-            </label>
-            <label for="teamSizeSelect">Team Size:</label>
-            <select id="teamSizeSelect">
-                <option value="2">Teams of 2</option>
-                <option value="3">Teams of 3</option>
-            </select>
+            <div class="form-row">
+                <label for="roomID">Room ID:</label>
+                <input type="text" id="roomID" placeholder="Enter room ID">
+            </div>
+            <div class="form-row">
+                <label>
+                    <input type="checkbox" id="isPublic"> Public Room
+                </label>
+                <label for="teamSizeSelect">Team Size:</label>
+                <select id="teamSizeSelect">
+                    <option value="2">Teams of 2</option>
+                    <option value="3">Teams of 3</option>
+                </select>
+            </div>
             <button id="joinRoom">Join or Create Room</button>
         </div>
 
@@ -34,11 +39,15 @@
 
         <!-- Submit Name Section -->
         <div class="form-group hidden" id="submitNameSection">
-            <label for="nameInput">Enter Your Name:</label>
-            <input type="text" id="nameInput" placeholder="Your name">
-            <label>
-                <input type="checkbox" id="afkqTool"> AFKQ Tool
-            </label>
+            <div class="form-row">
+                <label for="nameInput">Enter Your Name:</label>
+                <input type="text" id="nameInput" placeholder="Your name">
+            </div>
+            <div class="form-row">
+                <label>
+                    <input type="checkbox" id="afkqTool"> AFKQ Tool
+                </label>
+            </div>
             <button id="submitName">Submit Name</button>
         </div>
 
