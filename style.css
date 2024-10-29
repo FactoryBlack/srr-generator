@@ -270,7 +270,18 @@ ul {
 
 .inline-form button {
     flex: 0;
-    white-space: nowrap; /* Prevent text from wrapping */
+    white-space: nowrap;
+}
+
+.inline-form input[type="text"] {
+    max-width: 300px;
+}
+
+.inline-form .custom-checkbox,
+.inline-form button {
+    display: flex;
+    align-items: center;
+    height: 48px;
 }
 
 /* Fix vertical alignment */
@@ -280,6 +291,8 @@ ul {
     display: flex;
     align-items: center;
     height: 48px;
+    padding: 0 10px;
+    box-sizing: border-box;
 }
 
 .custom-checkbox .checkbox-custom {
@@ -294,8 +307,8 @@ ul {
 
 /* Room Code Input Field Styling */
 #roomID {
-    width: 100%;
-    font-size: 64px; /* Double the previous size */
+    width: 100%; /* Ensure full width */
+    font-size: 64px;
     font-weight: bold;
     border: none;
     border-bottom: 4px solid #E91E63; /* Accent color underline */
@@ -305,6 +318,7 @@ ul {
     letter-spacing: 20px;
     padding: 20px 0;
     text-align: center;
+    box-sizing: border-box; /* Include padding and border in width */
 }
 
 #roomID::placeholder {
@@ -328,12 +342,17 @@ input:-webkit-autofill:focus {
 }
 
 /* Member Information Styling */
+/* Member Information Styling */
 #memberCount {
     font-size: 18px;
     color: #FFFFFF;
 }
 
-#memberCount span {
+.member-stat {
+    font-weight: bold; /* Make subheadings bold */
+}
+
+.member-stat span {
     color: #E91E63; /* Accent color for numbers */
     font-weight: bold;
 }

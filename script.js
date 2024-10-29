@@ -145,8 +145,8 @@ socket.on('activeRooms', (publicRooms) => {
         roomsList.innerHTML = '';
         noRoomsMessage.classList.remove('hidden');
     } else {
-        noRoomsMessage.classList.add('hidden');
         roomsList.innerHTML = '';
+        noRoomsMessage.classList.add('hidden'); // Ensure the message is hidden
         publicRooms.forEach(room => {
             const roomItem = document.createElement('li');
             roomItem.textContent = `${room.roomID} - Team Size: ${room.teamSize}`;
@@ -172,8 +172,9 @@ socket.on('activeRooms', (publicRooms) => {
 });
 
 socket.on('memberCount', ({ total, named, unnamed }) => {
-    document.getElementById("memberCount").innerHTML =
-        `Total Members: <span>${total}</span>, Named: <span>${named}</span>, Unnamed: <span>${unnamed}</span>`;
+    document.getElementById("totalMembers").textContent = total;
+    document.getElementById("namedMembers").textContent = named;
+    document.getElementById("unnamedMembers").textContent = unnamed;
 });
 
 document.getElementById("joinRoom").addEventListener("click", () => {

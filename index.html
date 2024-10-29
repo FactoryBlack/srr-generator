@@ -45,24 +45,24 @@
         <!-- Member Information Section -->
         <div id="memberInfoSection" class="hidden">
             <h2 id="memberInfoTitle">Member Count</h2>
-            <p id="memberCount">Total Members: 0, Named: 0, Unnamed: 0</p>
+            <p id="memberCount">
+                <span class="member-stat">Total Members: <span id="totalMembers">0</span></span><br>
+                <span class="member-stat">Named: <span id="namedMembers">0</span></span><br>
+                <span class="member-stat">Unnamed: <span id="unnamedMembers">0</span></span>
+            </p>
         </div>
 
         <!-- Submit Name Section -->
         <div class="form-group hidden" id="submitNameSection">
-            <div class="form-row">
-                <label for="nameInput">Enter Your Name:</label>
+            <div class="form-row inline-form">
                 <input type="text" id="nameInput" placeholder="Your name">
-            </div>
-            <div class="form-row">
                 <label class="custom-checkbox">
                     <input type="checkbox" id="afkqTool">
                     <span class="checkbox-custom"></span>
-                    <!-- Placeholder for square icon -->
                     AFKQ Tool
                 </label>
+                <button id="submitName" class="button-primary">Submit Name</button>
             </div>
-            <button id="submitName" class="button-primary">Submit Name</button>
         </div>
 
         <!-- Team Generation Section -->
