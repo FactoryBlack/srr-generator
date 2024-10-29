@@ -6,7 +6,7 @@ let currentRoomID = null;
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("submitNameSection").style.display = "none";
     document.getElementById("memberInfoSection").style.display = "none";
-    document.getElementById("teamGenerationSection").style.display = "none"; // Hide team generation section initially
+    document.getElementById("teamGenerationSection").style.visibility = "hidden"; // Use visibility: hidden initially
 });
 
 socket.on('creatorStatus', (data) => {
