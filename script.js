@@ -6,7 +6,8 @@ let currentRoomID = null;
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("submitNameSection").style.display = "none";
     document.getElementById("memberInfoSection").style.display = "none";
-    document.getElementById("teamGenerationSection").style.visibility = "hidden"; // Keep team generation section hidden but accessible
+    document.getElementById("teamGenerationSection").style.visibility = "hidden"; // Keeps section in DOM but hidden
+    document.getElementById("generateTeams").style.display = "none"; // Only show button to creator
 });
 
 socket.on('creatorStatus', (data) => {
@@ -14,8 +15,7 @@ socket.on('creatorStatus', (data) => {
     console.log("Creator status:", isCreator);
 
     // Show the Generate Teams button only if the user is the creator
-    const generateButton = document.getElementById("generateTeams");
-    generateButton.style.visibility = isCreator ? "visible" : "hidden"; // Use visibility to keep button in layout
+    document.getElementById("generateTeams").style.display = isCreator ? "inline-block" : "none";
 });
 
 function joinRoom(roomID) {
@@ -25,12 +25,7 @@ function joinRoom(roomID) {
     // Show the sections when the user joins a room
     document.getElementById("submitNameSection").style.display = "block";
     document.getElementById("memberInfoSection").style.display = "block";
-
-    // Make the entire team generation section visible
-    const teamGenerationSection = document.getElementById("teamGenerationSection");
-    if (teamGenerationSection) {
-        teamGenerationSection.style.visibility = "visible";
-    }
+    document.getElementById("teamGenerationSection").style.visibility = "visible"; // Show team generation section for all
 
     // Clear previous listeners to prevent duplication
     socket.off('updateNames');
@@ -65,11 +60,11 @@ function joinRoom(roomID) {
 }
 
 function kickUser(userID) {
-    console.log("Kick button clicked for user:", userID); // Debugging log to confirm function call
+    console.log("Kick button clicked for user:", userID);
 
     if (currentRoomID && isCreator) {
         socket.emit('kickUser', { roomID: currentRoomID, userID });
-        console.log("kickUser event emitted for user:", userID); // Confirm the event is emitted
+        console.log("kickUser event emitted for user:", userID);
     } else {
         console.log("Kick failed: Not the creator or room ID missing.");
     }
@@ -83,7 +78,7 @@ socket.on('kicked', (message) => {
     // Clear all room-related data on the page
     document.getElementById("submitNameSection").style.display = "none";
     document.getElementById("memberInfoSection").style.display = "none";
-    document.getElementById("teamGenerationSection").style.display = "none"; // Hide team generation if kicked
+    document.getElementById("teamGenerationSection").style.visibility = "hidden"; // Hide team generation if kicked
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
     document.getElementById("roomsList").innerHTML = "";
@@ -107,22 +102,7 @@ document.getElementById("joinRoom").addEventListener("click", () => {
 
     document.getElementById("submitNameSection").style.display = "block";
     document.getElementById("memberInfoSection").style.display = "block";
-    document.getElementById("teamGenerationSection").style.display = "block"; // Show team generation upon joining
-
-    socket.on('updateNames', (users) => {
-        const nameListDiv = document.getElementById("nameList");
-        nameListDiv.innerHTML = users.map(user => {
-            const kickButton = isCreator ? `<button onclick="kickUser('${user.id}')" class="kick-button" style="display: inline; color: red;">Kick</button>` : '';
-            return `<p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`;
-        }).join('');
-    });
-
-    socket.on('displayTeams', (teams) => {
-        const teamListDiv = document.getElementById("teamList");
-        teamListDiv.innerHTML = teams.map((team, i) =>
-            `<p><strong>Team ${i + 1}:</strong> ${team.join(', ')}</p>`
-        ).join('');
-    });
+    document.getElementById("teamGenerationSection").style.visibility = "visible"; // Show team generation for all
 });
 
 // Submit name to the room
@@ -150,14 +130,14 @@ socket.on('roomClosed', () => {
     alert("The room has been closed by the creator.");
     document.getElementById("submitNameSection").style.display = "none";
     document.getElementById("memberInfoSection").style.display = "none";
-    document.getElementById("teamGenerationSection").style.display = "none"; // Hide team generation upon room closure
+    document.getElementById("teamGenerationSection").style.visibility = "hidden"; // Hide team generation upon room closure
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
 });
 
 socket.on('joinDenied', (message) => {
     alert(message);
-    console.log("Join denied message received:", message); // For debugging
+    console.log("Join denied message received:", message);
 });
 
 window.kickUser = kickUser;
