@@ -4,17 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Random Team Room</title>
-    <link rel="stylesheet" href="style.css"> <!-- Link to the new CSS -->
+    <link rel="stylesheet" href="styled_template.css">
 </head>
-<body class="light"> <!-- Default theme set to 'light' -->
-
-    <!-- Theme Toggle Button -->
+<body class="light">
     <button id="themeToggle" onclick="toggleTheme()">Switch to Dark Mode</button>
 
     <div class="container">
         <h1>Join or Create a Team Room</h1>
-
-        <!-- Room ID, Public Room, and Team Size selection -->
         <div class="form-group">
             <label for="roomID">Room ID:</label>
             <input type="text" id="roomID" placeholder="Enter room ID">
@@ -33,13 +29,13 @@
         <ul id="roomsList" class="section"></ul>
 
         <!-- Member Info Section -->
-        <div id="memberInfoSection" class="section hidden">
+        <div id="memberInfoSection" class="section">
             <h2>Member Count</h2>
             <p id="memberCount">Total Members: 0, Named: 0, Unnamed: 0</p>
         </div>
 
         <!-- Submit Name Section -->
-        <div id="submitNameSection" class="form-group hidden">
+        <div id="submitNameSection" class="form-group">
             <label for="nameInput">Enter Your Name:</label>
             <input type="text" id="nameInput" placeholder="Your name">
             <label>
@@ -49,15 +45,17 @@
         </div>
 
         <!-- Team Generation Section -->
-        <div id="teamGenerationSection" class="section hidden">
+        <div id="teamGenerationSection" class="section">
             <h2>Team Generation</h2>
             <button id="generateTeams">Generate Teams</button>
             <div id="teamList"></div>
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+
     <script>
-        // JavaScript for theme toggling
         function toggleTheme() {
             const body = document.body;
             body.classList.toggle('light');
@@ -66,7 +64,5 @@
             themeToggleBtn.textContent = body.classList.contains('light') ? "Switch to Dark Mode" : "Switch to Light Mode";
         }
     </script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="script.js"></script>
 </body>
 </html>
