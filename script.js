@@ -2,15 +2,23 @@ const socket = io();
 let isCreator = false;
 let currentRoomID = null;
 
-// Hide the submit name section and member info section initially
+// Hide the submit name, member info, and team generation sections initially
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("submitNameSection").style.display = "none";
-    document.getElementById("memberInfoSection").style.display = "none"; // Hide member info initially
+    document.getElementById("memberInfoSection").style.display = "none";
+    document.getElementById("teamGenerationSection").style.display = "none"; // Hide team generation section initially
 });
 
 socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
     console.log("Creator status:", isCreator); // Confirm creator status on the client side
+
+    // Show the team generation button only if the user is the creator
+    if (isCreator) {
+        document.getElementById("generateTeams").style.display = "block";
+    } else {
+        document.getElementById("generateTeams").style.display = "none";
+    }
 });
 
 // Load active rooms and display Join Room buttons
@@ -29,6 +37,7 @@ function joinRoom(roomID) {
     // Show the sections upon joining the room
     document.getElementById("submitNameSection").style.display = "block";
     document.getElementById("memberInfoSection").style.display = "block";
+    document.getElementById("teamGenerationSection").style.display = "block"; // Show team generation section on join
 
     // Clear any previous listeners to prevent duplicates
     socket.off('updateNames');
@@ -72,14 +81,12 @@ socket.on('kicked', (message) => {
 
     // Clear all room-related data on the page
     document.getElementById("submitNameSection").style.display = "none";
-    document.getElementById("memberInfoSection").style.display = "none"; // Hide member info if kicked
+    document.getElementById("memberInfoSection").style.display = "none";
+    document.getElementById("teamGenerationSection").style.display = "none"; // Hide team generation if kicked
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
-    document.getElementById("roomsList").innerHTML = ""; // Clear the list of active rooms if applicable
+    document.getElementById("roomsList").innerHTML = "";
     document.getElementById("memberCount").textContent = "Total Members: 0, Named: 0, Unnamed: 0";
-
-    // Optionally, redirect the user to a homepage or lobby
-    // window.location.href = "/"; // Uncomment to redirect to the homepage or a different page
 });
 
 // Update member count display
@@ -98,14 +105,13 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     socket.emit('joinRoom', { roomID, isPublic, teamSize });
 
     document.getElementById("submitNameSection").style.display = "block";
-    document.getElementById("memberInfoSection").style.display = "block"; // Show member info upon joining
+    document.getElementById("memberInfoSection").style.display = "block";
+    document.getElementById("teamGenerationSection").style.display = "block"; // Show team generation upon joining
 
     socket.on('updateNames', (users) => {
         const nameListDiv = document.getElementById("nameList");
-
-        // Force the kick button with a direct inline onclick handler for testing
         nameListDiv.innerHTML = users.map(user => {
-            const kickButton = `<button onclick="kickUser('${user.id}')" class="kick-button" style="display: inline; color: red;">Kick</button>`;
+            const kickButton = isCreator ? `<button onclick="kickUser('${user.id}')" class="kick-button" style="display: inline; color: red;">Kick</button>` : '';
             return `<p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`;
         }).join('');
     });
@@ -142,25 +148,15 @@ document.getElementById("generateTeams").addEventListener("click", () => {
 socket.on('roomClosed', () => {
     alert("The room has been closed by the creator.");
     document.getElementById("submitNameSection").style.display = "none";
-    document.getElementById("memberInfoSection").style.display = "none"; // Hide member info upon room closure
+    document.getElementById("memberInfoSection").style.display = "none";
+    document.getElementById("teamGenerationSection").style.display = "none"; // Hide team generation upon room closure
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
 });
 
 socket.on('joinDenied', (message) => {
     alert(message);
-    console.log("Join denied message received:", message);
-
-    // Clear all room-related data to prevent further interaction
-    document.getElementById("submitNameSection").style.display = "none";
-    document.getElementById("memberInfoSection").style.display = "none";
-    document.getElementById("nameList").innerHTML = "";
-    document.getElementById("teamList").innerHTML = "";
-    document.getElementById("roomsList").innerHTML = "";
-    document.getElementById("memberCount").textContent = "Total Members: 0, Named: 0, Unnamed: 0";
-
-    // Optionally redirect the user away from the page or display a message
-    // window.location.href = "/"; // Uncomment to redirect to a different page
+    console.log("Join denied message received:", message); // For debugging
 });
 
 window.kickUser = kickUser;
