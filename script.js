@@ -36,7 +36,17 @@ function updateNameList(users) {
     nameListDiv.innerHTML = '';
     users.forEach(user => {
         const userElement = document.createElement('p');
-        userElement.textContent = `${user.name} ${user.afkq ? "(AFKQ Tool)" : ""}`;
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = user.name;
+
+        userElement.appendChild(nameSpan);
+
+        if (user.afkq) {
+            const iconSpan = document.createElement('span');
+            iconSpan.classList.add('icon-placeholder');
+            userElement.insertBefore(iconSpan, nameSpan);
+        }
 
         if (isCreator) {
             const kickButton = document.createElement('button');

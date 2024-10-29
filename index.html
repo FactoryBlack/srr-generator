@@ -5,8 +5,18 @@
     <title>Random Team Room</title>
     <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google Fonts for bold and clean typography -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">TeamUp</a>
+            <!-- Future navigation items can be added here -->
+        </div>
+    </nav>
+
     <div class="container">
         <h1>Join or Create a Team Room</h1>
 
@@ -16,7 +26,7 @@
                 <input type="text" id="roomID" placeholder="Enter room ID">
             </div>
             <div class="form-row">
-                <label>
+                <label class="checkbox-label">
                     <input type="checkbox" id="isPublic"> Public Room
                 </label>
                 <label for="teamSizeSelect">Team Size:</label>
@@ -44,8 +54,10 @@
                 <input type="text" id="nameInput" placeholder="Your name">
             </div>
             <div class="form-row">
-                <label>
-                    <input type="checkbox" id="afkqTool"> AFKQ Tool
+                <label class="checkbox-label">
+                    <input type="checkbox" id="afkqTool">
+                    <!-- Placeholder for square icon -->
+                    <span class="icon-placeholder"></span> AFKQ Tool
                 </label>
             </div>
             <button id="submitName">Submit Name</button>
