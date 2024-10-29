@@ -84,10 +84,24 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     document.getElementById("submitNameSection").style.display = "block";
 
     socket.on('updateNames', (users) => {
-        const nameListDiv = document.getElementById("nameList");
-        nameListDiv.innerHTML = users.map(user =>
-            `<p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""}</p>`
-        ).join('');
+        try {
+            console.log("Is creator inside updateNames?", isCreator); // Confirm creator status
+
+            const nameListDiv = document.getElementById("nameList");
+
+            // Force display of the Kick button for debugging
+            nameListDiv.innerHTML = users.map(user => {
+                // Force the kick button to show for testing purposes
+                const kickButton = `<button class="kick-button" style="display: inline; color: red;">Kick</button>`;
+                console.log(`Generated HTML for user ${user.name}: <p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`); // Log each user's HTML
+                return `<p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`;
+            }).join('');
+
+            // Log final HTML in nameListDiv for verification
+            console.log("Final HTML in nameListDiv:", nameListDiv.innerHTML);
+        } catch (error) {
+            console.error("Error in updateNames event handler:", error);
+        }
     });
 
     socket.on('displayTeams', (teams) => {
