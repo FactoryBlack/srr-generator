@@ -72,13 +72,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // Prevent other users from taking over the room if there's already a creator
-        if (room.creator && room.creator !== socket.id) {
-            socket.emit('joinDenied', 'This room already has a creator.');
-            return;
-        }
-
-        // Allow the user to join the room and mark them as "Unnamed"
+        // Allow users to join without changing the creator
         socket.join(roomID);
         room.users[socket.id] = { name: "Unnamed", afkq: false };
 
@@ -86,9 +80,9 @@ io.on('connection', (socket) => {
         broadcastPublicRooms();
         socket.emit('creatorStatus', { isCreator: room.creator === socket.id });
         updateMemberCount(roomID);
+
+        console.log(`User ${socket.id} joined room ${roomID}`);
     });
-
-
 
     // Handle name submission or update with AFKQ Tool status
     socket.on('submitName', ({ roomID, name, afkq }) => {
