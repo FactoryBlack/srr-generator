@@ -84,7 +84,6 @@ h2 {
 .form-row input[type="text"],
 .form-row select {
     flex: 1;
-    max-width: 300px;
     padding: 12px;
     font-size: 18px;
     margin-bottom: 10px;
@@ -110,6 +109,7 @@ h2 {
     cursor: pointer;
     user-select: none;
     color: #FFFFFF;
+    white-space: nowrap; /* Prevent text wrapping */
 }
 
 .custom-checkbox input[type="checkbox"] {
@@ -273,10 +273,6 @@ ul {
     white-space: nowrap;
 }
 
-.inline-form input[type="text"] {
-    max-width: 300px;
-}
-
 .inline-form .custom-checkbox,
 .inline-form button {
     display: flex;
@@ -382,4 +378,41 @@ input:-webkit-autofill:focus {
         font-size: 48px;
         letter-spacing: 15px;
     }
+}
+
+/* Apply styles to specific small inputs */
+.small-input {
+    flex: 1;
+    max-width: 300px;
+    padding: 12px;
+    font-size: 18px;
+    margin-bottom: 10px;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    background-color: #2A2A2A;
+    color: #FFFFFF;
+}
+
+/* Adjust inline form in #submitNameSection */
+#submitNameSection .inline-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap; /* Prevent wrapping */
+}
+
+#submitNameSection .inline-form > * {
+    flex: 0; /* Prevent flex items from growing */
+}
+
+#submitNameSection .inline-form input[type="text"] {
+    flex: 1; /* Allow the name input to take up available space */
+}
+
+#submitNameSection .custom-checkbox {
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+#submitNameSection .inline-form button {
+    white-space: nowrap; /* Prevent button text wrapping */
 }

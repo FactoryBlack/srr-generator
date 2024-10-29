@@ -85,7 +85,7 @@ function updateNameList(users) {
         } else {
             // Add a placeholder to keep the height consistent
             const placeholder = document.createElement('div');
-            placeholder.style.width = '66px'; // Width of the kick button
+            placeholder.style.width = '50px'; // Adjust width as needed
             userElement.appendChild(placeholder);
         }
         nameListDiv.appendChild(userElement);
@@ -126,7 +126,10 @@ function resetUI() {
     document.getElementById("teamGenerationSection").classList.add("hidden");
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
-    document.getElementById("memberCount").textContent = "Total Members: 0, Named: 0, Unnamed: 0";
+    document.getElementById("memberCount").innerHTML =
+        `<span class="member-stat">Total Members: <span id="totalMembers">0</span></span><br>
+         <span class="member-stat">Named: <span id="namedMembers">0</span></span><br>
+         <span class="member-stat">Unnamed: <span id="unnamedMembers">0</span></span>`;
     document.getElementById("memberInfoTitle").textContent = "Member Count";
 
     // Reset the join button if applicable
