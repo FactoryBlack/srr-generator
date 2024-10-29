@@ -50,31 +50,34 @@ io.on('connection', (socket) => {
     broadcastPublicRooms();
 
     socket.on('joinRoom', ({ roomID, isPublic, teamSize }) => {
+        const room = rooms[roomID];
+        const userIP = socket.handshake.address; // Use IP as an identifier
+
         // Initialize the room if it doesn't exist
-        if (!rooms[roomID]) {
+        if (!room) {
             rooms[roomID] = {
                 users: {},
                 public: isPublic,
                 teamSize: teamSize || 2,
-                creator: socket.id, // Set creator to the initial user
-                banList: [] // Initialize ban list for the room
+                creator: socket.id,
+                banList: []
             };
             console.log(`Room created: ${roomID} (Public: ${isPublic}, Team Size: ${rooms[roomID].teamSize})`);
         }
 
-        const room = rooms[roomID];
-        const userIP = socket.handshake.address; // Use IP as an identifier
-
-        // Check if the user is banned based on their IP address or another unique identifier
-        if (room.banList.includes(userIP)) {
+        // Check if the user is banned based on their IP
+        if (rooms[roomID].banList.includes(userIP)) {
             socket.emit('joinDenied', 'You have been banned from this room.');
             console.log(`User with IP ${userIP} attempted to join room ${roomID} but is banned.`);
+
+            // Disconnect the socket to prevent any further interactions
+            socket.disconnect(true);
             return;
         }
 
-        // Allow users to join without changing the creator
+        // Join the room if not banned
         socket.join(roomID);
-        room.users[socket.id] = { name: "Unnamed", afkq: false };
+        rooms[roomID].users[socket.id] = { name: "Unnamed", afkq: false };
 
         // Emit the updated list of public rooms and the creator status
         broadcastPublicRooms();
@@ -83,6 +86,7 @@ io.on('connection', (socket) => {
 
         console.log(`User ${socket.id} joined room ${roomID}`);
     });
+
 
     // Handle name submission or update with AFKQ Tool status
     socket.on('submitName', ({ roomID, name, afkq }) => {

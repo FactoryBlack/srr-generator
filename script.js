@@ -149,7 +149,18 @@ socket.on('roomClosed', () => {
 
 socket.on('joinDenied', (message) => {
     alert(message);
-    console.log("Join denied message received:", message); // For debugging
+    console.log("Join denied message received:", message);
+
+    // Clear all room-related data to prevent further interaction
+    document.getElementById("submitNameSection").style.display = "none";
+    document.getElementById("memberInfoSection").style.display = "none";
+    document.getElementById("nameList").innerHTML = "";
+    document.getElementById("teamList").innerHTML = "";
+    document.getElementById("roomsList").innerHTML = "";
+    document.getElementById("memberCount").textContent = "Total Members: 0, Named: 0, Unnamed: 0";
+
+    // Optionally redirect the user away from the page or display a message
+    // window.location.href = "/"; // Uncomment to redirect to a different page
 });
 
 window.kickUser = kickUser;
