@@ -51,41 +51,44 @@ io.on('connection', (socket) => {
 
     socket.on('joinRoom', ({ roomID, isPublic, teamSize }) => {
         const room = rooms[roomID];
+        const userIP = socket.handshake.address; // Use IP as an identifier
 
-        // Check if the user is banned from this room
-        if (room && room.banList && room.banList.includes(socket.id)) {
+        // Ensure the room has a ban list even if it's newly created
+        if (!room) {
+            rooms[roomID] = {
+                users: {},
+                public: isPublic,
+                teamSize: teamSize || 2,
+                creator: socket.id,
+                banList: []
+            };
+        }
+
+        // Check if the user is banned based on their IP address or another unique identifier
+        if (rooms[roomID].banList.includes(userIP)) {
             socket.emit('joinDenied', 'You have been banned from this room.');
-            console.log(`User ${socket.id} attempted to join room ${roomID} but is banned.`);
+            console.log(`User with IP ${userIP} attempted to join room ${roomID} but is banned.`);
             return;
         }
 
         socket.join(roomID);
 
-        if (!room) {
-            // Initialize room if it doesn't exist
-            rooms[roomID] = {
-                users: {},
-                public: isPublic,
-                teamSize: teamSize || 2,
-                creator: socket.id, // Set creator to the initial user
-                banList: [] // Initialize ban list for the room
-            };
-            console.log(`Room created: ${roomID} (Public: ${isPublic}, Team Size: ${rooms[roomID].teamSize})`);
-
-            // Broadcast the updated list of public rooms
-            broadcastPublicRooms();
-
-            // Emit creatorStatus to this user indicating they are the creator
-            socket.emit('creatorStatus', { isCreator: true });
-        } else {
-            // For non-creators joining an existing room
-            socket.emit('creatorStatus', { isCreator: false });
+        if (!room.creator) {
+            rooms[roomID].creator = socket.id; // Assign creator if none exists
+        } else if (room.creator !== socket.id) {
+            // Prevent anyone else from taking over the room
+            socket.emit('joinDenied', 'This room already has a creator.');
+            return;
         }
 
-        // Add user as "Unnamed" upon joining
         rooms[roomID].users[socket.id] = { name: "Unnamed", afkq: false };
+
+        // Emit the updated list of public rooms and the creator status
+        broadcastPublicRooms();
+        socket.emit('creatorStatus', { isCreator: room.creator === socket.id });
         updateMemberCount(roomID);
     });
+
 
     // Handle name submission or update with AFKQ Tool status
     socket.on('submitName', ({ roomID, name, afkq }) => {
@@ -103,18 +106,23 @@ io.on('connection', (socket) => {
 
     // Server-side: Handle the kickUser event
     socket.on('kickUser', ({ roomID, userID }) => {
-        console.log(`Received kickUser event for room ${roomID} to kick user ${userID}`);
-
         const room = rooms[roomID];
-        if (room && socket.id === room.creator && room.users[userID]) {
-            room.banList.push(userID); // Add user to the ban list
-            io.to(userID).emit('kicked', 'You have been kicked from the room.');
+        const userSocket = io.sockets.sockets.get(userID);
 
-            // Remove the user from the room and update other users
+        if (room && socket.id === room.creator && userSocket) {
+            const userIP = userSocket.handshake.address; // Identify the user by IP
+
+            // Add the user's IP to the ban list
+            room.banList.push(userIP);
+            userSocket.emit('kicked', 'You have been kicked from the room.');
+
+            // Remove the user from the room
             delete room.users[userID];
+            userSocket.leave(roomID); // Disconnect them from the room
             io.to(roomID).emit('updateNames', Object.entries(room.users).map(([id, user]) => ({ id, ...user })));
-            updateMemberCount(roomID); // Update member count for remaining users
-            console.log(`User ${userID} kicked from room ${roomID}`);
+            updateMemberCount(roomID);
+
+            console.log(`User with IP ${userIP} kicked and banned from room ${roomID}`);
         } else {
             console.log("Kick failed: Either not the creator or user does not exist in the room.");
         }
@@ -156,7 +164,7 @@ io.on('connection', (socket) => {
 
     // Handle user disconnect
     socket.on('disconnect', () => {
-        console.log(`User ${socket.id} disconnected`);
+        console.log('A user disconnected');
         for (const roomID in rooms) {
             const room = rooms[roomID];
 
@@ -168,9 +176,8 @@ io.on('connection', (socket) => {
                 broadcastPublicRooms();
             } else if (room.users[socket.id]) {
                 delete room.users[socket.id];
-                emitUpdateNames(roomID);
+                io.to(roomID).emit('updateNames', Object.entries(room.users).map(([id, user]) => ({ id, ...user })));
                 updateMemberCount(roomID);
-                console.log(`User ${socket.id} removed from room ${roomID} on disconnect.`);
             }
         }
     });
