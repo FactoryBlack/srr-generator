@@ -172,8 +172,8 @@ socket.on('activeRooms', (publicRooms) => {
 });
 
 socket.on('memberCount', ({ total, named, unnamed }) => {
-    document.getElementById("memberCount").textContent =
-        `Total Members: ${total}, Named: ${named}, Unnamed: ${unnamed}`;
+    document.getElementById("memberCount").innerHTML =
+        `Total Members: <span>${total}</span>, Named: <span>${named}</span>, Unnamed: <span>${unnamed}</span>`;
 });
 
 document.getElementById("joinRoom").addEventListener("click", () => {
