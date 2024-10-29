@@ -48,7 +48,6 @@ body {
 h1, h2 {
     color: #FFFFFF;
     margin-bottom: 20px;
-    text-align: right; /* Align headings to the right */
 }
 
 h1 {
@@ -71,14 +70,12 @@ h2 {
     flex-wrap: wrap;
     margin-bottom: 15px;
     align-items: center;
-    justify-content: flex-end; /* Align form elements to the right */
 }
 
 .form-row label {
     margin-right: 10px;
     min-width: 120px;
     font-size: 18px;
-    text-align: right; /* Align labels to the right */
 }
 
 .form-row input[type="text"],
@@ -87,13 +84,11 @@ h2 {
     max-width: 300px;
     padding: 12px;
     font-size: 18px;
-    margin-left: 10px;
     margin-bottom: 10px;
     border: 1px solid #333333;
     border-radius: 4px;
     background-color: #2A2A2A;
     color: #FFFFFF;
-    text-align: right; /* Align text inside inputs to the right */
 }
 
 .form-row input::placeholder {
@@ -108,7 +103,7 @@ h2 {
     display: flex;
     align-items: center;
     font-size: 18px;
-    margin-left: 10px; /* Add margin to align with other inputs */
+    margin-left: auto; /* Push checkbox label to the right */
 }
 
 .icon-placeholder {
@@ -141,7 +136,7 @@ button:disabled {
 
 /* Primary Button */
 .button-primary {
-    margin-bottom: 20px; /* Apply margin only to primary buttons */
+    margin-bottom: 20px;
 }
 
 /* Accent Color */
@@ -242,19 +237,22 @@ ul {
 @media (max-width: 600px) {
     .form-row {
         flex-direction: column;
-        align-items: flex-end; /* Align to the right on mobile as well */
+        align-items: stretch; /* Full width on mobile */
     }
 
     .form-row label {
         margin-bottom: 5px;
         min-width: auto;
-        text-align: right; /* Align labels to the right */
     }
 
     .form-row input[type="text"],
     .form-row select {
         margin-left: 0;
         width: 100%;
+    }
+
+    .checkbox-label {
+        margin-left: 0; /* Reset margin on mobile */
     }
 
     button {
