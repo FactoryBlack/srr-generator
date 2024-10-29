@@ -50,16 +50,21 @@ function updateNameList(users) {
     users.forEach(user => {
         const userElement = document.createElement('p');
 
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = user.name;
+        // Create a container for the name and icon
+        const nameContainer = document.createElement('div');
+        nameContainer.classList.add('user-name-container');
 
         if (user.afkq) {
             const iconSpan = document.createElement('span');
             iconSpan.classList.add('icon-placeholder');
-            userElement.appendChild(iconSpan);
+            nameContainer.appendChild(iconSpan);
         }
 
-        userElement.appendChild(nameSpan);
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = user.name;
+        nameContainer.appendChild(nameSpan);
+
+        userElement.appendChild(nameContainer);
 
         if (isCreator && user.id !== socket.id) {
             const kickButton = document.createElement('button');

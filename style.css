@@ -136,8 +136,10 @@ button.kick-button {
     background-color: #FF5252;
     color: white;
     font-size: 14px;
-    margin-left: 10px;
     padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
 }
 
 button.kick-button:hover {
@@ -150,15 +152,17 @@ ul {
     padding: 0;
 }
 
-#roomsList li, #nameList p, #teamList p {
+#roomsList li,
+#nameList p,
+#teamList p {
     font-size: 18px;
     padding: 10px;
     background-color: #2A2A2A;
-    margin-bottom: 10px;
     border-radius: 4px;
+    margin: 10px 0; /* Vertical spacing between entries */
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    align-items: center; /* Vertically center items */
+    justify-content: space-between; /* Space between content and buttons */
 }
 
 #roomsList li button {
@@ -173,6 +177,16 @@ ul {
 
 #teamList p {
     margin: 0;
+}
+
+/* User name and icon container */
+.user-name-container {
+    display: flex;
+    align-items: center; /* Vertically center name and icon */
+}
+
+.user-name-container .icon-placeholder {
+    margin-right: 8px; /* Space between icon and name */
 }
 
 /* Spacing Adjustments */
