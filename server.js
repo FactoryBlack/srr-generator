@@ -106,24 +106,22 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Kick a user from the room
+    // Server-side: Handle the kickUser event
     socket.on('kickUser', ({ roomID, userID }) => {
-        console.log(`kickUser event received from ${socket.id} to kick user ${userID} in room ${roomID}`);
+        console.log(`Received kickUser event for room ${roomID} to kick user ${userID}`);
 
         const room = rooms[roomID];
         if (room && socket.id === room.creator && room.users[userID]) {
-            // Add the kicked user to the ban list
-            room.banList.push(userID);
-
-            // Notify the kicked user
+            room.banList.push(userID); // Add user to the ban list
             io.to(userID).emit('kicked', 'You have been kicked from the room.');
 
-            // Remove the user from the room and update the user list
+            // Remove the user from the room and update other users
             delete room.users[userID];
-            console.log(`User ${userID} was kicked from room ${roomID}`);
-
-            emitUpdateNames(roomID);
-            updateMemberCount(roomID);
+            io.to(roomID).emit('updateNames', Object.entries(room.users).map(([id, user]) => ({ id, ...user })));
+            updateMemberCount(roomID); // Update member count for remaining users
+            console.log(`User ${userID} kicked from room ${roomID}`);
+        } else {
+            console.log("Kick failed: Either not the creator or user does not exist in the room.");
         }
     });
 

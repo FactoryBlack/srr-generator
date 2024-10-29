@@ -50,17 +50,21 @@ function joinRoom(roomID) {
     });
 }
 
-// Function to handle kicking a user
 function kickUser(userID) {
+    console.log("Kick button clicked for user:", userID); // Debugging log to confirm function call
+
     if (currentRoomID && isCreator) {
-        console.log("Attempting to kick user:", userID); // Debugging log for kicking
         socket.emit('kickUser', { roomID: currentRoomID, userID });
+        console.log("kickUser event emitted for user:", userID); // Confirm the event is emitted
+    } else {
+        console.log("Kick failed: Not the creator or room ID missing.");
     }
 }
 
 // Listen for the kicked event to reset the UI for the kicked user
 socket.on('kicked', (message) => {
     alert(message);
+    console.log("Kicked event received:", message); // Confirm the client received the kicked event
     document.getElementById("submitNameSection").style.display = "none";
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
