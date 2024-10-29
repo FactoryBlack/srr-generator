@@ -50,13 +50,12 @@ io.on('connection', (socket) => {
     broadcastPublicRooms();
 
     socket.on('joinRoom', ({ roomID, isPublic, teamSize }) => {
-        console.log(`joinRoom event received from ${socket.id} for room ${roomID}`);
-
         const room = rooms[roomID];
 
-        // Prevent banned users from joining
+        // Check if the user is banned from this room
         if (room && room.banList && room.banList.includes(socket.id)) {
             socket.emit('joinDenied', 'You have been banned from this room.');
+            console.log(`User ${socket.id} attempted to join room ${roomID} but is banned.`);
             return;
         }
 
@@ -68,8 +67,8 @@ io.on('connection', (socket) => {
                 users: {},
                 public: isPublic,
                 teamSize: teamSize || 2,
-                creator: socket.id,
-                banList: []
+                creator: socket.id, // Set creator to the initial user
+                banList: [] // Initialize ban list for the room
             };
             console.log(`Room created: ${roomID} (Public: ${isPublic}, Team Size: ${rooms[roomID].teamSize})`);
 
@@ -85,10 +84,6 @@ io.on('connection', (socket) => {
 
         // Add user as "Unnamed" upon joining
         rooms[roomID].users[socket.id] = { name: "Unnamed", afkq: false };
-        console.log(`User ${socket.id} joined room ${roomID}`);
-
-        // Emit updated names to everyone in the room
-        emitUpdateNames(roomID);
         updateMemberCount(roomID);
     });
 

@@ -133,4 +133,9 @@ socket.on('roomClosed', () => {
     document.getElementById("teamList").innerHTML = "";
 });
 
+socket.on('joinDenied', (message) => {
+    alert(message);
+    console.log("Join denied message received:", message); // For debugging
+});
+
 window.kickUser = kickUser;
