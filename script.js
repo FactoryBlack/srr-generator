@@ -33,26 +33,32 @@ function joinRoom(roomID) {
     socket.off('updateNames');
     socket.off('displayTeams');
 
+    // Listen for `updateNames` and populate `nameList`
     socket.on('updateNames', (users) => {
         console.log("updateNames event received with users:", users);
         const nameListDiv = document.getElementById("nameList");
         if (nameListDiv) {
+            // Update the innerHTML of nameListDiv
             nameListDiv.innerHTML = users.map(user => {
                 const kickButton = isCreator ? `<button class="kick-button" onclick="kickUser('${user.id}')">Kick</button>` : '';
                 return `<p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`;
             }).join('');
+            console.log("nameListDiv updated with:", nameListDiv.innerHTML); // Log the final HTML
         }
     });
 
+    // Listen for `displayTeams` and populate `teamList`
     socket.on('displayTeams', (teams) => {
         console.log("displayTeams event received with teams:", teams);
         const teamListDiv = document.getElementById("teamList");
         if (teamListDiv) {
+            // Update the innerHTML of teamListDiv
             teamListDiv.innerHTML = teams.map((team, i) =>
                 `<p><strong>Team ${i + 1}:</strong> ${team.join(', ')}</p>`
             ).join('');
+            console.log("teamListDiv updated with:", teamListDiv.innerHTML); // Log the final HTML
         }
-    });
+    })
 }
 
 function kickUser(userID) {
@@ -119,5 +125,8 @@ socket.on('roomClosed', () => {
 socket.on('joinDenied', (message) => {
     alert(message);
 });
+
+document.getElementById("nameList").innerHTML = "<p>Test User</p>";
+document.getElementById("teamList").innerHTML = "<p><strong>Team 1:</strong> Test User, Another User</p>";
 
 window.kickUser = kickUser;
