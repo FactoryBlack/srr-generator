@@ -43,11 +43,13 @@
             <button id="submitName">Submit Name</button>
         </div>
 
-        <h2>Team Generation</h2>
-        <button id="generateTeams">Generate Teams</button>
-
-        <div id="nameList"></div>
-        <div id="teamList"></div>
+        <!-- Team Generation Section - visibility: hidden keeps it in DOM but hidden -->
+        <div id="teamGenerationSection" class="hidden">
+            <h2>Team Generation</h2>
+            <button id="generateTeams" class="hidden">Generate Teams</button>
+            <div id="nameList"></div>
+            <div id="teamList"></div>
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>

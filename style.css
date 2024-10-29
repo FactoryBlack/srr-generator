@@ -80,3 +80,18 @@ button.kick-button:hover {
 h1, h2 {
     color: #333;
 }
+
+/* Visibility control classes */
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: block;
+}
+
+/* Kick button */
+.kick-button {
+    color: red;
+    cursor: pointer; /* Indicates it's clickable */
+}
