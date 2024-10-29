@@ -50,44 +50,44 @@ io.on('connection', (socket) => {
     broadcastPublicRooms();
 
     socket.on('joinRoom', ({ roomID, isPublic, teamSize }) => {
-        const room = rooms[roomID];
-        const userIP = socket.handshake.address; // Use IP as an identifier
-
-        // Ensure the room has a ban list even if it's newly created
-        if (!room) {
+        // Initialize the room if it doesn't exist
+        if (!rooms[roomID]) {
             rooms[roomID] = {
                 users: {},
                 public: isPublic,
                 teamSize: teamSize || 2,
-                creator: socket.id,
-                banList: []
+                creator: socket.id, // Set creator to the initial user
+                banList: [] // Initialize ban list for the room
             };
+            console.log(`Room created: ${roomID} (Public: ${isPublic}, Team Size: ${rooms[roomID].teamSize})`);
         }
 
+        const room = rooms[roomID];
+        const userIP = socket.handshake.address; // Use IP as an identifier
+
         // Check if the user is banned based on their IP address or another unique identifier
-        if (rooms[roomID].banList.includes(userIP)) {
+        if (room.banList.includes(userIP)) {
             socket.emit('joinDenied', 'You have been banned from this room.');
             console.log(`User with IP ${userIP} attempted to join room ${roomID} but is banned.`);
             return;
         }
 
-        socket.join(roomID);
-
-        if (!room.creator) {
-            rooms[roomID].creator = socket.id; // Assign creator if none exists
-        } else if (room.creator !== socket.id) {
-            // Prevent anyone else from taking over the room
+        // Prevent other users from taking over the room if there's already a creator
+        if (room.creator && room.creator !== socket.id) {
             socket.emit('joinDenied', 'This room already has a creator.');
             return;
         }
 
-        rooms[roomID].users[socket.id] = { name: "Unnamed", afkq: false };
+        // Allow the user to join the room and mark them as "Unnamed"
+        socket.join(roomID);
+        room.users[socket.id] = { name: "Unnamed", afkq: false };
 
         // Emit the updated list of public rooms and the creator status
         broadcastPublicRooms();
         socket.emit('creatorStatus', { isCreator: room.creator === socket.id });
         updateMemberCount(roomID);
     });
+
 
 
     // Handle name submission or update with AFKQ Tool status
