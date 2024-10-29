@@ -131,6 +131,11 @@ button:disabled {
     cursor: not-allowed;
 }
 
+/* Primary Button (e.g., Generate Teams Button) */
+.button-primary {
+    margin-bottom: 20px; /* Apply margin only to primary buttons */
+}
+
 /* Kick button */
 button.kick-button {
     background-color: #FF5252;
@@ -152,27 +157,45 @@ ul {
     padding: 0;
 }
 
-#roomsList li,
+#nameList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Vertical spacing between user entries */
+    margin-bottom: 20px;
+}
+
 #nameList p,
 #teamList p {
     font-size: 18px;
     padding: 10px;
     background-color: #2A2A2A;
     border-radius: 4px;
-    margin: 10px 0; /* Vertical spacing between entries */
     display: flex;
     align-items: center; /* Vertically center items */
-    justify-content: space-between; /* Space between content and buttons */
+    justify-content: space-between; /* Space between name and kick button */
+    min-height: 50px; /* Ensure consistent height */
+}
+
+#roomsList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Vertical spacing between room entries */
+}
+
+#roomsList li {
+    font-size: 18px;
+    padding: 10px;
+    background-color: #2A2A2A;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 #roomsList li button {
     padding: 10px 15px;
     font-size: 16px;
     margin-left: 10px;
-}
-
-#nameList p {
-    margin: 0;
 }
 
 #teamList p {
@@ -187,15 +210,6 @@ ul {
 
 .user-name-container .icon-placeholder {
     margin-right: 8px; /* Space between icon and name */
-}
-
-/* Spacing Adjustments */
-#nameList {
-    margin-bottom: 20px;
-}
-
-#teamGenerationSection button {
-    margin-bottom: 20px;
 }
 
 /* No Rooms Message */
@@ -240,12 +254,14 @@ ul {
         width: auto;
     }
 
-    #roomsList li {
+    #roomsList li,
+    #nameList p {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    #roomsList li button {
+    #roomsList li button,
+    #nameList p button.kick-button {
         margin-top: 10px;
         width: 100%;
         margin-left: 0;
