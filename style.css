@@ -416,3 +416,8 @@ input:-webkit-autofill:focus {
 #submitNameSection .inline-form button {
     white-space: nowrap; /* Prevent button text wrapping */
 }
+
+/* Visibility control classes */
+.hidden {
+    display: none !important;
+}
