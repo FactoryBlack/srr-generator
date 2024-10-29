@@ -71,19 +71,30 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Helper function to shuffle an array
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
     socket.on('generateTeams', ({ roomID }) => {
         const room = rooms[roomID];
         if (room && socket.id === room.creator) {
-            const users = Object.values(room.users).map(user => user.name);
-            const teams = [];
+            let users = Object.values(room.users).map(user => user.name);
 
-            // Generate teams based on team size
+            // Shuffle the users array before generating teams
+            users = shuffle(users);
+
+            const teams = [];
             while (users.length) {
                 teams.push(users.splice(0, room.teamSize));
             }
 
             io.to(roomID).emit('displayTeams', teams);
-            console.log(`Teams generated for room ${roomID}:`, teams); // Logging each generation for verification
+            console.log(`Teams generated for room ${roomID}:`, teams); // For logging each generation
         }
     });
 
