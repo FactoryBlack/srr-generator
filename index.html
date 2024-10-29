@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Random Team Room</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -28,13 +27,13 @@
         <ul id="roomsList"></ul>
 
         <!-- Member Information Section -->
-        <div id="memberInfoSection" style="display: none;">
+        <div id="memberInfoSection" class="hidden">
             <h2>Member Count</h2>
             <p id="memberCount">Total Members: 0, Named: 0, Unnamed: 0</p>
         </div>
 
-        <!-- Submit name section - JavaScript will hide it on page load -->
-        <div class="form-group" id="submitNameSection">
+        <!-- Submit Name Section -->
+        <div class="form-group hidden" id="submitNameSection">
             <label for="nameInput">Enter Your Name:</label>
             <input type="text" id="nameInput" placeholder="Your name">
             <label>
@@ -43,7 +42,7 @@
             <button id="submitName">Submit Name</button>
         </div>
 
-        <!-- Team Generation Section - visibility: hidden keeps it in DOM but hidden -->
+        <!-- Team Generation Section -->
         <div id="teamGenerationSection" class="hidden">
             <h2>Team Generation</h2>
             <button id="generateTeams" class="hidden">Generate Teams</button>

@@ -3,9 +3,7 @@ let isCreator = false;
 let currentRoomID = null;
 
 window.addEventListener('DOMContentLoaded', () => {
-    document.getElementById("submitNameSection").classList.add("hidden");
-    document.getElementById("memberInfoSection").classList.add("hidden");
-    document.getElementById("teamGenerationSection").classList.add("hidden");
+    // Sections are already hidden via the 'hidden' class in HTML
 });
 
 socket.on('creatorStatus', (data) => {
@@ -13,24 +11,44 @@ socket.on('creatorStatus', (data) => {
     document.getElementById("generateTeams").classList.toggle("hidden", !isCreator);
 });
 
-function joinRoom(roomID) {
+function joinRoom(roomID, isPublic = null, teamSize = null) {
     currentRoomID = roomID;
-    socket.emit('joinRoom', { roomID, isPublic: true, teamSize: 2 });
+    if (isPublic === null) {
+        isPublic = document.getElementById('isPublic').checked;
+    }
+    if (teamSize === null) {
+        teamSize = parseInt(document.getElementById('teamSizeSelect').value, 10);
+    }
+    socket.emit('joinRoom', { roomID, isPublic, teamSize });
 
+    // Show relevant sections
     document.getElementById("submitNameSection").classList.remove("hidden");
     document.getElementById("memberInfoSection").classList.remove("hidden");
     document.getElementById("teamGenerationSection").classList.remove("hidden");
 
+    // Update event listeners
     socket.off('updateNames').on('updateNames', updateNameList);
     socket.off('displayTeams').on('displayTeams', displayTeams);
 }
 
 function updateNameList(users) {
     const nameListDiv = document.getElementById("nameList");
-    nameListDiv.innerHTML = users.map(user => {
-        const kickButton = isCreator ? `<button class="kick-button" onclick="kickUser('${user.id}')">Kick</button>` : '';
-        return `<p>${user.name} ${user.afkq ? "(AFKQ Tool)" : ""} ${kickButton}</p>`;
-    }).join('');
+    nameListDiv.innerHTML = '';
+    users.forEach(user => {
+        const userElement = document.createElement('p');
+        userElement.textContent = `${user.name} ${user.afkq ? "(AFKQ Tool)" : ""}`;
+
+        if (isCreator) {
+            const kickButton = document.createElement('button');
+            kickButton.textContent = 'Kick';
+            kickButton.classList.add('kick-button');
+            kickButton.addEventListener('click', () => {
+                kickUser(user.id);
+            });
+            userElement.appendChild(kickButton);
+        }
+        nameListDiv.appendChild(userElement);
+    });
 }
 
 function displayTeams(teams) {
@@ -46,37 +64,35 @@ function kickUser(userID) {
     }
 }
 
-// Listen for the kicked event to reset the UI for the kicked user
+// Handle events when a user is kicked, room is closed, or join is denied
 socket.on('kicked', (message) => {
     alert(message);
+    resetUI();
+});
+
+socket.on('roomClosed', () => {
+    alert("The room has been closed by the creator.");
+    resetUI();
+});
+
+socket.on('joinDenied', (message) => {
+    alert(message);
+});
+
+function resetUI() {
     document.getElementById("submitNameSection").classList.add("hidden");
     document.getElementById("memberInfoSection").classList.add("hidden");
     document.getElementById("teamGenerationSection").classList.add("hidden");
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
     document.getElementById("memberCount").textContent = "Total Members: 0, Named: 0, Unnamed: 0";
-});
-
-// Handle roomClosed event to clear UI for users when the room is closed by creator
-socket.on('roomClosed', () => {
-    alert("The room has been closed by the creator.");
-    document.getElementById("submitNameSection").classList.add("hidden");
-    document.getElementById("memberInfoSection").classList.add("hidden");
-    document.getElementById("teamGenerationSection").classList.add("hidden");
-    document.getElementById("nameList").innerHTML = "";
-    document.getElementById("teamList").innerHTML = "";
-});
-
-// Handle joinDenied event to inform users when they are banned from a room
-socket.on('joinDenied', (message) => {
-    alert(message);
-});
+}
 
 socket.on('activeRooms', (publicRooms) => {
     const roomsList = document.getElementById("roomsList");
     roomsList.innerHTML = publicRooms.map(room =>
         `<li>${room.roomID} - Team Size: ${room.teamSize}
-        <button onclick="joinRoom('${room.roomID}')">Join Room</button></li>`
+        <button onclick="joinRoom('${room.roomID}', true, ${room.teamSize})">Join Room</button></li>`
     ).join('');
 });
 
@@ -86,21 +102,29 @@ socket.on('memberCount', ({ total, named, unnamed }) => {
 });
 
 document.getElementById("joinRoom").addEventListener("click", () => {
-    const roomID = document.getElementById("roomID").value.trim();
-    joinRoom(roomID);
+    const roomIDInput = document.getElementById("roomID");
+    const roomID = roomIDInput.value.trim();
+    if (roomID) {
+        joinRoom(roomID);
+    } else {
+        alert("Please enter a Room ID.");
+    }
 });
 
 document.getElementById("submitName").addEventListener("click", () => {
-    const name = document.getElementById("nameInput").value.trim();
+    const nameInput = document.getElementById("nameInput");
+    const name = nameInput.value.trim();
     const afkq = document.getElementById("afkqTool").checked;
     if (name && currentRoomID) {
         socket.emit('submitName', { roomID: currentRoomID, name, afkq });
+        nameInput.value = ''; // Clear the input field
+    } else {
+        alert("Please enter your name.");
     }
 });
 
 document.getElementById("generateTeams").addEventListener("click", () => {
     if (isCreator && currentRoomID) {
-        console.log("Generating teams..."); // Optional debug log for each click
         socket.emit('generateTeams', { roomID: currentRoomID });
     } else {
         alert("Only the room creator can generate teams.");
@@ -108,11 +132,4 @@ document.getElementById("generateTeams").addEventListener("click", () => {
 });
 
 // Listener to display teams after generation
-socket.on('displayTeams', (teams) => {
-    const teamListDiv = document.getElementById("teamList");
-    teamListDiv.innerHTML = teams.map((team, i) =>
-        `<p><strong>Team ${i + 1}:</strong> ${team.join(', ')}</p>`
-    ).join('');
-});
-
-window.kickUser = kickUser; // Expose kickUser for global access
+socket.on('displayTeams', displayTeams);

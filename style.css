@@ -85,13 +85,3 @@ h1, h2 {
 .hidden {
     display: none;
 }
-
-.visible {
-    display: block;
-}
-
-/* Kick button */
-.kick-button {
-    color: red;
-    cursor: pointer; /* Indicates it's clickable */
-}
