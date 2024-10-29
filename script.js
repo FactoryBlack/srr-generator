@@ -105,9 +105,10 @@ document.getElementById("joinRoom").addEventListener("click", () => {
 
     socket.emit('joinRoom', { roomID, isPublic, teamSize });
 
+    // Show sections upon joining
     document.getElementById("submitNameSection").style.display = "block";
     document.getElementById("memberInfoSection").style.display = "block";
-    document.getElementById("teamGenerationSection").style.display = "block"; // Show team generation upon joining
+    document.getElementById("teamGenerationSection").style.visibility = "visible";
 
     socket.on('updateNames', (users) => {
         const nameListDiv = document.getElementById("nameList");
