@@ -175,6 +175,23 @@ ul {
     margin: 0;
 }
 
+/* Spacing Adjustments */
+#nameList {
+    margin-bottom: 20px;
+}
+
+#teamGenerationSection button {
+    margin-bottom: 20px;
+}
+
+/* No Rooms Message */
+.no-rooms-message {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #888888;
+    text-align: center;
+}
+
 /* Visibility control classes */
 .hidden {
     display: none;

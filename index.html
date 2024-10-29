@@ -32,18 +32,19 @@
                 <label for="teamSizeSelect">Team Size:</label>
                 <select id="teamSizeSelect">
                     <option value="2">Teams of 2</option>
-                    <option value="3">Teams of 3</option>
+                    <option value="3" selected>Teams of 3</option>
                 </select>
             </div>
             <button id="joinRoom">Join or Create Room</button>
         </div>
 
         <h2>Active Public Rooms</h2>
+        <p id="noRoomsMessage" class="no-rooms-message">There are no public rooms currently active.</p>
         <ul id="roomsList"></ul>
 
         <!-- Member Information Section -->
         <div id="memberInfoSection" class="hidden">
-            <h2>Member Count</h2>
+            <h2 id="memberInfoTitle">Member Count</h2>
             <p id="memberCount">Total Members: 0, Named: 0, Unnamed: 0</p>
         </div>
 

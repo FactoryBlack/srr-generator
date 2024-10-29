@@ -1,17 +1,20 @@
 const socket = io();
 let isCreator = false;
 let currentRoomID = null;
-
-window.addEventListener('DOMContentLoaded', () => {
-    // Sections are already hidden via the 'hidden' class in HTML
-});
+let currentJoinButton = null;
 
 socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
     document.getElementById("generateTeams").classList.toggle("hidden", !isCreator);
 });
 
-function joinRoom(roomID, isPublic = null, teamSize = null) {
+function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
+    // Reset previous join button
+    if (currentJoinButton && currentJoinButton !== joinButton) {
+        currentJoinButton.disabled = false;
+        currentJoinButton.textContent = 'Join Room';
+    }
+
     currentRoomID = roomID;
     if (isPublic === null) {
         isPublic = document.getElementById('isPublic').checked;
@@ -21,6 +24,9 @@ function joinRoom(roomID, isPublic = null, teamSize = null) {
     }
     socket.emit('joinRoom', { roomID, isPublic, teamSize });
 
+    // Update the member info title with the room ID
+    document.getElementById("memberInfoTitle").textContent = `${roomID} Room Information`;
+
     // Show relevant sections
     document.getElementById("submitNameSection").classList.remove("hidden");
     document.getElementById("memberInfoSection").classList.remove("hidden");
@@ -29,6 +35,13 @@ function joinRoom(roomID, isPublic = null, teamSize = null) {
     // Update event listeners
     socket.off('updateNames').on('updateNames', updateNameList);
     socket.off('displayTeams').on('displayTeams', displayTeams);
+
+    // Disable the join button if provided
+    if (joinButton) {
+        joinButton.disabled = true;
+        joinButton.textContent = 'Joined';
+        currentJoinButton = joinButton;
+    }
 }
 
 function updateNameList(users) {
@@ -40,15 +53,15 @@ function updateNameList(users) {
         const nameSpan = document.createElement('span');
         nameSpan.textContent = user.name;
 
-        userElement.appendChild(nameSpan);
-
         if (user.afkq) {
             const iconSpan = document.createElement('span');
             iconSpan.classList.add('icon-placeholder');
-            userElement.insertBefore(iconSpan, nameSpan);
+            userElement.appendChild(iconSpan);
         }
 
-        if (isCreator) {
+        userElement.appendChild(nameSpan);
+
+        if (isCreator && user.id !== socket.id) {
             const kickButton = document.createElement('button');
             kickButton.textContent = 'Kick';
             kickButton.classList.add('kick-button');
@@ -96,14 +109,30 @@ function resetUI() {
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
     document.getElementById("memberCount").textContent = "Total Members: 0, Named: 0, Unnamed: 0";
+    document.getElementById("memberInfoTitle").textContent = "Member Count";
+
+    // Reset the join button if applicable
+    if (currentJoinButton) {
+        currentJoinButton.disabled = false;
+        currentJoinButton.textContent = 'Join Room';
+        currentJoinButton = null;
+    }
 }
 
 socket.on('activeRooms', (publicRooms) => {
     const roomsList = document.getElementById("roomsList");
-    roomsList.innerHTML = publicRooms.map(room =>
-        `<li>${room.roomID} - Team Size: ${room.teamSize}
-        <button onclick="joinRoom('${room.roomID}', true, ${room.teamSize})">Join Room</button></li>`
-    ).join('');
+    const noRoomsMessage = document.getElementById("noRoomsMessage");
+
+    if (publicRooms.length === 0) {
+        roomsList.innerHTML = '';
+        noRoomsMessage.classList.remove('hidden');
+    } else {
+        noRoomsMessage.classList.add('hidden');
+        roomsList.innerHTML = publicRooms.map(room =>
+            `<li>${room.roomID} - Team Size: ${room.teamSize}
+            <button id="joinRoomButton-${room.roomID}" onclick="joinRoom('${room.roomID}', true, ${room.teamSize}, this)">Join Room</button></li>`
+        ).join('');
+    }
 });
 
 socket.on('memberCount', ({ total, named, unnamed }) => {
