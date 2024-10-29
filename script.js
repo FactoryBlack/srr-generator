@@ -41,6 +41,14 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
         joinButton.disabled = true;
         joinButton.textContent = 'Joined';
         currentJoinButton = joinButton;
+    } else {
+        // Check if the room exists in the public rooms list and update the button there
+        const publicJoinButton = document.getElementById(`joinRoomButton-${roomID}`);
+        if (publicJoinButton) {
+            publicJoinButton.disabled = true;
+            publicJoinButton.textContent = 'Joined';
+            currentJoinButton = publicJoinButton;
+        }
     }
 }
 
@@ -74,6 +82,11 @@ function updateNameList(users) {
                 kickUser(user.id);
             });
             userElement.appendChild(kickButton);
+        } else {
+            // Add a placeholder to keep the height consistent
+            const placeholder = document.createElement('div');
+            placeholder.style.width = '66px'; // Width of the kick button
+            userElement.appendChild(placeholder);
         }
         nameListDiv.appendChild(userElement);
     });
@@ -122,11 +135,6 @@ function resetUI() {
         currentJoinButton.textContent = 'Join Room';
         currentJoinButton = null;
     }
-    // Reset the "Join or Create Room" button
-    const joinRoomButton = document.getElementById("joinRoom");
-    joinRoomButton.disabled = false;
-    joinRoomButton.textContent = 'Join or Create Room';
-    currentJoinButton = null;
 }
 
 socket.on('activeRooms', (publicRooms) => {
@@ -138,10 +146,28 @@ socket.on('activeRooms', (publicRooms) => {
         noRoomsMessage.classList.remove('hidden');
     } else {
         noRoomsMessage.classList.add('hidden');
-        roomsList.innerHTML = publicRooms.map(room =>
-            `<li>${room.roomID} - Team Size: ${room.teamSize}
-            <button id="joinRoomButton-${room.roomID}" onclick="joinRoom('${room.roomID}', true, ${room.teamSize}, this)">Join Room</button></li>`
-        ).join('');
+        roomsList.innerHTML = '';
+        publicRooms.forEach(room => {
+            const roomItem = document.createElement('li');
+            roomItem.textContent = `${room.roomID} - Team Size: ${room.teamSize}`;
+
+            const joinButton = document.createElement('button');
+            joinButton.id = `joinRoomButton-${room.roomID}`;
+            joinButton.textContent = 'Join Room';
+            joinButton.addEventListener('click', function () {
+                joinRoom(room.roomID, true, room.teamSize, this);
+            });
+
+            // If the user is already in this room, disable the button
+            if (currentRoomID === room.roomID) {
+                joinButton.disabled = true;
+                joinButton.textContent = 'Joined';
+                currentJoinButton = joinButton;
+            }
+
+            roomItem.appendChild(joinButton);
+            roomsList.appendChild(roomItem);
+        });
     }
 });
 
@@ -155,11 +181,7 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     const roomID = roomIDInput.value.trim();
     if (roomID.length >= 3 && roomID.length <= 6) {
         joinRoom(roomID);
-        // Disable the "Join or Create Room" button and change its text
-        const joinRoomButton = document.getElementById("joinRoom");
-        joinRoomButton.disabled = true;
-        joinRoomButton.textContent = 'Joined';
-        currentJoinButton = joinRoomButton;
+        // The main 'Join or Create Room' button remains enabled
     } else {
         alert("Please enter a Room ID between 3 and 6 characters.");
     }

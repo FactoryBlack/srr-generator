@@ -77,28 +77,78 @@ h2 {
     font-size: 18px;
 }
 
-/* Room Code Input Field */
-#roomID {
-    width: 100%;
-    padding: 20px;
-    font-size: 32px;
-    border: 1px solid #333333;
-    border-radius: 8px;
-    background-color: #2A2A2A;
-    color: #FFFFFF;
-    margin-bottom: 20px;
-}
-
-#roomID::placeholder {
-    color: #888888;
-    font-size: 32px;
-}
-
 /* Inline Form Row */
 .inline-form {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.inline-form > * {
+    flex: 1; /* Distribute space evenly */
+}
+
+.inline-form .custom-checkbox {
+    flex: 0; /* Do not stretch the checkbox */
+}
+
+.inline-form button {
+    flex: 0; /* Do not stretch the button */
+}
+
+/* Fix vertical alignment */
+.inline-form select,
+.inline-form button,
+.inline-form .custom-checkbox {
+    display: flex;
+    align-items: center;
+    height: 48px; /* Match the height of the select and button */
+}
+
+.custom-checkbox .checkbox-custom {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+}
+
+.custom-checkbox {
+    cursor: pointer;
+}
+
+/* Room Code Input Field Styling */
+#roomID {
+    width: 100%;
+    font-size: 32px;
+    font-weight: bold;
+    border: none;
+    border-bottom: 4px solid #E91E63; /* Accent color underline */
+    background-color: transparent;
+    color: #FFFFFF;
+    margin-bottom: 20px;
+    letter-spacing: 10px;
+    padding: 20px 0;
+    text-align: center;
+}
+
+#roomID::placeholder {
+    color: #888888;
+    font-size: 32px;
+    letter-spacing: 10px;
+}
+
+#roomID:focus {
+    outline: none;
+    border-bottom: 4px solid #C2185B; /* Darker shade on focus */
+}
+
+/* Remove input autofill background color */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px #121212 inset;
+    box-shadow: 0 0 0px 1000px #121212 inset;
+    -webkit-text-fill-color: #FFFFFF;
 }
 
 .custom-checkbox {
