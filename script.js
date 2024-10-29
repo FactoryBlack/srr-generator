@@ -72,6 +72,14 @@ socket.on('joinDenied', (message) => {
     alert(message);
 });
 
+socket.on('activeRooms', (publicRooms) => {
+    const roomsList = document.getElementById("roomsList");
+    roomsList.innerHTML = publicRooms.map(room =>
+        `<li>${room.roomID} - Team Size: ${room.teamSize}
+        <button onclick="joinRoom('${room.roomID}')">Join Room</button></li>`
+    ).join('');
+});
+
 socket.on('memberCount', ({ total, named, unnamed }) => {
     document.getElementById("memberCount").textContent =
         `Total Members: ${total}, Named: ${named}, Unnamed: ${unnamed}`;
