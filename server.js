@@ -110,17 +110,20 @@ io.on('connection', (socket) => {
             room.banList.push(userIP);
             userSocket.emit('kicked', 'You have been kicked from the room.');
 
-            // Remove the user from the room
+            // Remove the user from the room and update other users
             delete room.users[userID];
-            userSocket.leave(roomID); // Disconnect them from the room
             io.to(roomID).emit('updateNames', Object.entries(room.users).map(([id, user]) => ({ id, ...user })));
             updateMemberCount(roomID);
 
             console.log(`User with IP ${userIP} kicked and banned from room ${roomID}`);
+
+            // Force the user to disconnect from the server
+            userSocket.disconnect();
         } else {
             console.log("Kick failed: Either not the creator or user does not exist in the room.");
         }
     });
+
 
     // Function to update and broadcast member count
     function updateMemberCount(roomID) {

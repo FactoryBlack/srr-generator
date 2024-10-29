@@ -2,9 +2,10 @@ const socket = io();
 let isCreator = false;
 let currentRoomID = null;
 
-// Hide the submit name section initially
+// Hide the submit name section and member info section initially
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("submitNameSection").style.display = "none";
+    document.getElementById("memberInfoSection").style.display = "none"; // Hide member info initially
 });
 
 socket.on('creatorStatus', (data) => {
@@ -24,7 +25,10 @@ socket.on('activeRooms', (publicRooms) => {
 function joinRoom(roomID) {
     currentRoomID = roomID;
     socket.emit('joinRoom', { roomID, isPublic: true, teamSize: 2 });
+
+    // Show the sections upon joining the room
     document.getElementById("submitNameSection").style.display = "block";
+    document.getElementById("memberInfoSection").style.display = "block";
 
     // Clear any previous listeners to prevent duplicates
     socket.off('updateNames');
@@ -64,10 +68,18 @@ function kickUser(userID) {
 // Listen for the kicked event to reset the UI for the kicked user
 socket.on('kicked', (message) => {
     alert(message);
-    console.log("Kicked event received:", message); // Confirm the client received the kicked event
+    console.log("Kicked event received:", message);
+
+    // Clear all room-related data on the page
     document.getElementById("submitNameSection").style.display = "none";
+    document.getElementById("memberInfoSection").style.display = "none"; // Hide member info if kicked
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
+    document.getElementById("roomsList").innerHTML = ""; // Clear the list of active rooms if applicable
+    document.getElementById("memberCount").textContent = "Total Members: 0, Named: 0, Unnamed: 0";
+
+    // Optionally, redirect the user to a homepage or lobby
+    // window.location.href = "/"; // Uncomment to redirect to the homepage or a different page
 });
 
 // Update member count display
@@ -86,6 +98,7 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     socket.emit('joinRoom', { roomID, isPublic, teamSize });
 
     document.getElementById("submitNameSection").style.display = "block";
+    document.getElementById("memberInfoSection").style.display = "block"; // Show member info upon joining
 
     socket.on('updateNames', (users) => {
         const nameListDiv = document.getElementById("nameList");
@@ -129,6 +142,7 @@ document.getElementById("generateTeams").addEventListener("click", () => {
 socket.on('roomClosed', () => {
     alert("The room has been closed by the creator.");
     document.getElementById("submitNameSection").style.display = "none";
+    document.getElementById("memberInfoSection").style.display = "none"; // Hide member info upon room closure
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
 });
