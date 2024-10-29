@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Random Team Room</title>
+    <title>Restless.gg | Room Creator</title>
     <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Google Fonts for bold and clean typography -->
@@ -12,7 +12,7 @@
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="#" class="nav-logo">Restless</a>
+            <a href="#" class="nav-logo">Restless<span class="accent-color">.gg</span></a>
             <!-- Future navigation items can be added here -->
         </div>
     </nav>
@@ -35,7 +35,7 @@
                     <option value="3" selected>Teams of 3</option>
                 </select>
             </div>
-            <button id="joinRoom">Join or Create Room</button>
+            <button id="joinRoom" class="button-primary">Join or Create Room</button>
         </div>
 
         <h2>Active Public Rooms</h2>
@@ -61,13 +61,13 @@
                     <span class="icon-placeholder"></span> AFKQ Tool
                 </label>
             </div>
-            <button id="submitName">Submit Name</button>
+            <button id="submitName" class="button-primary">Submit Name</button>
         </div>
 
         <!-- Team Generation Section -->
         <div id="teamGenerationSection" class="hidden">
             <h2>Team Generation</h2>
-            <button id="generateTeams" class="hidden">Generate Teams</button>
+            <button id="generateTeams" class="button-primary hidden">Generate Teams</button>
             <div id="nameList"></div>
             <div id="teamList"></div>
         </div>

@@ -30,27 +30,30 @@ body {
     text-decoration: none;
 }
 
+.nav-logo .accent-color {
+    color: #E91E63; /* Accent color */
+}
+
 /* Container */
 .container {
     max-width: 800px;
-    margin: auto;
-    padding: 40px 20px;
+    margin: 40px auto;
+    padding: 40px;
     background-color: #1E1E1E; /* Slightly lighter than body for contrast */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
     border-radius: 8px;
-    margin-top: 40px;
 }
 
 /* Headings */
 h1, h2 {
     color: #FFFFFF;
     margin-bottom: 20px;
+    text-align: right; /* Align headings to the right */
 }
 
 h1 {
     font-size: 36px;
     font-weight: 700;
-    text-align: center;
 }
 
 h2 {
@@ -68,25 +71,29 @@ h2 {
     flex-wrap: wrap;
     margin-bottom: 15px;
     align-items: center;
+    justify-content: flex-end; /* Align form elements to the right */
 }
 
 .form-row label {
     margin-right: 10px;
     min-width: 120px;
     font-size: 18px;
+    text-align: right; /* Align labels to the right */
 }
 
 .form-row input[type="text"],
 .form-row select {
     flex: 1;
+    max-width: 300px;
     padding: 12px;
     font-size: 18px;
-    margin-right: 10px;
+    margin-left: 10px;
     margin-bottom: 10px;
     border: 1px solid #333333;
     border-radius: 4px;
     background-color: #2A2A2A;
     color: #FFFFFF;
+    text-align: right; /* Align text inside inputs to the right */
 }
 
 .form-row input::placeholder {
@@ -101,6 +108,7 @@ h2 {
     display: flex;
     align-items: center;
     font-size: 18px;
+    margin-left: 10px; /* Add margin to align with other inputs */
 }
 
 .icon-placeholder {
@@ -131,9 +139,14 @@ button:disabled {
     cursor: not-allowed;
 }
 
-/* Primary Button (e.g., Generate Teams Button) */
+/* Primary Button */
 .button-primary {
     margin-bottom: 20px; /* Apply margin only to primary buttons */
+}
+
+/* Accent Color */
+.accent-color {
+    color: #E91E63; /* Accent color */
 }
 
 /* Kick button */
@@ -229,17 +242,18 @@ ul {
 @media (max-width: 600px) {
     .form-row {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: flex-end; /* Align to the right on mobile as well */
     }
 
     .form-row label {
         margin-bottom: 5px;
         min-width: auto;
+        text-align: right; /* Align labels to the right */
     }
 
     .form-row input[type="text"],
     .form-row select {
-        margin-right: 0;
+        margin-left: 0;
         width: 100%;
     }
 
