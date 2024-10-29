@@ -6,11 +6,10 @@
     <title>Random Team Room</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="light">
-    <button id="themeToggle" onclick="toggleTheme()">Switch to Dark Mode</button>
-
+<body>
     <div class="container">
         <h1>Join or Create a Team Room</h1>
+
         <div class="form-group">
             <label for="roomID">Room ID:</label>
             <input type="text" id="roomID" placeholder="Enter room ID">
@@ -25,17 +24,17 @@
             <button id="joinRoom">Join or Create Room</button>
         </div>
 
-        <h2 class="accent">Active Public Rooms</h2>
-        <ul id="roomsList" class="section"></ul>
+        <h2>Active Public Rooms</h2>
+        <ul id="roomsList"></ul>
 
-        <!-- Member Info Section -->
-        <div id="memberInfoSection" class="section">
+        <!-- Member Information Section -->
+        <div id="memberInfoSection" style="display: none;">
             <h2>Member Count</h2>
             <p id="memberCount">Total Members: 0, Named: 0, Unnamed: 0</p>
         </div>
 
-        <!-- Submit Name Section -->
-        <div id="submitNameSection" class="form-group">
+        <!-- Submit name section - JavaScript will hide it on page load -->
+        <div class="form-group" id="submitNameSection">
             <label for="nameInput">Enter Your Name:</label>
             <input type="text" id="nameInput" placeholder="Your name">
             <label>
@@ -44,25 +43,16 @@
             <button id="submitName">Submit Name</button>
         </div>
 
-        <!-- Team Generation Section -->
-        <div id="teamGenerationSection" class="section">
+        <!-- Team Generation Section - visibility: hidden keeps it in DOM but hidden -->
+        <div id="teamGenerationSection" class="hidden">
             <h2>Team Generation</h2>
-            <button id="generateTeams">Generate Teams</button>
+            <button id="generateTeams" class="hidden">Generate Teams</button>
+            <div id="nameList"></div>
             <div id="teamList"></div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
-
-    <script>
-        function toggleTheme() {
-            const body = document.body;
-            body.classList.toggle('light');
-            body.classList.toggle('dark');
-            const themeToggleBtn = document.getElementById("themeToggle");
-            themeToggleBtn.textContent = body.classList.contains('light') ? "Switch to Dark Mode" : "Switch to Light Mode";
-        }
-    </script>
 </body>
 </html>

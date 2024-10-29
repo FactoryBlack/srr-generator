@@ -1,101 +1,97 @@
-
-/* Base styling for light and dark themes */
-:root {
-    --primary-accent: #FA2A55;
-    --font-color-light: #333;
-    --font-color-dark: #FFF;
-    --bg-light: #F5F5F5;
-    --bg-dark: #1C1C1C;
-    --button-shadow: rgba(0, 0, 0, 0.2);
-    --border-radius: 8px;
-    --spacing: 1rem;
-    --font-size-header: 2rem;
-    --font-size-body: 1rem;
-    --font-size-button: 1rem;
+/* General page styling */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f9;
 }
 
-/* Light Theme */
-body.light {
-    color: var(--font-color-light);
-    background-color: var(--bg-light);
+.container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
 }
 
-.light .container {
-    background-color: #FFF;
-    color: var(--font-color-light);
-    box-shadow: 0 4px 10px var(--button-shadow);
-    padding: var(--spacing);
-    border-radius: var(--border-radius);
+/* Form and button styling */
+.form-group {
+    margin-bottom: 20px;
 }
 
-/* Dark Theme */
-body.dark {
-    color: var(--font-color-dark);
-    background-color: var(--bg-dark);
+label {
+    display: inline-block;
+    margin-right: 10px;
 }
 
-.dark .container {
-    background-color: #2A2A2A;
-    color: var(--font-color-dark);
-    box-shadow: 0 4px 10px var(--button-shadow);
-    padding: var(--spacing);
-    border-radius: var(--border-radius);
+input[type="text"],
+select {
+    padding: 8px;
+    font-size: 16px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
 
-/* Typography */
-h1, h2 {
-    font-size: var(--font-size-header);
-    margin-bottom: var(--spacing);
-    font-weight: bold;
-}
-
-p, label {
-    font-size: var(--font-size-body);
-}
-
-/* Button Styles */
 button {
-    background-color: var(--primary-accent);
-    color: white;
-    font-size: var(--font-size-button);
-    padding: 0.75rem 1.25rem;
+    padding: 10px 15px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #007bff;
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: 4px;
     cursor: pointer;
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
-    box-shadow: 0px 4px 8px var(--button-shadow);
 }
 
 button:hover {
-    transform: scale(1.05);
-    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
+    background-color: #0056b3;
 }
 
-button:active {
-    transform: scale(0.98);
-    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.4);
+/* Specific styling for the Kick button */
+button.kick-button {
+    background-color: #ff4d4d;
+    color: white;
+    font-size: 14px;
+    margin-left: 10px;
 }
 
-/* Accent Colors and Highlighting */
-.accent {
-    color: var(--primary-accent);
-    font-weight: bold;
+button.kick-button:hover {
+    background-color: #cc0000;
 }
 
-/* Section and Component Layout */
-.container {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: var(--spacing);
-    border-radius: var(--border-radius);
+/* Styling for lists */
+#roomsList, #nameList, #teamList {
+    list-style-type: none;
+    padding: 0;
 }
 
-.form-group, .section {
-    margin-bottom: var(--spacing);
-    padding: var(--spacing);
-    border-radius: var(--border-radius);
+#nameList p, #teamList p {
+    font-size: 16px;
+    padding: 5px;
 }
 
+#roomsList li {
+    font-size: 16px;
+    padding: 5px;
+}
+
+/* Headers */
+h1, h2 {
+    color: #333;
+}
+
+/* Visibility control classes */
 .hidden {
     display: none;
+}
+
+.visible {
+    display: block;
+}
+
+/* Kick button */
+.kick-button {
+    color: red;
+    cursor: pointer; /* Indicates it's clickable */
 }
