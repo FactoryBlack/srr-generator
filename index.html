@@ -4,12 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Random Team Room</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styled_template.css"> <!-- Link to the new CSS -->
 </head>
-<body>
+<body class="light"> <!-- Default theme set to 'light' -->
+
+    <!-- Theme Toggle Button -->
+    <button id="themeToggle" onclick="toggleTheme()">Switch to Dark Mode</button>
+
     <div class="container">
         <h1>Join or Create a Team Room</h1>
 
+        <!-- Room ID, Public Room, and Team Size selection -->
         <div class="form-group">
             <label for="roomID">Room ID:</label>
             <input type="text" id="roomID" placeholder="Enter room ID">
@@ -24,17 +29,17 @@
             <button id="joinRoom">Join or Create Room</button>
         </div>
 
-        <h2>Active Public Rooms</h2>
-        <ul id="roomsList"></ul>
+        <h2 class="accent">Active Public Rooms</h2>
+        <ul id="roomsList" class="section"></ul>
 
-        <!-- Member Information Section -->
-        <div id="memberInfoSection" style="display: none;">
+        <!-- Member Info Section -->
+        <div id="memberInfoSection" class="section hidden">
             <h2>Member Count</h2>
             <p id="memberCount">Total Members: 0, Named: 0, Unnamed: 0</p>
         </div>
 
-        <!-- Submit name section - JavaScript will hide it on page load -->
-        <div class="form-group" id="submitNameSection">
+        <!-- Submit Name Section -->
+        <div id="submitNameSection" class="form-group hidden">
             <label for="nameInput">Enter Your Name:</label>
             <input type="text" id="nameInput" placeholder="Your name">
             <label>
@@ -43,15 +48,24 @@
             <button id="submitName">Submit Name</button>
         </div>
 
-        <!-- Team Generation Section - visibility: hidden keeps it in DOM but hidden -->
-        <div id="teamGenerationSection" class="hidden">
+        <!-- Team Generation Section -->
+        <div id="teamGenerationSection" class="section hidden">
             <h2>Team Generation</h2>
-            <button id="generateTeams" class="hidden">Generate Teams</button>
-            <div id="nameList"></div>
+            <button id="generateTeams">Generate Teams</button>
             <div id="teamList"></div>
         </div>
     </div>
 
+    <script>
+        // JavaScript for theme toggling
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('light');
+            body.classList.toggle('dark');
+            const themeToggleBtn = document.getElementById("themeToggle");
+            themeToggleBtn.textContent = body.classList.contains('light') ? "Switch to Dark Mode" : "Switch to Light Mode";
+        }
+    </script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
