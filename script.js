@@ -3,11 +3,30 @@ let isCreator = false;
 let currentRoomID = null;
 let currentJoinButton = null;
 
+/* Functions to Show and Hide Elements with Fade Transitions */
+function showElement(elementId) {
+    const element = document.getElementById(elementId);
+    element.classList.remove('hidden');
+    element.classList.add('visible');
+}
+
+function hideElement(elementId) {
+    const element = document.getElementById(elementId);
+    element.classList.remove('visible');
+    element.classList.add('hidden');
+}
+
+/* Handle Creator Status */
 socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
-    document.getElementById("generateTeams").classList.toggle("hidden", !isCreator);
+    if (isCreator) {
+        showElement("generateTeams");
+    } else {
+        hideElement("generateTeams");
+    }
 });
 
+/* Join or Create Room Function */
 function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
     // Reset previous join button
     if (currentJoinButton && currentJoinButton !== joinButton) {
@@ -27,10 +46,10 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
     // Update the member info title with the room ID
     document.getElementById("memberInfoTitle").textContent = `${roomID} Room Information`;
 
-    // Show relevant sections
-    document.getElementById("submitNameSection").classList.remove("hidden");
-    document.getElementById("memberInfoSection").classList.remove("hidden");
-    document.getElementById("teamGenerationSection").classList.remove("hidden");
+    // Show relevant sections with fade transitions
+    showElement("submitNameSection");
+    showElement("memberInfoSection");
+    showElement("teamGenerationSection");
 
     // Update event listeners
     socket.off('updateNames').on('updateNames', updateNameList);
@@ -52,6 +71,7 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
     }
 }
 
+/* Update Name List Function */
 function updateNameList(users) {
     const nameListDiv = document.getElementById("nameList");
     nameListDiv.innerHTML = '';
@@ -92,6 +112,7 @@ function updateNameList(users) {
     });
 }
 
+/* Display Teams Function */
 function displayTeams(teams) {
     const teamListDiv = document.getElementById("teamList");
     teamListDiv.innerHTML = teams.map((team, i) =>
@@ -99,13 +120,14 @@ function displayTeams(teams) {
     ).join('');
 }
 
+/* Kick User Function */
 function kickUser(userID) {
     if (isCreator && currentRoomID) {
         socket.emit('kickUser', { roomID: currentRoomID, userID });
     }
 }
 
-// Handle events when a user is kicked, room is closed, or join is denied
+/* Handle Events When a User is Kicked, Room is Closed, or Join is Denied */
 socket.on('kicked', (message) => {
     alert(message);
     resetUI();
@@ -120,10 +142,11 @@ socket.on('joinDenied', (message) => {
     alert(message);
 });
 
+/* Reset UI Function */
 function resetUI() {
-    document.getElementById("submitNameSection").classList.add("hidden");
-    document.getElementById("memberInfoSection").classList.add("hidden");
-    document.getElementById("teamGenerationSection").classList.add("hidden");
+    hideElement("submitNameSection");
+    hideElement("memberInfoSection");
+    hideElement("teamGenerationSection");
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
     document.getElementById("memberCount").innerHTML =
@@ -140,16 +163,17 @@ function resetUI() {
     }
 }
 
+/* Handle Active Rooms */
 socket.on('activeRooms', (publicRooms) => {
     const roomsList = document.getElementById("roomsList");
     const noRoomsMessage = document.getElementById("noRoomsMessage");
 
     if (publicRooms.length === 0) {
         roomsList.innerHTML = '';
-        noRoomsMessage.classList.remove('hidden');
+        showElement("noRoomsMessage");
     } else {
         roomsList.innerHTML = '';
-        noRoomsMessage.classList.add('hidden'); // Ensure the message is hidden
+        hideElement("noRoomsMessage");
         publicRooms.forEach(room => {
             const roomItem = document.createElement('li');
             roomItem.textContent = `${room.roomID} - Team Size: ${room.teamSize}`;
@@ -174,12 +198,14 @@ socket.on('activeRooms', (publicRooms) => {
     }
 });
 
+/* Update Member Count */
 socket.on('memberCount', ({ total, named, unnamed }) => {
     document.getElementById("totalMembers").textContent = total;
     document.getElementById("namedMembers").textContent = named;
     document.getElementById("unnamedMembers").textContent = unnamed;
 });
 
+/* Join Room Button Event Listener */
 document.getElementById("joinRoom").addEventListener("click", () => {
     const roomIDInput = document.getElementById("roomID");
     const roomID = roomIDInput.value.trim();
@@ -191,6 +217,7 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     }
 });
 
+/* Submit Name Button Event Listener */
 document.getElementById("submitName").addEventListener("click", () => {
     const nameInput = document.getElementById("nameInput");
     const name = nameInput.value.trim();
@@ -203,6 +230,7 @@ document.getElementById("submitName").addEventListener("click", () => {
     }
 });
 
+/* Generate Teams Button Event Listener */
 document.getElementById("generateTeams").addEventListener("click", () => {
     if (isCreator && currentRoomID) {
         socket.emit('generateTeams', { roomID: currentRoomID });
@@ -211,5 +239,5 @@ document.getElementById("generateTeams").addEventListener("click", () => {
     }
 });
 
-// Listener to display teams after generation
+/* Display Teams After Generation */
 socket.on('displayTeams', displayTeams);
