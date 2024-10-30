@@ -1,5 +1,3 @@
-// script.js
-
 const socket = io();
 let isCreator = false;
 let currentRoomID = null;
@@ -31,12 +29,36 @@ socket.on('creatorStatus', (data) => {
         showElement("teamGenerationSection"); // Both creator and participants see this
         showElement("generateTeamsContainer"); // Only creator
         showElement("creatorNameSection"); // Only creator
+
+        // Add the Generate Teams button
+        setupGenerateTeamsButton();
     } else {
         showElement("teamGenerationSection"); // Participants see names and teams
         hideElement("generateTeamsContainer"); // Hide generate teams button
         hideElement("creatorNameSection"); // Hide creator name input
     }
 });
+
+/* Function to Setup Generate Teams Button */
+function setupGenerateTeamsButton() {
+    const generateTeamsContainer = document.getElementById('generateTeamsContainer');
+    generateTeamsContainer.innerHTML = ''; // Clear previous content
+
+    // Add the "Generate Teams" button
+    const generateTeamsButton = document.createElement('button');
+    generateTeamsButton.id = 'generateTeams';
+    generateTeamsButton.textContent = 'Generate Teams';
+    generateTeamsButton.classList.add('button-primary');
+    generateTeamsButton.addEventListener('click', () => {
+        if (isCreator && currentRoomID) {
+            socket.emit('generateTeams', { roomID: currentRoomID });
+            console.log("Requested team generation.");
+        } else {
+            alert("Only the room creator can generate teams.");
+        }
+    });
+    generateTeamsContainer.appendChild(generateTeamsButton);
+}
 
 /* Event Listener for the Add Name Button */
 document.getElementById("addName").addEventListener("click", () => {
@@ -96,28 +118,6 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
     const cachedName = localStorage.getItem('cachedName');
     if (cachedName) {
         document.getElementById('nameInput').value = cachedName;
-    }
-
-    // If creator, show the "Generate Teams" button initially
-    if (isCreator) {
-        const generateTeamsContainer = document.getElementById('generateTeamsContainer');
-        generateTeamsContainer.innerHTML = ''; // Clear previous content
-        showElement('generateTeamsContainer');
-
-        // Add the "Generate Teams" button
-        const generateTeamsButton = document.createElement('button');
-        generateTeamsButton.id = 'generateTeams';
-        generateTeamsButton.textContent = 'Generate Teams';
-        generateTeamsButton.classList.add('button-primary');
-        generateTeamsButton.addEventListener('click', () => {
-            if (isCreator && currentRoomID) {
-                socket.emit('generateTeams', { roomID: currentRoomID });
-                console.log("Requested team generation.");
-            } else {
-                alert("Only the room creator can generate teams.");
-            }
-        });
-        generateTeamsContainer.appendChild(generateTeamsButton);
     }
 
     // Update event listeners
