@@ -482,4 +482,26 @@ function updateChatBadge(badgeId, count) {
     const badge = document.getElementById(badgeId);
     if (count > 0) {
         badge.textContent = count;
-        badge.classList.remov
+        badge.classList.remove('hidden');
+    } else {
+        badge.textContent = '0';
+        badge.classList.add('hidden');
+    }
+}
+
+/* Reset Chat Variables */
+function resetChat() {
+    currentChatTab = 'roomChat';
+    roomChatUnread = 0;
+    teamChatUnread = 0;
+    teamGenerated = false;
+
+    document.getElementById('roomChatMessages').innerHTML = '';
+    document.getElementById('teamChatMessages').innerHTML = '';
+    updateChatBadge('roomChatBadge', 0);
+    updateChatBadge('teamChatBadge', 0);
+
+    document.getElementById('teamChatTab').disabled = true;
+    hideElement('teamChat');
+    switchChatTab('roomChat');
+}
