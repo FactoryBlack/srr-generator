@@ -5,22 +5,18 @@
     <title>Restless.gg | Room Creator</title>
     <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Google Fonts for bold and clean typography -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="nav-container">
             <a href="#" class="nav-logo">Restless<span class="accent-color">.gg</span></a>
-            <!-- Future navigation items can be added here -->
         </div>
     </nav>
 
     <div class="container">
         <h1>Room Creator</h1>
 
-        <!-- Room Creation and Joining Section -->
         <div class="form-group">
             <div class="form-row">
                 <input type="text" id="roomID" placeholder="XXXXXX" maxlength="6" minlength="3">
@@ -39,12 +35,10 @@
             </div>
         </div>
 
-        <!-- Active Public Rooms -->
         <h2>Active Public Rooms</h2>
         <p id="noRoomsMessage" class="no-rooms-message hidden">There are no public rooms currently active.</p>
         <ul id="roomsList"></ul>
 
-        <!-- Member Information Section -->
         <div id="memberInfoSection" class="hidden">
             <h2 id="memberInfoTitle">Member Count</h2>
             <p id="memberCount">
@@ -54,7 +48,6 @@
             </p>
         </div>
 
-        <!-- Submit Name Section -->
         <div class="form-group hidden" id="submitNameSection">
             <div class="form-row inline-form">
                 <input type="text" id="nameInput" class="small-input" placeholder="Your name">
@@ -67,15 +60,13 @@
             </div>
         </div>
 
-        <!-- Creator Name Input Section -->
         <div class="form-group hidden" id="creatorNameSection">
             <div class="form-row inline-form">
-                <input type="text" id="creatorNameInput" class="small-input full-width" placeholder="Enter name to add">
+                <input type="text" id="creatorNameInput" class="small-input" placeholder="Enter name to add">
                 <button id="addName" class="button-primary fixed-width">Add Name</button>
             </div>
         </div>
 
-        <!-- Team Generation Section -->
         <div id="teamGenerationSection" class="hidden">
             <h2>
                 Team Generation
@@ -85,7 +76,6 @@
             <div id="teamList"></div>
         </div>
 
-        <!-- Chat Section -->
         <div id="chatSection" class="hidden">
             <div class="chat-tabs">
                 <button id="roomChatTab" class="chat-tab active">Room Chat <span id="roomChatBadge" class="chat-badge hidden">0</span></button>
