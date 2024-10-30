@@ -14,6 +14,7 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
+/* Function to Broadcast Public Rooms */
 function broadcastPublicRooms() {
     const publicRooms = Object.entries(rooms)
         .filter(([_, roomData]) => roomData.public)
@@ -22,6 +23,7 @@ function broadcastPublicRooms() {
     console.log("Broadcasting public rooms:", publicRooms);
 }
 
+/* Function to Update Member Count */
 function updateMemberCount(roomID) {
     const room = rooms[roomID];
     if (room) {
@@ -32,16 +34,19 @@ function updateMemberCount(roomID) {
     }
 }
 
+/* Socket.io Connection Handler */
 io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
 
     broadcastPublicRooms();
 
+    /* Handle Joining or Creating a Room */
     socket.on('joinRoom', ({ roomID, isPublic, teamSize }) => {
         const room = rooms[roomID] || { users: {}, banList: [] };
 
         if (room.banList.includes(socket.id)) {
             socket.emit('joinDenied', 'You have been banned from this room.');
+            console.log(`User ${socket.id} denied access to room ${roomID}`);
             return;
         }
 
@@ -56,6 +61,7 @@ io.on('connection', (socket) => {
                 banList: []
             };
             broadcastPublicRooms();
+            console.log(`Room created: ${roomID} by ${socket.id}`);
         }
 
         rooms[roomID].users[socket.id] = { id: socket.id, name: "Unnamed", afkq: false };
@@ -63,29 +69,62 @@ io.on('connection', (socket) => {
         socket.emit('creatorStatus', { isCreator: socket.id === rooms[roomID].creator });
         io.to(roomID).emit('updateNames', Object.values(rooms[roomID].users));
         updateMemberCount(roomID);
+
+        console.log(`User ${socket.id} joined room ${roomID}`);
     });
 
+    /* Handle Name Submission */
     socket.on('submitName', ({ roomID, name, afkq }) => {
         const room = rooms[roomID];
         if (room && room.users[socket.id]) {
             room.users[socket.id] = { id: socket.id, name, afkq };
             io.to(roomID).emit('updateNames', Object.values(room.users));
             updateMemberCount(roomID);
+            console.log(`User ${socket.id} submitted name '${name}' in room ${roomID}`);
         }
     });
 
+    /* Handle Adding Name Manually */
+    socket.on('addName', ({ roomID, name }) => {
+        const room = rooms[roomID];
+        if (room && socket.id === room.creator) {
+            // Check for duplicate names
+            const existingNames = Object.values(room.users).map(user => user.name.toLowerCase());
+            if (existingNames.includes(name.toLowerCase())) {
+                socket.emit('joinDenied', 'This name already exists in the room.');
+                console.log(`Duplicate name '${name}' not added to room ${roomID}`);
+                return;
+            }
+
+            // Generate a unique ID for the new user
+            const newUserId = `manual-${Date.now()}-${Math.random()}`;
+            room.users[newUserId] = { id: newUserId, name, afkq: false, manual: true };
+            io.to(roomID).emit('updateNames', Object.values(room.users));
+            updateMemberCount(roomID);
+            console.log(`Creator added name '${name}' to room ${roomID}`);
+        }
+    });
+
+    /* Handle Kicking a User */
     socket.on('kickUser', ({ roomID, userID }) => {
         const room = rooms[roomID];
         if (room && socket.id === room.creator && room.users[userID]) {
-            room.banList.push(userID);
-            io.to(userID).emit('kicked', 'You have been kicked from the room.');
+            // If the user is connected via socket, disconnect them
+            if (io.sockets.sockets.get(userID)) {
+                room.banList.push(userID);
+                io.to(userID).emit('kicked', 'You have been kicked from the room.');
+                io.sockets.sockets.get(userID).leave(roomID);
+                console.log(`User ${userID} kicked and banned from room ${roomID}`);
+            } else {
+                console.log(`Manual user '${room.users[userID].name}' removed from room ${roomID}`);
+            }
             delete room.users[userID];
             io.to(roomID).emit('updateNames', Object.values(room.users));
             updateMemberCount(roomID);
         }
     });
 
-    // Helper function to shuffle an array
+    /* Helper Function to Shuffle an Array */
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -94,6 +133,7 @@ io.on('connection', (socket) => {
         return array;
     }
 
+    /* Handle Team Generation */
     socket.on('generateTeams', ({ roomID }) => {
         const room = rooms[roomID];
         if (room && socket.id === room.creator) {
@@ -112,6 +152,7 @@ io.on('connection', (socket) => {
         }
     });
 
+    /* Handle User Disconnection */
     socket.on('disconnect', () => {
         for (const roomID in rooms) {
             const room = rooms[roomID];
@@ -119,10 +160,12 @@ io.on('connection', (socket) => {
                 io.to(roomID).emit('roomClosed');
                 delete rooms[roomID];
                 broadcastPublicRooms();
+                console.log(`Room ${roomID} closed by creator ${socket.id}`);
             } else if (room.users[socket.id]) {
                 delete room.users[socket.id];
                 io.to(roomID).emit('updateNames', Object.values(room.users));
                 updateMemberCount(roomID);
+                console.log(`User ${socket.id} disconnected from room ${roomID}`);
             }
         }
     });

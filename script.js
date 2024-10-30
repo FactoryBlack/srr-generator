@@ -3,16 +3,14 @@ let isCreator = false;
 let currentRoomID = null;
 let currentJoinButton = null;
 
-/* Functions to Show and Hide Elements with Fade Transitions */
+/* Functions to Show and Hide Elements */
 function showElement(elementId) {
     const element = document.getElementById(elementId);
     element.classList.remove('hidden');
-    element.classList.add('visible');
 }
 
 function hideElement(elementId) {
     const element = document.getElementById(elementId);
-    element.classList.remove('visible');
     element.classList.add('hidden');
 }
 
@@ -21,10 +19,38 @@ socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
     if (isCreator) {
         showElement("generateTeams");
+        showElement("creatorNameSection");
     } else {
         hideElement("generateTeams");
+        hideElement("creatorNameSection");
     }
 });
+
+/* Event Listener for the Add Name Button */
+document.getElementById("addName").addEventListener("click", () => {
+    const nameInput = document.getElementById("creatorNameInput");
+    const name = nameInput.value.trim();
+    if (name && currentRoomID) {
+        // Check for duplicate names
+        if (isNameDuplicate(name)) {
+            alert("This name already exists in the room. Please enter a different name.");
+            console.log(`Attempted to add duplicate name: ${name}`);
+            return;
+        }
+        socket.emit('addName', { roomID: currentRoomID, name });
+        nameInput.value = ''; // Clear the input field
+    } else {
+        alert("Please enter a name to add.");
+    }
+});
+
+/* Function to Check for Duplicate Names */
+function isNameDuplicate(name) {
+    const nameListDiv = document.getElementById("nameList");
+    const existingNames = Array.from(nameListDiv.querySelectorAll('.user-name'))
+        .map(span => span.textContent.trim().toLowerCase());
+    return existingNames.includes(name.toLowerCase());
+}
 
 /* Join or Create Room Function */
 function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
@@ -46,7 +72,7 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
     // Update the member info title with the room ID
     document.getElementById("memberInfoTitle").textContent = `${roomID} Room Information`;
 
-    // Show relevant sections with fade transitions
+    // Show relevant sections
     showElement("submitNameSection");
     showElement("memberInfoSection");
     showElement("teamGenerationSection");
@@ -69,6 +95,8 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
             currentJoinButton = publicJoinButton;
         }
     }
+
+    console.log(`Joined room: ${roomID}`);
 }
 
 /* Update Name List Function */
@@ -77,23 +105,28 @@ function updateNameList(users) {
     nameListDiv.innerHTML = '';
     users.forEach(user => {
         const userElement = document.createElement('p');
+        userElement.classList.add('user-entry');
 
-        // Create a container for the name and icon
+        // Create a container for the name and badge
         const nameContainer = document.createElement('div');
         nameContainer.classList.add('user-name-container');
 
-        if (user.afkq) {
-            const iconSpan = document.createElement('span');
-            iconSpan.classList.add('icon-placeholder');
-            nameContainer.appendChild(iconSpan);
-        }
-
         const nameSpan = document.createElement('span');
         nameSpan.textContent = user.name;
+        nameSpan.classList.add('user-name');
         nameContainer.appendChild(nameSpan);
+
+        // Add AFKQ badge if applicable
+        if (user.afkq) {
+            const badgeSpan = document.createElement('span');
+            badgeSpan.classList.add('afkq-badge');
+            badgeSpan.textContent = 'AFKQ';
+            nameContainer.appendChild(badgeSpan);
+        }
 
         userElement.appendChild(nameContainer);
 
+        // Add 'Kick' button for creator
         if (isCreator && user.id !== socket.id) {
             const kickButton = document.createElement('button');
             kickButton.textContent = 'Kick';
@@ -110,20 +143,99 @@ function updateNameList(users) {
         }
         nameListDiv.appendChild(userElement);
     });
+    console.log("Updated name list.");
 }
+
+/* Variables to Track Revealed Names */
+let revealedNames = new Set();
 
 /* Display Teams Function */
 function displayTeams(teams) {
     const teamListDiv = document.getElementById("teamList");
-    teamListDiv.innerHTML = teams.map((team, i) =>
-        `<p><strong>Team ${i + 1}:</strong> ${team.join(', ')}</p>`
-    ).join('');
+    teamListDiv.innerHTML = '';
+    revealedNames.clear(); // Reset revealed names
+
+    teams.forEach((team, i) => {
+        const teamElement = document.createElement('div');
+        teamElement.classList.add('team');
+
+        const teamHeader = document.createElement('h3');
+        teamHeader.textContent = `Team ${i + 1}`;
+        teamElement.appendChild(teamHeader);
+
+        const memberList = document.createElement('ul');
+        team.forEach((memberName, index) => {
+            const memberItem = document.createElement('li');
+            const memberId = `team${i}-member${index}`;
+            memberItem.id = memberId;
+
+            // Initially mask the names
+            memberItem.textContent = '???';
+
+            // If creator, add a "Reveal" button
+            if (isCreator) {
+                const revealButton = document.createElement('button');
+                revealButton.textContent = 'Reveal';
+                revealButton.classList.add('reveal-button');
+                revealButton.addEventListener('click', () => {
+                    revealName(memberId, memberName);
+                });
+                memberItem.appendChild(revealButton);
+            }
+
+            memberList.appendChild(memberItem);
+        });
+        teamElement.appendChild(memberList);
+        teamListDiv.appendChild(teamElement);
+    });
+
+    // If creator, add a "Reveal All" button
+    if (isCreator) {
+        const revealAllButton = document.createElement('button');
+        revealAllButton.textContent = 'Reveal All';
+        revealAllButton.classList.add('button-primary');
+        revealAllButton.addEventListener('click', () => {
+            revealAllNames(teams);
+        });
+        teamListDiv.appendChild(revealAllButton);
+    }
+
+    console.log("Displayed teams.");
+}
+
+/* Function to Reveal a Single Name */
+function revealName(memberId, memberName) {
+    const memberItem = document.getElementById(memberId);
+    if (memberItem && !revealedNames.has(memberId)) {
+        // Remove existing content
+        memberItem.textContent = memberName;
+        revealedNames.add(memberId);
+        console.log(`Revealed name: ${memberName}`);
+
+        // Remove the 'Reveal' button if present
+        const revealButton = memberItem.querySelector('.reveal-button');
+        if (revealButton) {
+            revealButton.remove();
+        }
+    }
+}
+
+/* Function to Reveal All Names */
+function revealAllNames(teams) {
+    teams.forEach((team, i) => {
+        team.forEach((memberName, index) => {
+            const memberId = `team${i}-member${index}`;
+            revealName(memberId, memberName);
+        });
+    });
+    console.log("Revealed all names.");
 }
 
 /* Kick User Function */
 function kickUser(userID) {
     if (isCreator && currentRoomID) {
         socket.emit('kickUser', { roomID: currentRoomID, userID });
+        console.log(`Kicked user: ${userID}`);
     }
 }
 
@@ -131,15 +243,18 @@ function kickUser(userID) {
 socket.on('kicked', (message) => {
     alert(message);
     resetUI();
+    console.log("You have been kicked from the room.");
 });
 
 socket.on('roomClosed', () => {
     alert("The room has been closed by the creator.");
     resetUI();
+    console.log("Room has been closed by the creator.");
 });
 
 socket.on('joinDenied', (message) => {
     alert(message);
+    console.log("Join denied: " + message);
 });
 
 /* Reset UI Function */
@@ -161,6 +276,8 @@ function resetUI() {
         currentJoinButton.textContent = 'Join Room';
         currentJoinButton = null;
     }
+
+    console.log("UI has been reset.");
 }
 
 /* Handle Active Rooms */
@@ -196,6 +313,8 @@ socket.on('activeRooms', (publicRooms) => {
             roomsList.appendChild(roomItem);
         });
     }
+
+    console.log("Updated active public rooms.");
 });
 
 /* Update Member Count */
@@ -203,6 +322,7 @@ socket.on('memberCount', ({ total, named, unnamed }) => {
     document.getElementById("totalMembers").textContent = total;
     document.getElementById("namedMembers").textContent = named;
     document.getElementById("unnamedMembers").textContent = unnamed;
+    console.log(`Member count updated: Total - ${total}, Named - ${named}, Unnamed - ${unnamed}`);
 });
 
 /* Join Room Button Event Listener */
@@ -225,6 +345,7 @@ document.getElementById("submitName").addEventListener("click", () => {
     if (name && currentRoomID) {
         socket.emit('submitName', { roomID: currentRoomID, name, afkq });
         nameInput.value = ''; // Clear the input field
+        console.log(`Submitted name: ${name}, AFKQ: ${afkq}`);
     } else {
         alert("Please enter your name.");
     }
@@ -234,6 +355,7 @@ document.getElementById("submitName").addEventListener("click", () => {
 document.getElementById("generateTeams").addEventListener("click", () => {
     if (isCreator && currentRoomID) {
         socket.emit('generateTeams', { roomID: currentRoomID });
+        console.log("Requested team generation.");
     } else {
         alert("Only the room creator can generate teams.");
     }

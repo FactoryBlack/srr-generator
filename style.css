@@ -31,7 +31,7 @@ body {
 }
 
 .nav-logo .accent-color {
-    color: #E91E63;
+    color: #FA2A55;
 }
 
 /* Container */
@@ -60,7 +60,7 @@ h2 {
     justify-content: space-between;
 }
 
-/* Updated Accent Color */
+/* Accent Color */
 .accent-color {
     color: #FA2A55;
 }
@@ -122,7 +122,7 @@ button {
     font-size: 18px;
     font-weight: 700;
     color: #FFFFFF;
-    background-color: #FA2A55; /* Updated Accent Color */
+    background-color: #FA2A55;
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -130,12 +130,12 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.3s ease, color 0.3s ease; /* Add transition for hover */
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 button:hover {
-    background-color: #FFFFFF; /* White accent on hover */
-    color: #FA2A55; /* Change text color to accent color */
+    background-color: #FFFFFF;
+    color: #FA2A55;
 }
 
 button:disabled {
@@ -146,7 +146,7 @@ button:disabled {
 button.kick-button {
     background: none;
     border: none;
-    color: #FA2A55; /* Updated Accent Color */
+    color: #FA2A55;
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
@@ -176,14 +176,14 @@ button.kick-button:hover:not(:disabled) {
     width: 24px;
     height: 24px;
     background-color: #1E1E1E;
-    border: 2px solid #FA2A55; /* Updated Accent Color */
+    border: 2px solid #FA2A55;
     border-radius: 4px;
     margin-right: 8px;
     flex-shrink: 0;
 }
 
 .custom-checkbox input[type="checkbox"]:checked + .checkbox-custom {
-    background-color: #FA2A55; /* Updated Accent Color */
+    background-color: #FA2A55;
 }
 
 /* Room Code Input Field */
@@ -192,7 +192,7 @@ button.kick-button:hover:not(:disabled) {
     font-size: 64px;
     font-weight: bold;
     border: none;
-    border-bottom: 4px solid #FA2A55; /* Updated Accent Color */
+    border-bottom: 4px solid #FA2A55;
     background-color: transparent;
     color: #FFFFFF;
     margin-bottom: 20px;
@@ -210,7 +210,7 @@ button.kick-button:hover:not(:disabled) {
 
 #roomID:focus {
     outline: none;
-    border-bottom: 4px solid #C2185B; /* Optional: Adjust to a darker shade if desired */
+    border-bottom: 4px solid #C2185B;
 }
 
 /* Exclude the big input field from height adjustments */
@@ -218,7 +218,7 @@ input[type="text"]:not(#roomID),
 .small-input,
 select,
 button {
-    height: 48px; /* Consistent height */
+    height: 48px;
 }
 
 /* Small Input */
@@ -244,8 +244,7 @@ ul {
 }
 
 #roomsList li,
-#nameList p,
-#teamList p {
+.user-entry {
     font-size: 18px;
     padding: 10px 15px;
     background-color: #2A2A2A;
@@ -260,7 +259,7 @@ ul {
 .kick-button {
     background: none;
     border: none;
-    color: #FA2A55; /* Updated Accent Color */
+    color: #FA2A55;
     font-size: 18px;
     font-weight: bold;
     cursor: pointer;
@@ -288,7 +287,7 @@ ul {
 }
 
 .member-stat span {
-    color: #FA2A55; /* Updated Accent Color */
+    color: #FA2A55;
     font-weight: bold;
 }
 
@@ -300,17 +299,9 @@ ul {
     text-align: center;
 }
 
-/* Visibility Control with Fade Transitions */
+/* Visibility Control */
 .hidden {
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.5s ease;
-}
-
-.visible {
-    opacity: 1;
-    visibility: visible;
-    transition: opacity 0.5s ease;
+    display: none !important;
 }
 
 /* Responsive Styles */
@@ -345,4 +336,56 @@ ul {
     .custom-checkbox {
         margin-bottom: 10px;
     }
+}
+
+/* AFKQ Badge */
+.afkq-badge {
+    background-color: #FA2A55;
+    color: #FFFFFF;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-left: 8px;
+    display: inline-block;
+}
+
+/* Team Styling */
+.team {
+    margin-bottom: 20px;
+}
+
+.team h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.team ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.team li {
+    font-size: 18px;
+    padding: 8px;
+    background-color: #2A2A2A;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.reveal-button {
+    background-color: #FA2A55;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.reveal-button:hover {
+    background-color: #FFFFFF;
+    color: #FA2A55;
 }
