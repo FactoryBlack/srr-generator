@@ -1,8 +1,15 @@
+// script.js
+
 const socket = io();
 let isCreator = false;
 let currentRoomID = null;
 let currentJoinButton = null;
 let teamGenerated = false;
+
+let userVoted = false;
+let voteDuration = 60; // 60 seconds
+let voteInterval = null;
+let revealedNames = new Set();
 
 /* Functions to Show and Hide Elements */
 function showElement(elementId) {
@@ -79,7 +86,7 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
     showElement("submitNameSection");
     showElement("memberInfoSection");
     showElement("teamGenerationSection");
-    showElement("chatSection"); // Show chat section
+    showElement("chatSection");
 
     // Check for cached name and pre-fill the input
     const cachedName = localStorage.getItem('cachedName');
@@ -97,6 +104,12 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
     });
     socket.off('revealAllNames').on('revealAllNames', (teams) => {
         handleRevealAllNames(teams);
+    });
+    socket.off('voteUpdate').on('voteUpdate', ({ votedUsernames }) => {
+        updateVotedMembers(votedUsernames);
+    });
+    socket.off('teamsRerolled').on('teamsRerolled', (teams) => {
+        handleTeamsRerolled(teams);
     });
 
     if (joinButton) {
@@ -177,15 +190,12 @@ function updateNameList(users, creatorId) {
     console.log("Updated name list.");
 }
 
-/* Variables to Track Revealed Names */
-let revealedNames = new Set();
-
 /* Display Teams Function */
 function displayTeams(teams) {
     const teamListDiv = document.getElementById("teamList");
     teamListDiv.innerHTML = '';
-    revealedNames.clear(); // Reset revealed names
-    teamGenerated = true; // Mark that teams have been generated
+    revealedNames.clear();
+    teamGenerated = true;
 
     // Enable Team Chat Tab
     document.getElementById('teamChatTab').disabled = false;
@@ -235,7 +245,90 @@ function displayTeams(teams) {
         teamListDiv.appendChild(revealAllButton);
     }
 
+    // Show the Vote to Reroll button to all participants
+    showVoteToRerollButton();
+
     console.log("Displayed teams.");
+}
+
+/* Show Vote to Reroll Button */
+function showVoteToRerollButton() {
+    const teamListDiv = document.getElementById("teamList");
+
+    const voteButton = document.createElement('button');
+    voteButton.textContent = 'Vote to Reroll';
+    voteButton.classList.add('button-primary', 'vote-reroll-button');
+    voteButton.addEventListener('click', () => {
+        if (!userVoted) {
+            socket.emit('voteReroll', { roomID: currentRoomID });
+            userVoted = true;
+            voteButton.disabled = true;
+        }
+    });
+
+    teamListDiv.appendChild(voteButton);
+
+    // Start the countdown timer
+    startVoteTimer(voteButton);
+}
+
+/* Start Vote Timer */
+function startVoteTimer(voteButton) {
+    let timeLeft = voteDuration;
+
+    voteInterval = setInterval(() => {
+        timeLeft--;
+        const percentage = (timeLeft / voteDuration) * 100;
+        voteButton.style.background = `linear-gradient(to right, #FA2A55 ${percentage}%, #FFFFFF ${percentage}%)`;
+
+        if (timeLeft <= 0) {
+            clearInterval(voteInterval);
+            if (voteButton) {
+                voteButton.remove();
+            }
+            userVoted = false;
+        }
+    }, 1000);
+}
+
+/* Update Voted Members */
+function updateVotedMembers(votedUsernames) {
+    // Clear previous votes
+    const nameElements = document.querySelectorAll('.user-name');
+    nameElements.forEach(element => {
+        element.classList.remove('voted-member');
+    });
+
+    // Highlight users who have voted
+    votedUsernames.forEach(username => {
+        nameElements.forEach(element => {
+            if (element.textContent === username) {
+                element.classList.add('voted-member');
+            }
+        });
+    });
+}
+
+/* Handle Teams Rerolled */
+function handleTeamsRerolled(teams) {
+    // Reset userVoted and clear any existing votes
+    userVoted = false;
+    clearInterval(voteInterval);
+
+    // Remove the Vote to Reroll button if it exists
+    const voteButton = document.querySelector('.vote-reroll-button');
+    if (voteButton) {
+        voteButton.remove();
+    }
+
+    // Clear accent color from names
+    const votedMembers = document.querySelectorAll('.voted-member');
+    votedMembers.forEach(member => {
+        member.classList.remove('voted-member');
+    });
+
+    // Display the new teams
+    displayTeams(teams);
 }
 
 /* Handle Reveal Name Event */
@@ -350,6 +443,24 @@ function resetUI() {
     socket.off('displayTeams');
     socket.off('revealName');
     socket.off('revealAllNames');
+    socket.off('voteUpdate');
+    socket.off('teamsRerolled');
+
+    // Reset vote variables
+    userVoted = false;
+    clearInterval(voteInterval);
+
+    // Remove any vote-related elements
+    const voteButton = document.querySelector('.vote-reroll-button');
+    if (voteButton) {
+        voteButton.remove();
+    }
+
+    // Clear accent color from names
+    const votedMembers = document.querySelectorAll('.voted-member');
+    votedMembers.forEach(member => {
+        member.classList.remove('voted-member');
+    });
 
     console.log("UI has been reset.");
 }
@@ -371,7 +482,7 @@ socket.on('activeRooms', (publicRooms) => {
 
             const joinButton = document.createElement('button');
             joinButton.id = `joinRoomButton-${room.roomID}`;
-            joinButton.setAttribute('data-room-id', room.roomID); // Add data attribute
+            joinButton.setAttribute('data-room-id', room.roomID);
             joinButton.textContent = 'Join Room';
             joinButton.addEventListener('click', function () {
                 joinRoom(room.roomID, true, room.teamSize, this);
@@ -408,7 +519,6 @@ document.getElementById("joinRoom").addEventListener("click", () => {
     const roomID = roomIDInput.value.trim();
     if (roomID.length >= 3 && roomID.length <= 6) {
         joinRoom(roomID);
-        // The main 'Join or Create Room' button remains enabled
     } else {
         alert("Please enter a Room ID between 3 and 6 characters.");
     }
@@ -441,11 +551,7 @@ document.getElementById("generateTeams").addEventListener("click", () => {
     }
 });
 
-/* Display Teams After Generation */
-socket.on('displayTeams', displayTeams);
-
 /* Chat Functionality */
-/* Variables for Chat */
 let currentChatTab = 'roomChat';
 let roomChatUnread = 0;
 let teamChatUnread = 0;

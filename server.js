@@ -1,3 +1,5 @@
+// server.js
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -34,6 +36,72 @@ function updateMemberCount(roomID) {
     }
 }
 
+/* Helper Function to Shuffle an Array */
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+/* Reroll Teams Function */
+function rerollTeams(roomID) {
+    const room = rooms[roomID];
+    if (room) {
+        // Reset votes
+        room.votes = [];
+        if (room.voteTimer) {
+            clearTimeout(room.voteTimer);
+            room.voteTimer = null;
+        }
+
+        // Generate new teams
+        let users = Object.values(room.users).map(user => user.name);
+
+        // Shuffle the users array before generating teams
+        users = shuffle(users);
+
+        const teams = [];
+        room.teamAssignments = {}; // Reset team assignments
+
+        while (users.length) {
+            const team = users.splice(0, room.teamSize);
+            teams.push(team);
+
+            // Assign users to their teams
+            team.forEach(memberName => {
+                room.teamAssignments[memberName] = teams.length - 1;
+            });
+        }
+
+        room.teams = teams; // Save teams in room data
+
+        // Notify all clients about the new teams
+        io.to(roomID).emit('teamsRerolled', teams);
+        console.log(`Teams rerolled for room ${roomID}:`, teams);
+
+        // Start a new vote timer for the rerolled teams
+        startVoteTimer(roomID);
+    }
+}
+
+/* Start Vote Timer */
+function startVoteTimer(roomID) {
+    const room = rooms[roomID];
+    if (room) {
+        if (room.voteTimer) {
+            clearTimeout(room.voteTimer);
+        }
+        room.voteTimer = setTimeout(() => {
+            // Clear votes after 60 seconds
+            room.votes = [];
+            io.to(roomID).emit('voteUpdate', { votedUsernames: room.votes });
+            console.log(`Vote to reroll expired in room ${roomID}`);
+        }, 60000); // 60,000 milliseconds = 60 seconds
+    }
+}
+
 /* Socket.io Connection Handler */
 io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
@@ -61,6 +129,8 @@ io.on('connection', (socket) => {
                 banList: [],
                 teams: [],
                 teamAssignments: {},
+                votes: [],
+                voteTimer: null,
             };
             broadcastPublicRooms();
             console.log(`Room created: ${roomID} by ${socket.id}`);
@@ -126,15 +196,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    /* Helper Function to Shuffle an Array */
-    function shuffle(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
-
     /* Handle Team Generation */
     socket.on('generateTeams', ({ roomID }) => {
         const room = rooms[roomID];
@@ -158,8 +219,36 @@ io.on('connection', (socket) => {
             }
 
             room.teams = teams; // Save teams in room data
+
+            // Reset votes
+            room.votes = [];
+
+            // Notify all clients about the new teams
             io.to(roomID).emit('displayTeams', teams);
             console.log(`Teams generated for room ${roomID}:`, teams);
+
+            // Start the vote timer
+            startVoteTimer(roomID);
+        }
+    });
+
+    /* Handle Vote to Reroll */
+    socket.on('voteReroll', ({ roomID }) => {
+        const room = rooms[roomID];
+        if (room && room.users[socket.id]) {
+            const username = room.users[socket.id].name;
+            if (!room.votes.includes(username)) {
+                room.votes.push(username);
+                io.to(roomID).emit('voteUpdate', { votedUsernames: room.votes });
+                console.log(`User ${username} voted to reroll in room ${roomID}`);
+
+                // Check if majority has been reached
+                const totalUsers = Object.keys(room.users).length;
+                if (room.votes.length > totalUsers / 2) {
+                    // Majority reached, reroll teams
+                    rerollTeams(roomID);
+                }
+            }
         }
     });
 
@@ -213,6 +302,9 @@ io.on('connection', (socket) => {
         if (room) {
             if (socket.id === room.creator) {
                 // Creator is leaving, close the room
+                if (room.voteTimer) {
+                    clearTimeout(room.voteTimer);
+                }
                 io.to(roomID).emit('roomClosed');
                 delete rooms[roomID];
                 broadcastPublicRooms();
@@ -235,6 +327,9 @@ io.on('connection', (socket) => {
         for (const roomID in rooms) {
             const room = rooms[roomID];
             if (room.creator === socket.id) {
+                if (room.voteTimer) {
+                    clearTimeout(room.voteTimer);
+                }
                 io.to(roomID).emit('roomClosed');
                 delete rooms[roomID];
                 broadcastPublicRooms();
