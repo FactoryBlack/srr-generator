@@ -98,6 +98,28 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
         document.getElementById('nameInput').value = cachedName;
     }
 
+    // If creator, show the "Generate Teams" button initially
+    if (isCreator) {
+        const generateTeamsContainer = document.getElementById('generateTeamsContainer');
+        generateTeamsContainer.innerHTML = ''; // Clear previous content
+        showElement('generateTeamsContainer');
+
+        // Add the "Generate Teams" button
+        const generateTeamsButton = document.createElement('button');
+        generateTeamsButton.id = 'generateTeams';
+        generateTeamsButton.textContent = 'Generate Teams';
+        generateTeamsButton.classList.add('button-primary');
+        generateTeamsButton.addEventListener('click', () => {
+            if (isCreator && currentRoomID) {
+                socket.emit('generateTeams', { roomID: currentRoomID });
+                console.log("Requested team generation.");
+            } else {
+                alert("Only the room creator can generate teams.");
+            }
+        });
+        generateTeamsContainer.appendChild(generateTeamsButton);
+    }
+
     // Update event listeners
     socket.off('updateNames').on('updateNames', ({ users, creatorId }) => {
         updateNameList(users, creatorId);
@@ -243,12 +265,12 @@ function displayTeams(teams) {
         teamListDiv.appendChild(teamElement);
     });
 
-    // If creator, show the generate teams container (may contain different buttons)
+    // If creator, update the generate teams container
     if (isCreator) {
-        showElement('generateTeamsContainer');
-        // Initially, show the "Generate Teams" button (it will be replaced dynamically)
+        // Remove "Generate Teams" button
         const generateTeamsContainer = document.getElementById('generateTeamsContainer');
         generateTeamsContainer.innerHTML = ''; // Clear previous content
+        showElement('generateTeamsContainer');
 
         // Show Vote Counter
         showVoteCounter();
@@ -645,16 +667,6 @@ document.getElementById("submitName").addEventListener("click", () => {
         localStorage.setItem('cachedName', name);
     } else {
         alert("Please enter your name.");
-    }
-});
-
-/* Generate Teams Button Event Listener */
-document.getElementById("generateTeams").addEventListener("click", () => {
-    if (isCreator && currentRoomID) {
-        socket.emit('generateTeams', { roomID: currentRoomID });
-        console.log("Requested team generation.");
-    } else {
-        alert("Only the room creator can generate teams.");
     }
 });
 
