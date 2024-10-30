@@ -185,8 +185,13 @@ io.on('connection', (socket) => {
                 io.to(roomID).emit('voteUpdate', { votedUsernames: room.votes });
                 console.log(`User ${username} voted to reroll in room ${roomID}`);
 
+                // Exclude creator from total users
+                const totalUsers = Object.keys(room.users).length - 1; // Exclude creator
+                if (totalUsers <= 0) {
+                    return;
+                }
+
                 // Check if votes reach 80% or more
-                const totalUsers = Object.keys(room.users).length;
                 if (room.votes.length / totalUsers >= 0.8) {
                     // Notify creator to enable Confirm Reroll button
                     io.to(room.creator).emit('enableConfirmReroll');

@@ -394,20 +394,25 @@ ul {
     justify-content: space-between;
 }
 
-.reveal-button {
-    background-color: #FA2A55;
-    color: #FFFFFF;
+button.reveal-button,
+.kick-button {
+    background: none;
     border: none;
-    border-radius: 4px;
-    padding: 4px 8px;
+    color: #FA2A55;
+    font-size: 18px;
+    font-weight: bold;
     cursor: pointer;
-    font-size: 14px;
-    min-width: 100px; /* Ensure consistent button size */
 }
 
-.reveal-button:hover {
-    background-color: #FFFFFF;
-    color: #FA2A55;
+button.reveal-button:hover:not(:disabled),
+.kick-button:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+/* Full Width Button */
+.full-width-button {
+    width: 100%;
+    margin-top: 10px;
 }
 
 /* Chat Section */
@@ -514,6 +519,35 @@ ul {
     min-width: 300px;
 }
 
+.button-full-width {
+    width: 100%;
+    min-width: unset;
+}
+
+/* Reveal Button Styled Like Kick and Leave Room Buttons */
+.reveal-button {
+    background: none;
+    border: none;
+    color: #FA2A55;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.reveal-button:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+/* Vote Counter Styling */
+#voteCounter {
+    font-size: 16px;
+    margin-left: 10px;
+}
+
+#voteCounter .accent-color {
+    color: #FA2A55;
+}
+
 /* Name List Grid */
 #nameList {
     display: flex;
@@ -575,4 +609,16 @@ ul {
     transform: scaleX(0);
     transition: transform 1s linear;
     z-index: -1;
+}
+
+/* Smaller Font for Vote Counter */
+#voteCounter {
+    font-size: 16px;
+    margin-left: 10px;
+}
+
+/* Full Width for Reveal All Button */
+.full-width-button {
+    width: 100%;
+    margin-top: 10px;
 }

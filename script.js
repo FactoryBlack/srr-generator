@@ -1,5 +1,3 @@
-// script.js
-
 const socket = io();
 let isCreator = false;
 let currentRoomID = null;
@@ -28,16 +26,15 @@ function hideElement(elementId) {
 socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
     if (isCreator) {
-        showElement("teamGenerationSection"); // Show the entire section
-        showElement("generateTeamsContainer");
-        showElement("creatorNameSection");
+        showElement("teamGenerationSection"); // Both creator and participants see this
+        showElement("generateTeamsContainer"); // Only creator
+        showElement("creatorNameSection"); // Only creator
     } else {
-        hideElement("teamGenerationSection"); // Hide the entire section for participants
-        hideElement("generateTeamsContainer");
-        hideElement("creatorNameSection");
+        showElement("teamGenerationSection"); // Participants see names and teams
+        hideElement("generateTeamsContainer"); // Hide generate teams button
+        hideElement("creatorNameSection"); // Hide creator name input
     }
 });
-
 
 /* Event Listener for the Add Name Button */
 document.getElementById("addName").addEventListener("click", () => {
@@ -145,7 +142,8 @@ function leaveRoom(roomID, joinButton) {
 
 /* Update Name List Function */
 function updateNameList(users, creatorId) {
-    totalMembers = users.length;
+    // Exclude creator from totalMembers
+    totalMembers = users.filter(user => user.id !== creatorId).length;
     const nameListDiv = document.getElementById("nameList");
     nameListDiv.innerHTML = '';
     users.forEach(user => {
@@ -237,15 +235,6 @@ function displayTeams(teams) {
                 memberItem.appendChild(revealButton);
             }
 
-            // Show the Vote to Reroll button to participants only
-            if (!isCreator) {
-                showVoteToRerollButton();
-            } else {
-                // For creator, show the vote counter and confirm button container
-                showVoteCounter();
-            }
-
-            console.log("Displayed teams.");
             memberList.appendChild(memberItem);
         });
         teamElement.appendChild(memberList);
@@ -256,7 +245,7 @@ function displayTeams(teams) {
     if (isCreator) {
         const revealAllButton = document.createElement('button');
         revealAllButton.textContent = 'Reveal All';
-        revealAllButton.classList.add('button-primary');
+        revealAllButton.classList.add('button-primary', 'button-full-width');
         revealAllButton.addEventListener('click', () => {
             socket.emit('revealAllNames', { roomID: currentRoomID });
         });
@@ -332,8 +321,9 @@ function showVoteCounter() {
     // Create vote counter label
     const voteCounter = document.createElement('span');
     voteCounter.id = 'voteCounter';
-    voteCounter.textContent = '0 / 0 members voted reroll';
+    voteCounter.innerHTML = 'Votes Required: <span class="accent-color">0</span>';
     voteCounter.style.marginLeft = '10px';
+    voteCounter.style.fontSize = '16px';
 
     // Create Confirm Reroll button (initially hidden)
     const confirmButton = document.createElement('button');
@@ -356,11 +346,13 @@ function updateVotedMembers(votedUsernames) {
     if (isCreator) {
         const voteCounter = document.getElementById('voteCounter');
         if (voteCounter) {
-            voteCounter.textContent = `${votedUsernames.length} / ${totalMembers} members voted reroll`;
+            const votesNeeded = Math.ceil(0.8 * totalMembers) - votedUsernames.length;
+            const votesNeededText = votesNeeded > 0 ? votesNeeded : 0;
+            voteCounter.innerHTML = `Votes Required: <span class="accent-color">${votesNeededText}</span>`;
         }
 
         // Check if votes reach 80% or more
-        if (votedUsernames.length / totalMembers >= 0.8) {
+        if (votedUsernames.length / totalMembers >= 0.8 && totalMembers > 0) {
             const confirmButton = document.getElementById('confirmRerollButton');
             if (confirmButton) {
                 confirmButton.style.display = 'inline-block';
@@ -606,7 +598,6 @@ socket.on('memberCount', ({ total, named, unnamed }) => {
     document.getElementById("totalMembers").textContent = total;
     document.getElementById("namedMembers").textContent = named;
     document.getElementById("unnamedMembers").textContent = unnamed;
-    totalMembers = total; // Update total members for voting
     console.log(`Member count updated: Total - ${total}, Named - ${named}, Unnamed - ${unnamed}`);
 });
 
