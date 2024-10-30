@@ -58,7 +58,9 @@ io.on('connection', (socket) => {
                 public: isPublic,
                 teamSize: teamSize || 2,
                 creator: socket.id,
-                banList: []
+                banList: [],
+                teams: [],
+                teamAssignments: {},
             };
             broadcastPublicRooms();
             console.log(`Room created: ${roomID} by ${socket.id}`);
@@ -143,12 +145,65 @@ io.on('connection', (socket) => {
             users = shuffle(users);
 
             const teams = [];
+            room.teamAssignments = {}; // Reset team assignments
+
             while (users.length) {
-                teams.push(users.splice(0, room.teamSize));
+                const team = users.splice(0, room.teamSize);
+                teams.push(team);
+
+                // Assign users to their teams
+                team.forEach(memberName => {
+                    room.teamAssignments[memberName] = teams.length - 1;
+                });
             }
 
+            room.teams = teams; // Save teams in room data
             io.to(roomID).emit('displayTeams', teams);
             console.log(`Teams generated for room ${roomID}:`, teams);
+        }
+    });
+
+    /* Handle Reveal Name */
+    socket.on('revealName', ({ roomID, memberId, memberName }) => {
+        const room = rooms[roomID];
+        if (room && socket.id === room.creator) {
+            io.to(roomID).emit('revealName', { memberId, memberName });
+            console.log(`Name revealed: ${memberName} in room ${roomID}`);
+        }
+    });
+
+    /* Handle Reveal All Names */
+    socket.on('revealAllNames', ({ roomID }) => {
+        const room = rooms[roomID];
+        if (room && socket.id === room.creator) {
+            io.to(roomID).emit('revealAllNames', room.teams);
+            console.log(`All names revealed in room ${roomID}`);
+        }
+    });
+
+    /* Handle Room Chat Messages */
+    socket.on('roomChatMessage', ({ roomID, message }) => {
+        const room = rooms[roomID];
+        const sender = room.users[socket.id] ? room.users[socket.id].name : 'Unknown';
+        io.to(roomID).emit('roomChatMessage', { sender, message });
+    });
+
+    /* Handle Team Chat Messages */
+    socket.on('teamChatMessage', ({ roomID, message }) => {
+        const room = rooms[roomID];
+        if (!room.teamAssignments) return;
+
+        const senderName = room.users[socket.id] ? room.users[socket.id].name : 'Unknown';
+        const teamIndex = room.teamAssignments[senderName];
+
+        if (teamIndex !== undefined) {
+            // Send message to team members
+            const teamMembers = room.teams[teamIndex];
+            Object.values(room.users).forEach(user => {
+                if (teamMembers.includes(user.name)) {
+                    io.to(user.id).emit('teamChatMessage', { sender: senderName, message });
+                }
+            });
         }
     });
 

@@ -20,6 +20,7 @@
     <div class="container">
         <h1>Room Creator</h1>
 
+        <!-- Room Creation and Joining Section -->
         <div class="form-group">
             <div class="form-row">
                 <input type="text" id="roomID" placeholder="XXXXXX" maxlength="6" minlength="3">
@@ -34,10 +35,11 @@
                     <option value="2">Teams of 2</option>
                     <option value="3" selected>Teams of 3</option>
                 </select>
-                <button id="joinRoom" class="button-primary">Join or Create Room</button>
+                <button id="joinRoom" class="button-primary fixed-width">Join or Create Room</button>
             </div>
         </div>
 
+        <!-- Active Public Rooms -->
         <h2>Active Public Rooms</h2>
         <p id="noRoomsMessage" class="no-rooms-message hidden">There are no public rooms currently active.</p>
         <ul id="roomsList"></ul>
@@ -61,7 +63,7 @@
                     <span class="checkbox-custom"></span>
                     AFKQ Tool
                 </label>
-                <button id="submitName" class="button-primary">Submit Name</button>
+                <button id="submitName" class="button-primary fixed-width">Submit Name</button>
             </div>
         </div>
 
@@ -81,6 +83,28 @@
             </h2>
             <div id="nameList"></div>
             <div id="teamList"></div>
+        </div>
+
+        <!-- Chat Section -->
+        <div id="chatSection" class="hidden">
+            <div class="chat-tabs">
+                <button id="roomChatTab" class="chat-tab active">Room Chat <span id="roomChatBadge" class="chat-badge hidden">0</span></button>
+                <button id="teamChatTab" class="chat-tab">Team Chat <span id="teamChatBadge" class="chat-badge hidden">0</span></button>
+            </div>
+            <div id="roomChat" class="chat-window">
+                <div id="roomChatMessages" class="chat-messages"></div>
+                <div class="chat-input">
+                    <input type="text" id="roomChatInput" placeholder="Type a message...">
+                    <button id="roomChatSend" class="button-primary fixed-width">Send</button>
+                </div>
+            </div>
+            <div id="teamChat" class="chat-window hidden">
+                <div id="teamChatMessages" class="chat-messages"></div>
+                <div class="chat-input">
+                    <input type="text" id="teamChatInput" placeholder="Type a message...">
+                    <button id="teamChatSend" class="button-primary fixed-width">Send</button>
+                </div>
+            </div>
         </div>
     </div>
 

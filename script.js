@@ -2,6 +2,7 @@ const socket = io();
 let isCreator = false;
 let currentRoomID = null;
 let currentJoinButton = null;
+let teamGenerated = false;
 
 /* Functions to Show and Hide Elements */
 function showElement(elementId) {
@@ -76,6 +77,7 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
     showElement("submitNameSection");
     showElement("memberInfoSection");
     showElement("teamGenerationSection");
+    showElement("chatSection"); // Show chat section
 
     // Update event listeners
     socket.off('updateNames').on('updateNames', updateNameList);
@@ -154,6 +156,10 @@ function displayTeams(teams) {
     const teamListDiv = document.getElementById("teamList");
     teamListDiv.innerHTML = '';
     revealedNames.clear(); // Reset revealed names
+    teamGenerated = true; // Mark that teams have been generated
+
+    // Enable Team Chat Tab
+    document.getElementById('teamChatTab').disabled = false;
 
     teams.forEach((team, i) => {
         const teamElement = document.createElement('div');
@@ -178,7 +184,7 @@ function displayTeams(teams) {
                 revealButton.textContent = 'Reveal';
                 revealButton.classList.add('reveal-button');
                 revealButton.addEventListener('click', () => {
-                    revealName(memberId, memberName);
+                    socket.emit('revealName', { roomID: currentRoomID, memberId, memberName });
                 });
                 memberItem.appendChild(revealButton);
             }
@@ -195,7 +201,7 @@ function displayTeams(teams) {
         revealAllButton.textContent = 'Reveal All';
         revealAllButton.classList.add('button-primary');
         revealAllButton.addEventListener('click', () => {
-            revealAllNames(teams);
+            socket.emit('revealAllNames', { roomID: currentRoomID });
         });
         teamListDiv.appendChild(revealAllButton);
     }
@@ -203,8 +209,8 @@ function displayTeams(teams) {
     console.log("Displayed teams.");
 }
 
-/* Function to Reveal a Single Name */
-function revealName(memberId, memberName) {
+/* Handle Reveal Name Event */
+socket.on('revealName', ({ memberId, memberName }) => {
     const memberItem = document.getElementById(memberId);
     if (memberItem && !revealedNames.has(memberId)) {
         // Remove existing content
@@ -218,18 +224,28 @@ function revealName(memberId, memberName) {
             revealButton.remove();
         }
     }
-}
+});
 
-/* Function to Reveal All Names */
-function revealAllNames(teams) {
+/* Handle Reveal All Names Event */
+socket.on('revealAllNames', (teams) => {
     teams.forEach((team, i) => {
         team.forEach((memberName, index) => {
             const memberId = `team${i}-member${index}`;
-            revealName(memberId, memberName);
+            const memberItem = document.getElementById(memberId);
+            if (memberItem && !revealedNames.has(memberId)) {
+                memberItem.textContent = memberName;
+                revealedNames.add(memberId);
+
+                // Remove the 'Reveal' button if present
+                const revealButton = memberItem.querySelector('.reveal-button');
+                if (revealButton) {
+                    revealButton.remove();
+                }
+            }
         });
     });
     console.log("Revealed all names.");
-}
+});
 
 /* Kick User Function */
 function kickUser(userID) {
@@ -262,6 +278,7 @@ function resetUI() {
     hideElement("submitNameSection");
     hideElement("memberInfoSection");
     hideElement("teamGenerationSection");
+    hideElement("chatSection");
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
     document.getElementById("memberCount").innerHTML =
@@ -276,6 +293,9 @@ function resetUI() {
         currentJoinButton.textContent = 'Join Room';
         currentJoinButton = null;
     }
+
+    // Reset chat variables
+    resetChat();
 
     console.log("UI has been reset.");
 }
@@ -363,3 +383,103 @@ document.getElementById("generateTeams").addEventListener("click", () => {
 
 /* Display Teams After Generation */
 socket.on('displayTeams', displayTeams);
+
+/* Chat Functionality */
+/* Variables for Chat */
+let currentChatTab = 'roomChat';
+let roomChatUnread = 0;
+let teamChatUnread = 0;
+
+/* Switch Chat Tabs */
+document.getElementById('roomChatTab').addEventListener('click', () => {
+    switchChatTab('roomChat');
+});
+
+document.getElementById('teamChatTab').addEventListener('click', () => {
+    if (!teamGenerated) {
+        alert('Team Chat will be available after teams are generated.');
+        return;
+    }
+    switchChatTab('teamChat');
+});
+
+function switchChatTab(tab) {
+    currentChatTab = tab;
+    document.querySelectorAll('.chat-tab').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tab + 'Tab').classList.add('active');
+
+    document.querySelectorAll('.chat-window').forEach(div => hideElement(div.id));
+    showElement(tab);
+
+    // Reset unread count
+    if (tab === 'roomChat') {
+        roomChatUnread = 0;
+        updateChatBadge('roomChatBadge', roomChatUnread);
+    } else if (tab === 'teamChat') {
+        teamChatUnread = 0;
+        updateChatBadge('teamChatBadge', teamChatUnread);
+    }
+}
+
+/* Send Message */
+document.getElementById('roomChatSend').addEventListener('click', () => {
+    const message = document.getElementById('roomChatInput').value.trim();
+    if (message) {
+        socket.emit('roomChatMessage', { roomID: currentRoomID, message });
+        document.getElementById('roomChatInput').value = '';
+    }
+});
+
+document.getElementById('teamChatSend').addEventListener('click', () => {
+    const message = document.getElementById('teamChatInput').value.trim();
+    if (message) {
+        socket.emit('teamChatMessage', { roomID: currentRoomID, message });
+        document.getElementById('teamChatInput').value = '';
+    }
+});
+
+/* Receive Messages */
+socket.on('roomChatMessage', ({ sender, message }) => {
+    displayChatMessage('roomChatMessages', sender, message);
+    if (currentChatTab !== 'roomChat') {
+        roomChatUnread++;
+        updateChatBadge('roomChatBadge', roomChatUnread);
+    }
+});
+
+socket.on('teamChatMessage', ({ sender, message }) => {
+    displayChatMessage('teamChatMessages', sender, message);
+    if (currentChatTab !== 'teamChat') {
+        teamChatUnread++;
+        updateChatBadge('teamChatBadge', teamChatUnread);
+    }
+});
+
+/* Display Chat Message */
+function displayChatMessage(chatMessagesId, sender, message) {
+    const chatMessagesDiv = document.getElementById(chatMessagesId);
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('chat-message');
+
+    const senderSpan = document.createElement('span');
+    senderSpan.classList.add('message-sender');
+    senderSpan.textContent = sender + ': ';
+
+    const messageSpan = document.createElement('span');
+    messageSpan.classList.add('message-text');
+    messageSpan.textContent = message;
+
+    messageElement.appendChild(senderSpan);
+    messageElement.appendChild(messageSpan);
+    chatMessagesDiv.appendChild(messageElement);
+
+    // Scroll to the bottom
+    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+}
+
+/* Update Chat Badge */
+function updateChatBadge(badgeId, count) {
+    const badge = document.getElementById(badgeId);
+    if (count > 0) {
+        badge.textContent = count;
+        badge.classList.remov
