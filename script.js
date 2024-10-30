@@ -81,6 +81,12 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
     showElement("teamGenerationSection");
     showElement("chatSection"); // Show chat section
 
+    // Check for cached name and pre-fill the input
+    const cachedName = localStorage.getItem('cachedName');
+    if (cachedName) {
+        document.getElementById('nameInput').value = cachedName;
+    }
+
     // Update event listeners
     socket.off('updateNames').on('updateNames', ({ users, creatorId }) => {
         updateNameList(users, creatorId);
@@ -310,6 +316,7 @@ function resetUI() {
     hideElement("memberInfoSection");
     hideElement("teamGenerationSection");
     hideElement("chatSection");
+    hideElement("creatorNameSection"); // Hide the creatorNameSection
     document.getElementById("nameList").innerHTML = "";
     document.getElementById("teamList").innerHTML = "";
     document.getElementById("memberCount").innerHTML =
@@ -416,6 +423,9 @@ document.getElementById("submitName").addEventListener("click", () => {
         socket.emit('submitName', { roomID: currentRoomID, name, afkq });
         nameInput.value = ''; // Clear the input field
         console.log(`Submitted name: ${name}, AFKQ: ${afkq}`);
+
+        // Save the name to localStorage
+        localStorage.setItem('cachedName', name);
     } else {
         alert("Please enter your name.");
     }
