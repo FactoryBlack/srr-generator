@@ -1,13 +1,13 @@
-/* Import the Google Font */
+/* Import Google Font */
 @import url('https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap');
 
-/* General page styling */
+/* General Styles */
 body {
     font-family: 'Montserrat', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #121212; /* Dark theme background */
-    color: #FFFFFF; /* Text color for dark theme */
+    background-color: #121212;
+    color: #FFFFFF;
 }
 
 /* Navigation Bar */
@@ -18,7 +18,7 @@ body {
 
 .nav-container {
     max-width: 1200px;
-    margin: auto;
+    margin: 0 auto;
     display: flex;
     align-items: center;
 }
@@ -31,7 +31,7 @@ body {
 }
 
 .nav-logo .accent-color {
-    color: #E91E63; /* Accent color */
+    color: #E91E63;
 }
 
 /* Container */
@@ -39,32 +39,29 @@ body {
     max-width: 800px;
     margin: 40px auto;
     padding: 40px;
-    background-color: #1E1E1E; /* Slightly lighter than body for contrast */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+    background-color: #1E1E1E;
     border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
 }
 
 /* Headings */
-h1, h2 {
-    color: #FFFFFF;
-    margin-bottom: 20px;
-}
-
 h1 {
     font-size: 36px;
     font-weight: 700;
+    margin-bottom: 20px;
 }
 
 h2 {
     font-size: 28px;
     font-weight: 700;
+    margin-bottom: 20px;
 }
 
 #memberInfoTitle {
-    color: #E91E63; /* Accent color for the member info title */
+    color: #E91E63;
 }
 
-/* Form and button styling */
+/* Form Styles */
 .form-group {
     margin-bottom: 30px;
 }
@@ -72,35 +69,72 @@ h2 {
 .form-row {
     display: flex;
     flex-wrap: wrap;
-    margin-bottom: 15px;
     align-items: center;
+    margin-bottom: 15px;
 }
 
-.form-row label {
-    margin-right: 10px;
-    font-size: 18px;
+.inline-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
 }
 
-.form-row input[type="text"],
-.form-row select {
+.inline-form > * {
     flex: 1;
+}
+
+.inline-form .fixed-width {
+    flex: 0 0 auto;
+}
+
+.inline-form .full-width {
+    flex: 1 1 auto;
+}
+
+label {
+    font-size: 18px;
+    margin-right: 10px;
+}
+
+input[type="text"],
+select {
     padding: 12px;
     font-size: 18px;
-    margin-bottom: 10px;
     border: 1px solid #333333;
     border-radius: 4px;
     background-color: #2A2A2A;
     color: #FFFFFF;
+    box-sizing: border-box;
+    width: 100%;
 }
 
-.form-row input::placeholder {
+input[type="text"]::placeholder {
     color: #888888;
 }
 
-.form-row input[type="checkbox"] {
-    margin-right: 5px;
+button {
+    padding: 12px 20px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #FFFFFF;
+    background-color: #E91E63;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-sizing: border-box;
 }
 
+button:hover {
+    background-color: #C2185B;
+}
+
+button:disabled {
+    background-color: #555555;
+    cursor: not-allowed;
+}
+
+/* Custom Checkbox */
 .custom-checkbox {
     position: relative;
     display: flex;
@@ -108,8 +142,7 @@ h2 {
     font-size: 18px;
     cursor: pointer;
     user-select: none;
-    color: #FFFFFF;
-    white-space: nowrap; /* Prevent text wrapping */
+    white-space: nowrap;
 }
 
 .custom-checkbox input[type="checkbox"] {
@@ -124,197 +157,27 @@ h2 {
     border: 2px solid #E91E63;
     border-radius: 4px;
     margin-right: 8px;
-    display: inline-block;
+    flex-shrink: 0;
 }
 
 .custom-checkbox input[type="checkbox"]:checked + .checkbox-custom {
     background-color: #E91E63;
 }
 
-select {
-    padding: 12px;
-    font-size: 18px;
-    border: 1px solid #333333;
-    border-radius: 8px;
-    background-color: #2A2A2A;
-    color: #FFFFFF;
-}
-
-button {
-    padding: 12px 20px;
-    font-size: 18px;
-    color: #FFFFFF;
-    background-color: #E91E63; /* Accent color */
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 700;
-}
-
-button:hover {
-    background-color: #C2185B; /* Darker shade of the accent color */
-}
-
-button:disabled {
-    background-color: #555555;
-    cursor: not-allowed;
-}
-
-/* Primary Button */
-.button-primary {
-    margin-bottom: 20px;
-}
-
-/* Accent Color */
-.accent-color {
-    color: #E91E63; /* Accent color */
-}
-
-/* Kick button */
-button.kick-button {
-    background: none;
-    border: none;
-    color: #E91E63; /* Accent color */
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-left: 10px;
-}
-
-button.kick-button:hover {
-    text-decoration: underline;
-}
-
-/* List Styling */
-ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-#nameList,
-#roomsList {
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* Vertical spacing between entries */
-    margin-bottom: 20px;
-}
-
-#nameList p,
-#teamList p,
-#roomsList li {
-    font-size: 18px;
-    padding: 10px 15px;
-    background-color: #2A2A2A;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 50px;
-}
-
-#roomsList li button {
-    background: none;
-    border: none;
-    color: #E91E63; /* Accent color */
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-#roomsList li button:disabled {
-    color: #555555;
-    cursor: not-allowed;
-}
-
-#roomsList li button:hover:not(:disabled) {
-    text-decoration: underline;
-}
-
-#teamList p {
-    margin: 0;
-}
-
-/* User name and icon container */
-.user-name-container {
-    display: flex;
-    align-items: center;
-}
-
-.user-name-container .icon-placeholder {
-    margin-right: 8px;
-}
-
-/* No Rooms Message */
-.no-rooms-message {
-    font-size: 18px;
-    margin-bottom: 10px;
-    color: #888888;
-    text-align: center;
-}
-
-/* Inline Form Row */
-.inline-form {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.inline-form > * {
-    flex: 1;
-}
-
-.inline-form .custom-checkbox {
-    flex: 0;
-}
-
-.inline-form button {
-    flex: 0;
-    white-space: nowrap;
-}
-
-.inline-form .custom-checkbox,
-.inline-form button {
-    display: flex;
-    align-items: center;
-    height: 48px;
-}
-
-/* Fix vertical alignment */
-.inline-form select,
-.inline-form button,
-.inline-form .custom-checkbox {
-    display: flex;
-    align-items: center;
-    height: 48px;
-    padding: 0 10px;
-    box-sizing: border-box;
-}
-
-.custom-checkbox .checkbox-custom {
-    width: 24px;
-    height: 24px;
-    margin-right: 8px;
-}
-
-.custom-checkbox {
-    cursor: pointer;
-}
-
-/* Room Code Input Field Styling */
+/* Room Code Input Field */
 #roomID {
-    width: 100%; /* Ensure full width */
+    width: 100%;
     font-size: 64px;
     font-weight: bold;
     border: none;
-    border-bottom: 4px solid #E91E63; /* Accent color underline */
+    border-bottom: 4px solid #E91E63;
     background-color: transparent;
     color: #FFFFFF;
     margin-bottom: 20px;
     letter-spacing: 20px;
     padding: 20px 0;
     text-align: center;
-    box-sizing: border-box; /* Include padding and border in width */
+    box-sizing: border-box;
 }
 
 #roomID::placeholder {
@@ -325,48 +188,101 @@ ul {
 
 #roomID:focus {
     outline: none;
-    border-bottom: 4px solid #C2185B; /* Darker shade on focus */
+    border-bottom: 4px solid #C2185B;
 }
 
-/* Remove input autofill background color */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0px 1000px #121212 inset;
-    box-shadow: 0 0 0px 1000px #121212 inset;
-    -webkit-text-fill-color: #FFFFFF;
+/* Small Input */
+.small-input {
+    padding: 12px;
+    font-size: 18px;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    background-color: #2A2A2A;
+    color: #FFFFFF;
+    box-sizing: border-box;
+    width: 100%;
 }
 
-/* Member Information Styling */
-/* Member Information Styling */
+.small-input::placeholder {
+    color: #888888;
+}
+
+/* Lists */
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+#roomsList li,
+#nameList p,
+#teamList p {
+    font-size: 18px;
+    padding: 10px 15px;
+    background-color: #2A2A2A;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+#roomsList li button,
+.kick-button {
+    background: none;
+    border: none;
+    color: #E91E63;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#roomsList li button:disabled,
+.kick-button:disabled {
+    color: #555555;
+    cursor: not-allowed;
+}
+
+#roomsList li button:hover:not(:disabled),
+.kick-button:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+/* Member Information */
 #memberCount {
     font-size: 18px;
     color: #FFFFFF;
 }
 
 .member-stat {
-    font-weight: bold; /* Make subheadings bold */
-}
-
-.member-stat span {
-    color: #E91E63; /* Accent color for numbers */
     font-weight: bold;
 }
 
-/* Responsive styles */
+.member-stat span {
+    color: #E91E63;
+    font-weight: bold;
+}
+
+/* No Rooms Message */
+.no-rooms-message {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #888888;
+    text-align: center;
+}
+
+/* Visibility Control */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive Styles */
 @media (max-width: 600px) {
     .inline-form {
         flex-direction: column;
-        align-items: stretch;
     }
 
-    select,
-    button {
+    .inline-form > * {
         width: 100%;
-    }
-
-    .custom-checkbox {
-        margin-bottom: 10px;
     }
 
     #roomID {
@@ -378,46 +294,4 @@ input:-webkit-autofill:focus {
         font-size: 48px;
         letter-spacing: 15px;
     }
-}
-
-/* Apply styles to specific small inputs */
-.small-input {
-    flex: 1;
-    max-width: 300px;
-    padding: 12px;
-    font-size: 18px;
-    margin-bottom: 10px;
-    border: 1px solid #333333;
-    border-radius: 4px;
-    background-color: #2A2A2A;
-    color: #FFFFFF;
-}
-
-/* Adjust inline form in #submitNameSection */
-#submitNameSection .inline-form {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: nowrap; /* Prevent wrapping */
-}
-
-#submitNameSection .inline-form > * {
-    flex: 0; /* Prevent flex items from growing */
-}
-
-#submitNameSection .inline-form input[type="text"] {
-    flex: 1; /* Allow the name input to take up available space */
-}
-
-#submitNameSection .custom-checkbox {
-    white-space: nowrap; /* Prevent text wrapping */
-}
-
-#submitNameSection .inline-form button {
-    white-space: nowrap; /* Prevent button text wrapping */
-}
-
-/* Visibility control classes */
-.hidden {
-    display: none !important;
 }
