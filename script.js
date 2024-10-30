@@ -28,13 +28,16 @@ function hideElement(elementId) {
 socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
     if (isCreator) {
-        showElement("generateTeamsContainer"); // Updated to show the container
+        showElement("teamGenerationSection"); // Show the entire section
+        showElement("generateTeamsContainer");
         showElement("creatorNameSection");
     } else {
-        hideElement("generateTeamsContainer"); // Hide the container for participants
+        hideElement("teamGenerationSection"); // Hide the entire section for participants
+        hideElement("generateTeamsContainer");
         hideElement("creatorNameSection");
     }
 });
+
 
 /* Event Listener for the Add Name Button */
 document.getElementById("addName").addEventListener("click", () => {
@@ -234,6 +237,15 @@ function displayTeams(teams) {
                 memberItem.appendChild(revealButton);
             }
 
+            // Show the Vote to Reroll button to participants only
+            if (!isCreator) {
+                showVoteToRerollButton();
+            } else {
+                // For creator, show the vote counter and confirm button container
+                showVoteCounter();
+            }
+
+            console.log("Displayed teams.");
             memberList.appendChild(memberItem);
         });
         teamElement.appendChild(memberList);
@@ -305,6 +317,17 @@ function startVoteTimer(voteButton) {
 /* Show Vote Counter and Confirm Button for Creator */
 function showVoteCounter() {
     const container = document.getElementById('generateTeamsContainer');
+
+    if (!container) {
+        console.error('generateTeamsContainer not found.');
+        return;
+    }
+
+    // Remove existing vote counter and confirm button if they exist
+    const existingVoteCounter = document.getElementById('voteCounter');
+    const existingConfirmButton = document.getElementById('confirmRerollButton');
+    if (existingVoteCounter) existingVoteCounter.remove();
+    if (existingConfirmButton) existingConfirmButton.remove();
 
     // Create vote counter label
     const voteCounter = document.createElement('span');
@@ -520,6 +543,8 @@ function resetUI() {
     if (voteButton) {
         voteButton.remove();
     }
+
+    hideElement("generateTeamsContainer"); // Hide the generateTeamsContainer
 
     // Remove vote counter and confirm button if creator
     const voteCounter = document.getElementById('voteCounter');
