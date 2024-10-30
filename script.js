@@ -574,7 +574,7 @@ socket.on('activeRooms', (publicRooms) => {
     }
 
     console.log("Updated active public rooms.");
-};
+});
 
 /* Update Member Count */
 socket.on('memberCount', ({ total, named, unnamed }) => {
