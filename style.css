@@ -640,3 +640,38 @@ button.reveal-button:hover:not(:disabled),
     width: 100%;
     margin-top: 10px;
 }
+
+/* Increased Vertical Spacing Between Sections */
+.container > h1,
+.container > h2,
+.form-group,
+#memberInfoSection,
+#teamGenerationSection,
+#chatSection {
+    margin-bottom: 40px;
+}
+
+/* Adjusted Button Styles */
+.button-primary {
+    min-width: 300px;
+}
+
+.button-inline {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+/* Confirmation Buttons Styling */
+.confirm-button {
+    min-width: 140px;
+}
+
+/* Adjusted Vote Counter Styling */
+#voteCounter {
+    font-size: 16px;
+    margin-left: 10px;
+}
+
+#voteCounter .accent-color {
+    color: #FA2A55;
+}
