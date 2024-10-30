@@ -675,3 +675,93 @@ button.reveal-button:hover:not(:disabled),
 #voteCounter .accent-color {
     color: #FA2A55;
 }
+
+/* Accent Color */
+.accent-color {
+    color: #FA2A55;
+}
+
+/* Voted Member Styling */
+.voted-member {
+    color: #FA2A55;
+    font-weight: bold;
+}
+
+/* Team Generation Header */
+.team-generation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.team-generation-header h2 {
+    margin: 0;
+}
+
+/* Generate Teams Container */
+#generateTeamsContainer {
+    display: flex;
+    align-items: center;
+}
+
+/* Vote to Reroll Button */
+.vote-reroll-button {
+    width: 100%;
+    background-color: #FFFFFF;
+    color: #FA2A55;
+    border: 2px solid #FA2A55;
+    padding: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    margin-top: 20px;
+}
+
+.vote-reroll-button:hover {
+    background-color: #FA2A55;
+    color: #FFFFFF;
+}
+
+.vote-reroll-button:disabled {
+    background-color: #FA2A55;
+    color: #FFFFFF;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Adjusted Button Styles */
+.button-primary {
+    min-width: 150px;
+}
+
+.button-inline {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+/* Confirmation Buttons Styling */
+.confirm-button {
+    min-width: 100px;
+}
+
+/* Adjusted Vote Counter Styling */
+#voteCounter {
+    font-size: 16px;
+    margin-left: 10px;
+}
+
+#voteCounter .accent-color {
+    color: #FA2A55;
+}
+
+/* Increased Vertical Spacing Between Sections */
+.container > h1,
+.container > h2,
+.form-group,
+#memberInfoSection,
+#teamGenerationSection,
+#chatSection {
+    margin-bottom: 40px;
+}

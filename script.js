@@ -1,3 +1,5 @@
+// script.js
+
 const socket = io();
 let isCreator = false;
 let currentRoomID = null;
@@ -26,23 +28,23 @@ function hideElement(elementId) {
 socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
     if (isCreator) {
-        showElement("teamGenerationSection"); // Both creator and participants see this
-        showElement("generateTeamsContainer"); // Only creator
-        showElement("creatorNameSection"); // Only creator
+        showElement("teamGenerationSection");
+        showElement("generateTeamsContainer");
+        showElement("creatorNameSection");
 
         // Add the Generate Teams button
         setupGenerateTeamsButton();
     } else {
-        showElement("teamGenerationSection"); // Participants see names and teams
-        hideElement("generateTeamsContainer"); // Hide generate teams button
-        hideElement("creatorNameSection"); // Hide creator name input
+        showElement("teamGenerationSection");
+        hideElement("generateTeamsContainer");
+        hideElement("creatorNameSection");
     }
 });
 
 /* Function to Setup Generate Teams Button */
 function setupGenerateTeamsButton() {
     const generateTeamsContainer = document.getElementById('generateTeamsContainer');
-    generateTeamsContainer.innerHTML = ''; // Clear previous content
+    generateTeamsContainer.innerHTML = '';
 
     // Add the "Generate Teams" button
     const generateTeamsButton = document.createElement('button');
@@ -290,7 +292,7 @@ function showVoteToRerollButton() {
 
     const voteButton = document.createElement('button');
     voteButton.textContent = 'Vote to Reroll';
-    voteButton.classList.add('button-primary', 'vote-reroll-button');
+    voteButton.classList.add('vote-reroll-button');
     voteButton.addEventListener('click', () => {
         if (!userVoted) {
             socket.emit('voteReroll', { roomID: currentRoomID });
@@ -387,6 +389,7 @@ function showConfirmRerollButtons() {
 }
 
 /* Update Voted Members */
+/* Update Voted Members */
 function updateVotedMembers(votedUsernames) {
     // Update vote counter if creator
     if (isCreator) {
@@ -405,23 +408,21 @@ function updateVotedMembers(votedUsernames) {
         }
     }
 
-    // For participants, highlight voted members
-    if (!isCreator) {
-        // Clear previous votes
-        const nameElements = document.querySelectorAll('.user-name');
-        nameElements.forEach(element => {
-            element.classList.remove('voted-member');
-        });
+    // Highlight voted members for all participants
+    // Clear previous votes
+    const nameElements = document.querySelectorAll('.user-name');
+    nameElements.forEach(element => {
+        element.classList.remove('voted-member');
+    });
 
-        // Highlight users who have voted
-        votedUsernames.forEach(username => {
-            nameElements.forEach(element => {
-                if (element.textContent === username) {
-                    element.classList.add('voted-member');
-                }
-            });
+    // Highlight users who have voted
+    votedUsernames.forEach(username => {
+        nameElements.forEach(element => {
+            if (element.textContent.trim() === username.trim()) {
+                element.classList.add('voted-member');
+            }
         });
-    }
+    });
 }
 
 /* Handle Teams Rerolled */
