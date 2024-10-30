@@ -299,18 +299,13 @@ ul {
     text-align: center;
 }
 
-/* Visibility Control */
+/* Ensure hidden class works properly */
 .hidden {
     display: none !important;
 }
 
-/* Responsive Styles */
+/* Responsive Styles Adjusted */
 @media (max-width: 600px) {
-    /* Remove margin-right from label on mobile */
-    label {
-        margin-right: 0;
-    }
-
     /* Stack form elements vertically */
     .inline-form {
         flex-direction: column;
@@ -335,6 +330,29 @@ ul {
     /* Adjust custom checkbox spacing on mobile */
     .custom-checkbox {
         margin-bottom: 10px;
+    }
+
+    /* Ensure team list and name list display correctly */
+    #teamList, #nameList {
+        display: block;
+    }
+
+    .user-entry {
+        flex: 1 1 100%;
+    }
+
+    .team ul {
+        list-style-type: none;
+        padding-left: 0;
+    }
+
+    .team li {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .team li button {
+        margin-top: 5px;
     }
 }
 
