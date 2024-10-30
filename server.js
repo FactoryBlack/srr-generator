@@ -69,7 +69,7 @@ io.on('connection', (socket) => {
         rooms[roomID].users[socket.id] = { id: socket.id, name: "Unnamed", afkq: false };
 
         socket.emit('creatorStatus', { isCreator: socket.id === rooms[roomID].creator });
-        io.to(roomID).emit('updateNames', Object.values(rooms[roomID].users));
+        io.to(roomID).emit('updateNames', { users: Object.values(rooms[roomID].users), creatorId: rooms[roomID].creator });
         updateMemberCount(roomID);
 
         console.log(`User ${socket.id} joined room ${roomID}`);
@@ -80,7 +80,7 @@ io.on('connection', (socket) => {
         const room = rooms[roomID];
         if (room && room.users[socket.id]) {
             room.users[socket.id] = { id: socket.id, name, afkq };
-            io.to(roomID).emit('updateNames', Object.values(room.users));
+            io.to(roomID).emit('updateNames', { users: Object.values(room.users), creatorId: room.creator });
             updateMemberCount(roomID);
             console.log(`User ${socket.id} submitted name '${name}' in room ${roomID}`);
         }
@@ -101,7 +101,7 @@ io.on('connection', (socket) => {
             // Generate a unique ID for the new user
             const newUserId = `manual-${Date.now()}-${Math.random()}`;
             room.users[newUserId] = { id: newUserId, name, afkq: false, manual: true };
-            io.to(roomID).emit('updateNames', Object.values(room.users));
+            io.to(roomID).emit('updateNames', { users: Object.values(room.users), creatorId: room.creator });
             updateMemberCount(roomID);
             console.log(`Creator added name '${name}' to room ${roomID}`);
         }
@@ -121,7 +121,7 @@ io.on('connection', (socket) => {
                 console.log(`Manual user '${room.users[userID].name}' removed from room ${roomID}`);
             }
             delete room.users[userID];
-            io.to(roomID).emit('updateNames', Object.values(room.users));
+            io.to(roomID).emit('updateNames', { users: Object.values(room.users), creatorId: room.creator });
             updateMemberCount(roomID);
         }
     });
@@ -207,6 +207,18 @@ io.on('connection', (socket) => {
         }
     });
 
+    /* Handle Leave Room */
+    socket.on('leaveRoom', ({ roomID }) => {
+        socket.leave(roomID);
+        const room = rooms[roomID];
+        if (room && room.users[socket.id]) {
+            delete room.users[socket.id];
+            io.to(roomID).emit('updateNames', { users: Object.values(room.users), creatorId: room.creator });
+            updateMemberCount(roomID);
+            console.log(`User ${socket.id} left room ${roomID}`);
+        }
+    });
+
     /* Handle User Disconnection */
     socket.on('disconnect', () => {
         for (const roomID in rooms) {
@@ -218,7 +230,7 @@ io.on('connection', (socket) => {
                 console.log(`Room ${roomID} closed by creator ${socket.id}`);
             } else if (room.users[socket.id]) {
                 delete room.users[socket.id];
-                io.to(roomID).emit('updateNames', Object.values(room.users));
+                io.to(roomID).emit('updateNames', { users: Object.values(room.users), creatorId: room.creator });
                 updateMemberCount(roomID);
                 console.log(`User ${socket.id} disconnected from room ${roomID}`);
             }

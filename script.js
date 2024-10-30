@@ -59,6 +59,9 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
     if (currentJoinButton && currentJoinButton !== joinButton) {
         currentJoinButton.disabled = false;
         currentJoinButton.textContent = 'Join Room';
+        currentJoinButton.onclick = function () {
+            joinRoom(currentRoomID, true, null, currentJoinButton);
+        };
     }
 
     currentRoomID = roomID;
@@ -80,29 +83,34 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
     showElement("chatSection"); // Show chat section
 
     // Update event listeners
-    socket.off('updateNames').on('updateNames', updateNameList);
+    socket.off('updateNames').on('updateNames', ({ users, creatorId }) => {
+        updateNameList(users, creatorId);
+    });
     socket.off('displayTeams').on('displayTeams', displayTeams);
 
-    // Disable the join button if provided
     if (joinButton) {
-        joinButton.disabled = true;
-        joinButton.textContent = 'Joined';
+        joinButton.textContent = 'Leave Room';
+        joinButton.onclick = function () {
+            leaveRoom(roomID, joinButton);
+        };
         currentJoinButton = joinButton;
-    } else {
-        // Check if the room exists in the public rooms list and update the button there
-        const publicJoinButton = document.getElementById(`joinRoomButton-${roomID}`);
-        if (publicJoinButton) {
-            publicJoinButton.disabled = true;
-            publicJoinButton.textContent = 'Joined';
-            currentJoinButton = publicJoinButton;
-        }
     }
 
     console.log(`Joined room: ${roomID}`);
 }
 
+/* Leave Room Function */
+function leaveRoom(roomID, joinButton) {
+    socket.emit('leaveRoom', { roomID });
+    resetUI();
+    joinButton.textContent = 'Join Room';
+    joinButton.onclick = function () {
+        joinRoom(roomID, true, null, joinButton);
+    };
+}
+
 /* Update Name List Function */
-function updateNameList(users) {
+function updateNameList(users, creatorId) {
     const nameListDiv = document.getElementById("nameList");
     nameListDiv.innerHTML = '';
     users.forEach(user => {
@@ -124,6 +132,14 @@ function updateNameList(users) {
             badgeSpan.classList.add('afkq-badge');
             badgeSpan.textContent = 'AFKQ';
             nameContainer.appendChild(badgeSpan);
+        }
+
+        // Add 'Host' badge if the user is the creator
+        if (user.id === creatorId) {
+            const hostBadge = document.createElement('span');
+            hostBadge.classList.add('host-badge');
+            hostBadge.textContent = 'Host';
+            nameContainer.appendChild(hostBadge);
         }
 
         userElement.appendChild(nameContainer);
@@ -291,6 +307,9 @@ function resetUI() {
     if (currentJoinButton) {
         currentJoinButton.disabled = false;
         currentJoinButton.textContent = 'Join Room';
+        currentJoinButton.onclick = function () {
+            joinRoom(currentRoomID, true, null, currentJoinButton);
+        };
         currentJoinButton = null;
     }
 
@@ -322,10 +341,12 @@ socket.on('activeRooms', (publicRooms) => {
                 joinRoom(room.roomID, true, room.teamSize, this);
             });
 
-            // If the user is already in this room, disable the button
+            // If the user is already in this room
             if (currentRoomID === room.roomID) {
-                joinButton.disabled = true;
-                joinButton.textContent = 'Joined';
+                joinButton.textContent = 'Leave Room';
+                joinButton.onclick = function () {
+                    leaveRoom(room.roomID, joinButton);
+                };
                 currentJoinButton = joinButton;
             }
 
@@ -505,3 +526,39 @@ function resetChat() {
     hideElement('teamChat');
     switchChatTab('roomChat');
 }
+
+/* Event Listeners for Enter Key Press */
+// Join or Create Room
+document.getElementById('roomID').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        document.getElementById('joinRoom').click();
+    }
+});
+
+// Submit Name
+document.getElementById('nameInput').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        document.getElementById('submitName').click();
+    }
+});
+
+// Add Name (Creator)
+document.getElementById('creatorNameInput').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        document.getElementById('addName').click();
+    }
+});
+
+// Room Chat Send
+document.getElementById('roomChatInput').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        document.getElementById('roomChatSend').click();
+    }
+});
+
+// Team Chat Send
+document.getElementById('teamChatInput').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        document.getElementById('teamChatSend').click();
+    }
+});
