@@ -55,14 +55,13 @@ function isNameDuplicate(name) {
 
 /* Join or Create Room Function */
 function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
-    // Reset previous join button
-    if (currentJoinButton && currentJoinButton !== joinButton) {
-        currentJoinButton.disabled = false;
-        currentJoinButton.textContent = 'Join Room';
-        currentJoinButton.onclick = function () {
-            joinRoom(currentRoomID, true, null, currentJoinButton);
-        };
+    // If already in a room, leave it first
+    if (currentRoomID) {
+        leaveRoom(currentRoomID, currentJoinButton);
     }
+
+    // Reset UI before joining a new room
+    resetUI();
 
     currentRoomID = roomID;
     if (isPublic === null) {
@@ -87,6 +86,12 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
         updateNameList(users, creatorId);
     });
     socket.off('displayTeams').on('displayTeams', displayTeams);
+    socket.off('revealName').on('revealName', ({ memberId, memberName }) => {
+        handleRevealName(memberId, memberName);
+    });
+    socket.off('revealAllNames').on('revealAllNames', (teams) => {
+        handleRevealAllNames(teams);
+    });
 
     if (joinButton) {
         joinButton.textContent = 'Leave Room';
@@ -103,10 +108,12 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
 function leaveRoom(roomID, joinButton) {
     socket.emit('leaveRoom', { roomID });
     resetUI();
-    joinButton.textContent = 'Join Room';
-    joinButton.onclick = function () {
-        joinRoom(roomID, true, null, joinButton);
-    };
+    if (joinButton) {
+        joinButton.textContent = 'Join Room';
+        joinButton.onclick = function () {
+            joinRoom(roomID, true, null, joinButton);
+        };
+    }
 }
 
 /* Update Name List Function */
@@ -226,7 +233,7 @@ function displayTeams(teams) {
 }
 
 /* Handle Reveal Name Event */
-socket.on('revealName', ({ memberId, memberName }) => {
+function handleRevealName(memberId, memberName) {
     const memberItem = document.getElementById(memberId);
     if (memberItem && !revealedNames.has(memberId)) {
         // Remove existing content
@@ -240,10 +247,14 @@ socket.on('revealName', ({ memberId, memberName }) => {
             revealButton.remove();
         }
     }
+}
+
+socket.on('revealName', ({ memberId, memberName }) => {
+    handleRevealName(memberId, memberName);
 });
 
 /* Handle Reveal All Names Event */
-socket.on('revealAllNames', (teams) => {
+function handleRevealAllNames(teams) {
     teams.forEach((team, i) => {
         team.forEach((memberName, index) => {
             const memberId = `team${i}-member${index}`;
@@ -261,6 +272,10 @@ socket.on('revealAllNames', (teams) => {
         });
     });
     console.log("Revealed all names.");
+}
+
+socket.on('revealAllNames', (teams) => {
+    handleRevealAllNames(teams);
 });
 
 /* Kick User Function */
@@ -308,13 +323,26 @@ function resetUI() {
         currentJoinButton.disabled = false;
         currentJoinButton.textContent = 'Join Room';
         currentJoinButton.onclick = function () {
-            joinRoom(currentRoomID, true, null, currentJoinButton);
+            const roomID = currentJoinButton.getAttribute('data-room-id');
+            joinRoom(roomID, true, null, currentJoinButton);
         };
         currentJoinButton = null;
     }
 
     // Reset chat variables
     resetChat();
+
+    // Reset variables
+    currentRoomID = null;
+    isCreator = false;
+    teamGenerated = false;
+    revealedNames = new Set();
+
+    // Remove any event listeners
+    socket.off('updateNames');
+    socket.off('displayTeams');
+    socket.off('revealName');
+    socket.off('revealAllNames');
 
     console.log("UI has been reset.");
 }
@@ -336,6 +364,7 @@ socket.on('activeRooms', (publicRooms) => {
 
             const joinButton = document.createElement('button');
             joinButton.id = `joinRoomButton-${room.roomID}`;
+            joinButton.setAttribute('data-room-id', room.roomID); // Add data attribute
             joinButton.textContent = 'Join Room';
             joinButton.addEventListener('click', function () {
                 joinRoom(room.roomID, true, room.teamSize, this);

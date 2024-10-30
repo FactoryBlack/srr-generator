@@ -209,13 +209,24 @@ io.on('connection', (socket) => {
 
     /* Handle Leave Room */
     socket.on('leaveRoom', ({ roomID }) => {
-        socket.leave(roomID);
         const room = rooms[roomID];
-        if (room && room.users[socket.id]) {
-            delete room.users[socket.id];
-            io.to(roomID).emit('updateNames', { users: Object.values(room.users), creatorId: room.creator });
-            updateMemberCount(roomID);
-            console.log(`User ${socket.id} left room ${roomID}`);
+        if (room) {
+            if (socket.id === room.creator) {
+                // Creator is leaving, close the room
+                io.to(roomID).emit('roomClosed');
+                delete rooms[roomID];
+                broadcastPublicRooms();
+                console.log(`Room ${roomID} closed by creator ${socket.id}`);
+            } else {
+                // Regular user leaving
+                socket.leave(roomID);
+                if (room.users[socket.id]) {
+                    delete room.users[socket.id];
+                    io.to(roomID).emit('updateNames', { users: Object.values(room.users), creatorId: room.creator });
+                    updateMemberCount(roomID);
+                    console.log(`User ${socket.id} left room ${roomID}`);
+                }
+            }
         }
     });
 
