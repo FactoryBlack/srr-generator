@@ -11,6 +11,8 @@ let voteDuration = 60; // 60 seconds
 let voteInterval = null;
 let revealedNames = new Set();
 
+let totalMembers = 0;
+
 /* Functions to Show and Hide Elements */
 function showElement(elementId) {
     const element = document.getElementById(elementId);
@@ -26,10 +28,10 @@ function hideElement(elementId) {
 socket.on('creatorStatus', (data) => {
     isCreator = data.isCreator;
     if (isCreator) {
-        showElement("generateTeams");
+        showElement("generateTeamsContainer"); // Updated to show the container
         showElement("creatorNameSection");
     } else {
-        hideElement("generateTeams");
+        hideElement("generateTeamsContainer"); // Hide the container for participants
         hideElement("creatorNameSection");
     }
 });
@@ -108,6 +110,9 @@ function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
     socket.off('voteUpdate').on('voteUpdate', ({ votedUsernames }) => {
         updateVotedMembers(votedUsernames);
     });
+    socket.off('enableConfirmReroll').on('enableConfirmReroll', () => {
+        showConfirmRerollButton();
+    });
     socket.off('teamsRerolled').on('teamsRerolled', (teams) => {
         handleTeamsRerolled(teams);
     });
@@ -137,6 +142,7 @@ function leaveRoom(roomID, joinButton) {
 
 /* Update Name List Function */
 function updateNameList(users, creatorId) {
+    totalMembers = users.length;
     const nameListDiv = document.getElementById("nameList");
     nameListDiv.innerHTML = '';
     users.forEach(user => {
@@ -245,13 +251,18 @@ function displayTeams(teams) {
         teamListDiv.appendChild(revealAllButton);
     }
 
-    // Show the Vote to Reroll button to all participants
-    showVoteToRerollButton();
+    // Show the Vote to Reroll button to participants only
+    if (!isCreator) {
+        showVoteToRerollButton();
+    } else {
+        // For creator, show the vote counter and confirm button container
+        showVoteCounter();
+    }
 
     console.log("Displayed teams.");
 }
 
-/* Show Vote to Reroll Button */
+/* Show Vote to Reroll Button for Participants */
 function showVoteToRerollButton() {
     const teamListDiv = document.getElementById("teamList");
 
@@ -291,22 +302,66 @@ function startVoteTimer(voteButton) {
     }, 1000);
 }
 
-/* Update Voted Members */
-function updateVotedMembers(votedUsernames) {
-    // Clear previous votes
-    const nameElements = document.querySelectorAll('.user-name');
-    nameElements.forEach(element => {
-        element.classList.remove('voted-member');
+/* Show Vote Counter and Confirm Button for Creator */
+function showVoteCounter() {
+    const container = document.getElementById('generateTeamsContainer');
+
+    // Create vote counter label
+    const voteCounter = document.createElement('span');
+    voteCounter.id = 'voteCounter';
+    voteCounter.textContent = '0 / 0 members voted reroll';
+    voteCounter.style.marginLeft = '10px';
+
+    // Create Confirm Reroll button (initially hidden)
+    const confirmButton = document.createElement('button');
+    confirmButton.id = 'confirmRerollButton';
+    confirmButton.textContent = 'Confirm Reroll';
+    confirmButton.classList.add('button-primary');
+    confirmButton.style.display = 'none';
+    confirmButton.style.marginLeft = '10px';
+    confirmButton.addEventListener('click', () => {
+        socket.emit('confirmReroll', { roomID: currentRoomID });
     });
 
-    // Highlight users who have voted
-    votedUsernames.forEach(username => {
-        nameElements.forEach(element => {
-            if (element.textContent === username) {
-                element.classList.add('voted-member');
+    container.appendChild(voteCounter);
+    container.appendChild(confirmButton);
+}
+
+/* Update Voted Members */
+function updateVotedMembers(votedUsernames) {
+    // Update vote counter if creator
+    if (isCreator) {
+        const voteCounter = document.getElementById('voteCounter');
+        if (voteCounter) {
+            voteCounter.textContent = `${votedUsernames.length} / ${totalMembers} members voted reroll`;
+        }
+
+        // Check if votes reach 80% or more
+        if (votedUsernames.length / totalMembers >= 0.8) {
+            const confirmButton = document.getElementById('confirmRerollButton');
+            if (confirmButton) {
+                confirmButton.style.display = 'inline-block';
             }
+        }
+    }
+
+    // For participants, highlight voted members
+    if (!isCreator) {
+        // Clear previous votes
+        const nameElements = document.querySelectorAll('.user-name');
+        nameElements.forEach(element => {
+            element.classList.remove('voted-member');
         });
-    });
+
+        // Highlight users who have voted
+        votedUsernames.forEach(username => {
+            nameElements.forEach(element => {
+                if (element.textContent === username) {
+                    element.classList.add('voted-member');
+                }
+            });
+        });
+    }
 }
 
 /* Handle Teams Rerolled */
@@ -319,6 +374,14 @@ function handleTeamsRerolled(teams) {
     const voteButton = document.querySelector('.vote-reroll-button');
     if (voteButton) {
         voteButton.remove();
+    }
+
+    // Remove vote counter and confirm button if creator
+    if (isCreator) {
+        const voteCounter = document.getElementById('voteCounter');
+        const confirmButton = document.getElementById('confirmRerollButton');
+        if (voteCounter) voteCounter.remove();
+        if (confirmButton) confirmButton.remove();
     }
 
     // Clear accent color from names
@@ -437,6 +500,7 @@ function resetUI() {
     isCreator = false;
     teamGenerated = false;
     revealedNames = new Set();
+    totalMembers = 0;
 
     // Remove any event listeners
     socket.off('updateNames');
@@ -444,6 +508,7 @@ function resetUI() {
     socket.off('revealName');
     socket.off('revealAllNames');
     socket.off('voteUpdate');
+    socket.off('enableConfirmReroll');
     socket.off('teamsRerolled');
 
     // Reset vote variables
@@ -455,6 +520,12 @@ function resetUI() {
     if (voteButton) {
         voteButton.remove();
     }
+
+    // Remove vote counter and confirm button if creator
+    const voteCounter = document.getElementById('voteCounter');
+    const confirmButton = document.getElementById('confirmRerollButton');
+    if (voteCounter) voteCounter.remove();
+    if (confirmButton) confirmButton.remove();
 
     // Clear accent color from names
     const votedMembers = document.querySelectorAll('.voted-member');
@@ -503,13 +574,14 @@ socket.on('activeRooms', (publicRooms) => {
     }
 
     console.log("Updated active public rooms.");
-});
+}
 
 /* Update Member Count */
 socket.on('memberCount', ({ total, named, unnamed }) => {
     document.getElementById("totalMembers").textContent = total;
     document.getElementById("namedMembers").textContent = named;
     document.getElementById("unnamedMembers").textContent = unnamed;
+    totalMembers = total; // Update total members for voting
     console.log(`Member count updated: Total - ${total}, Named - ${named}, Unnamed - ${unnamed}`);
 });
 
