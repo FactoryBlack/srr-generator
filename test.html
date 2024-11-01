@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Wanna Lockpick Open Exploration</title>
+    <title>I Wanna Lockpick Puzzle Solver</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         #output { margin-top: 20px; white-space: pre-wrap; }
@@ -11,8 +11,8 @@
     </style>
 </head>
 <body>
-    <h1>I Wanna Lockpick Open Exploration</h1>
-    <p>Explore all possible states starting from (1, 1, 1) with additions and divisions, without a specific goal.</p>
+    <h1>I Wanna Lockpick Puzzle Solver</h1>
+    <p>Explore all possible states starting from (1, 1, 1) with additions and divisions to find the target (7 pink, 21 green).</p>
 
     <label for="maxSteps">Maximum Steps:</label>
     <input type="number" id="maxSteps" value="100" min="1">
@@ -30,11 +30,14 @@
             const outputDiv = document.getElementById('output');
             outputDiv.innerHTML = "Exploring states...";
 
-            const states = bruteForceExplore(maxSteps);
-            if (states.length === 0) {
+            const { states, goalFound } = bruteForceExplore(maxSteps);
+
+            if (goalFound) {
+                outputDiv.innerHTML = "Goal State Found! (7 pink, 21 green)";
+            } else if (states.length === 0) {
                 outputDiv.innerHTML = "No states found within the step limit.";
             } else {
-                outputDiv.innerHTML = "Unique States Explored:\n" + states.join("\n");
+                outputDiv.innerHTML = "Goal State Not Found. Unique States Explored:\n" + states.join("\n");
             }
         }
 
@@ -45,10 +48,13 @@
         function bruteForceExplore(maxStep) {
             const MAX_SET_SIZE = 10000;
             const MAX_PINK_GREEN = 30; // Prune states where pink or green exceeds this threshold
+            const TARGET_PINK = 7;
+            const TARGET_GREEN = 21;
 
             let step = 0;
             let workList = [[1, 1, 1, []]]; // Start with (pink, green, cyan, path)
             let reachedStates = new Set(); // Record all reached states
+            let goalFound = false;
 
             while (step < maxStep && !stop) {
                 let nextWorkList = [];
@@ -62,7 +68,7 @@
                     // Check if we've hit the max set size to prevent overflow
                     if (reachedStates.size >= MAX_SET_SIZE) {
                         stop = true;
-                        return Array.from(reachedStates);
+                        return { states: Array.from(reachedStates), goalFound };
                     }
 
                     // Prune states with pink or green greater than MAX_PINK_GREEN
@@ -70,6 +76,12 @@
 
                     // Add the current state to the reached set
                     reachedStates.add(stateId);
+
+                    // Check if we've reached the goal state (7 pink, 21 green)
+                    if (pink === TARGET_PINK && green === TARGET_GREEN) {
+                        goalFound = true;
+                        return { states: Array.from(reachedStates), goalFound };
+                    }
 
                     // Add operations
                     nextWorkList.push([pink + cyan, green, cyan + 1, [...path, "add cyan to pink"]]);
@@ -86,7 +98,7 @@
                 step++;
             }
 
-            return Array.from(reachedStates);
+            return { states: Array.from(reachedStates), goalFound };
         }
     </script>
 </body>
