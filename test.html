@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Wanna Lockpick State Explorer</title>
+    <title>I Wanna Lockpick Open Exploration</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         #output { margin-top: 20px; white-space: pre-wrap; }
@@ -11,8 +11,8 @@
     </style>
 </head>
 <body>
-    <h1>I Wanna Lockpick Puzzle State Explorer</h1>
-    <p>Explore all possible states starting from (1, 1, 1) with additions and divisions.</p>
+    <h1>I Wanna Lockpick Open Exploration</h1>
+    <p>Explore all possible states starting from (1, 1, 1) with additions and divisions, without a specific goal.</p>
 
     <label for="maxSteps">Maximum Steps:</label>
     <input type="number" id="maxSteps" value="100" min="1">
@@ -34,7 +34,7 @@
             if (states.length === 0) {
                 outputDiv.innerHTML = "No states found within the step limit.";
             } else {
-                outputDiv.innerHTML = "Unique States Found:\n" + states.join("\n");
+                outputDiv.innerHTML = "Unique States Explored:\n" + states.join("\n");
             }
         }
 
@@ -59,7 +59,7 @@
                     // Only process new states to avoid redundancy
                     if (reachedStates.has(stateId)) continue;
 
-                    // Check if we've hit the max set size to prevent memory overflow
+                    // Check if we've hit the max set size to prevent overflow
                     if (reachedStates.size >= MAX_SET_SIZE) {
                         stop = true;
                         return Array.from(reachedStates);
