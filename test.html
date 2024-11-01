@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Wanna Lockpick Puzzle Solver</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #solution { margin-top: 20px; }
+        button { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>I Wanna Lockpick Puzzle Solver</h1>
+    <p>Goal: Reach 7 pink and 21 green keys starting from (1, 1, 1).</p>
+
+    <label for="maxSteps">Maximum Steps:</label>
+    <input type="number" id="maxSteps" value="1000" min="1">
+    <button onclick="startSolver()">Start Solver</button>
+    <button onclick="stopSolver()">Stop Solver</button>
+
+    <div id="solution"></div>
+
+    <script>
+        let stop = false;
+
+        function startSolver() {
+            stop = false; // Reset stop flag
+            const maxSteps = parseInt(document.getElementById('maxSteps').value);
+            const resultDiv = document.getElementById('solution');
+            resultDiv.innerHTML = "Solving...";
+
+            const solution = bruteForce(maxSteps);
+            if (solution === "no solution") {
+                resultDiv.innerHTML = "No solution found within the step limit.";
+            } else {
+                resultDiv.innerHTML = "Solution Path: " + solution.join(" ➔ ");
+            }
+        }
+
+        function stopSolver() {
+            stop = true;
+        }
+
+        function bruteForce(maxStep) {
+            let step = -1;
+            let workList = [[1, 1, 1, []]]; // Start with (pink, green, cyan, path)
+            while (step < maxStep && !stop) {
+                let nextWorkList = [];
+                for (let i = 0; i < workList.length; i++) {
+                    let [pink, green, cyan, path] = workList[i];
+
+                    // Check if we've reached the target
+                    if (pink === 7 && green === 21) return path;
+
+                    // Add operations
+                    nextWorkList.push([pink + cyan, green, cyan + 1, [...path, "add pink"]]);
+                    nextWorkList.push([pink, green + cyan, cyan + 1, [...path, "add green"]]);
+
+                    // Divide operations
+                    for (let j = 2; j <= Math.min(pink, green); j++) {
+                        if (pink % j === 0 && green % j === 0) {
+                            nextWorkList.push([pink / j, green / j, cyan, [...path, `divide by ${j}`]]);
+                        }
+                    }
+                }
+                workList = nextWorkList;
+                step++;
+            }
+            return "no solution";
+        }
+    </script>
+</body>
+</html>
