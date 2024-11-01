@@ -3,55 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Wanna Lockpick Puzzle Solver</title>
+    <title>I Wanna Lockpick State Explorer</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        #solution { margin-top: 20px; }
+        #output { margin-top: 20px; white-space: pre-wrap; }
         button { margin: 10px 0; }
     </style>
 </head>
 <body>
-    <h1>I Wanna Lockpick Puzzle Solver</h1>
-    <p>Goal: Reach 7 pink and 21 green keys starting from (1, 1, 1).</p>
+    <h1>I Wanna Lockpick Puzzle State Explorer</h1>
+    <p>Explore all possible states starting from (1, 1, 1) with additions and divisions.</p>
 
     <label for="maxSteps">Maximum Steps:</label>
-    <input type="number" id="maxSteps" value="1000" min="1">
-    <button onclick="startSolver()">Start Solver</button>
-    <button onclick="stopSolver()">Stop Solver</button>
+    <input type="number" id="maxSteps" value="100" min="1">
+    <button onclick="exploreStates()">Explore States</button>
+    <button onclick="stopExploration()">Stop Exploration</button>
 
-    <div id="solution"></div>
+    <div id="output">Output will appear here...</div>
 
     <script>
         let stop = false;
 
-        function startSolver() {
+        function exploreStates() {
             stop = false; // Reset stop flag
             const maxSteps = parseInt(document.getElementById('maxSteps').value);
-            const resultDiv = document.getElementById('solution');
-            resultDiv.innerHTML = "Solving...";
+            const outputDiv = document.getElementById('output');
+            outputDiv.innerHTML = "Exploring states...";
 
-            const solution = bruteForce(maxSteps);
-            if (solution === "no solution") {
-                resultDiv.innerHTML = "No solution found within the step limit.";
+            const states = bruteForceExplore(maxSteps);
+            if (states.length === 0) {
+                outputDiv.innerHTML = "No states found within the step limit.";
             } else {
-                resultDiv.innerHTML = "Solution Path: " + solution.join(" ➔ ");
+                outputDiv.innerHTML = "Unique States Found:\n" + states.join("\n");
             }
         }
 
-        function stopSolver() {
+        function stopExploration() {
             stop = true;
         }
 
-        function bruteForce(maxStep) {
+        function bruteForceExplore(maxStep) {
             let step = -1;
             let workList = [[1, 1, 1, []]]; // Start with (pink, green, cyan, path)
+            let reachedStates = new Set(); // Record all reached states
+
             while (step < maxStep && !stop) {
                 let nextWorkList = [];
                 for (let i = 0; i < workList.length; i++) {
                     let [pink, green, cyan, path] = workList[i];
+                    let stateId = `${pink},${green},${cyan}`;
 
-                    // Check if we've reached the target
-                    if (pink === 7 && green === 21) return path;
+                    // Only process new states to avoid redundancy
+                    if (reachedStates.has(stateId)) continue;
+                    reachedStates.add(stateId);
 
                     // Add operations
                     nextWorkList.push([pink + cyan, green, cyan + 1, [...path, "add pink"]]);
@@ -67,7 +71,8 @@
                 workList = nextWorkList;
                 step++;
             }
-            return "no solution";
+
+            return Array.from(reachedStates);
         }
     </script>
 </body>
