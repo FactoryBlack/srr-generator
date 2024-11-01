@@ -30,10 +30,10 @@
             const outputDiv = document.getElementById('output');
             outputDiv.innerHTML = "Exploring states...";
 
-            const { states, goalFound } = bruteForceExplore(maxSteps);
+            const { states, goalFound, goalPath } = bruteForceExplore(maxSteps);
 
             if (goalFound) {
-                outputDiv.innerHTML = "Goal State Found! (7 pink, 21 green)";
+                outputDiv.innerHTML = `Goal State Found! (7 pink, 21 green)\n\nSteps to reach the goal:\n${goalPath.join(" ➔ ")}`;
             } else if (states.length === 0) {
                 outputDiv.innerHTML = "No states found within the step limit.";
             } else {
@@ -55,6 +55,7 @@
             let workList = [[1, 1, 1, []]]; // Start with (pink, green, cyan, path)
             let reachedStates = new Set(); // Record all reached states
             let goalFound = false;
+            let goalPath = [];
 
             while (step < maxStep && !stop) {
                 let nextWorkList = [];
@@ -68,7 +69,7 @@
                     // Check if we've hit the max set size to prevent overflow
                     if (reachedStates.size >= MAX_SET_SIZE) {
                         stop = true;
-                        return { states: Array.from(reachedStates), goalFound };
+                        return { states: Array.from(reachedStates), goalFound, goalPath };
                     }
 
                     // Prune states with pink or green greater than MAX_PINK_GREEN
@@ -80,7 +81,8 @@
                     // Check if we've reached the goal state (7 pink, 21 green)
                     if (pink === TARGET_PINK && green === TARGET_GREEN) {
                         goalFound = true;
-                        return { states: Array.from(reachedStates), goalFound };
+                        goalPath = path; // Save the path to reach the goal
+                        return { states: Array.from(reachedStates), goalFound, goalPath };
                     }
 
                     // Add operations
@@ -98,7 +100,7 @@
                 step++;
             }
 
-            return { states: Array.from(reachedStates), goalFound };
+            return { states: Array.from(reachedStates), goalFound, goalPath };
         }
     </script>
 </body>
