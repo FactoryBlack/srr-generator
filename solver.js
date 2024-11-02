@@ -13,7 +13,7 @@ const puzzleData = {
         { color: 'green', amount: 5, position: "start" },
         // Define additional key locations based on level layout
     ],
-    goal: { reached: false, position: "green_check" }
+    goal: { reached: false, position: "green_check" } // Green check position as goal
 };
 
 let logDiv = document.getElementById("log");
@@ -84,11 +84,11 @@ function openDoor(door, data) {
 
 // Function to check if the goal (reaching green check) has been met
 function checkGoal(data) {
-    // Assuming reaching the green check mark requires unlocking all relevant doors
+    // Explicitly check if the final goal position (green check) is reachable
     const allDoorsOpen = data.doors.every(door => door.copies <= 0);
-    if (allDoorsOpen) {
-        data.goal.reached = true;
-        logMessage("Goal reached! Reached the green check mark.");
+    if (allDoorsOpen && !data.goal.reached) {
+        data.goal.reached = true;  // Mark goal as reached
+        logMessage("Goal reached! The path to the green check mark is now clear.");
     }
 }
 
