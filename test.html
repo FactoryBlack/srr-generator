@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Wanna Lockpick Solver</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Wanna Lockpick Solver - Multi-Bot</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,33 +13,73 @@
             padding: 20px;
         }
         #solver-container {
-            max-width: 800px;
-            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
         }
-        #output {
-            margin-top: 20px;
+        .bot-container {
+            border: 1px solid #ccc;
+            border-radius: 8px;
             padding: 10px;
+            width: 300px;
+            background-color: #fafafa;
+        }
+        .output {
             background-color: #e9e9e9;
             border: 1px solid #ccc;
             border-radius: 5px;
             overflow-y: auto;
-            max-height: 300px;
+            max-height: 200px;
             text-align: left;
+            padding: 5px;
+            font-size: 0.9em;
+        }
+        .stats {
+            font-size: 0.9em;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
+    <h1>I Wanna Lockpick Solver - Multi-Bot</h1>
+    <p>Click "Start All Bots" to run four solvers in parallel, each with its own log and stats.</p>
+    <button onclick="startAllBots()">Start All Bots</button>
+
     <div id="solver-container">
-        <h1>I Wanna Lockpick Solver</h1>
-        <button onclick="startSolver()">Start Solver</button>
-        <div id="output"><pre id="result"></pre></div>
+        <!-- Containers for each bot -->
+        <div id="bot1" class="bot-container">
+            <h2>Bot 1</h2>
+            <div id="output1" class="output"></div>
+            <div id="stats1" class="stats"></div>
+        </div>
+        <div id="bot2" class="bot-container">
+            <h2>Bot 2</h2>
+            <div id="output2" class="output"></div>
+            <div id="stats2" class="stats"></div>
+        </div>
+        <div id="bot3" class="bot-container">
+            <h2>Bot 3</h2>
+            <div id="output3" class="output"></div>
+            <div id="stats3" class="stats"></div>
+        </div>
+        <div id="bot4" class="bot-container">
+            <h2>Bot 4</h2>
+            <div id="output4" class="output"></div>
+            <div id="stats4" class="stats"></div>
+        </div>
     </div>
 
     <script>
-        function logToOutput(message) {
-            const resultElement = document.getElementById('result');
-            resultElement.innerHTML += message + '\n';
-            resultElement.scrollTop = resultElement.scrollHeight;
+        function logToOutput(botId, message) {
+            const outputElement = document.getElementById(`output${botId}`);
+            outputElement.innerHTML += message + '\n';
+            outputElement.scrollTop = outputElement.scrollHeight; // Auto-scroll to the latest message
+        }
+
+        function updateStats(botId, steps, keys) {
+            const statsElement = document.getElementById(`stats${botId}`);
+            statsElement.innerHTML = `Steps: ${steps} | Keys - Cyan: ${keys.cyan}, Pink: ${keys.pink}, Green: ${keys.green}, White: ${keys.white}`;
         }
 
         const initialState = { keys: { white: 0, cyan: 0, pink: 0, green: 0 }, steps: 0, path: [] };
@@ -76,7 +117,7 @@
             return null;
         }
 
-        async function processQueue(queue, visited, solutions) {
+        async function processQueue(botId, queue, visited, solutions) {
             const chunkSize = 20;
             const topKStates = 50;
             let iterations = 0;
@@ -94,16 +135,17 @@
                 visited.add(keys);
 
                 if (isGoalCondition(currentState)) {
-                    logToOutput(`Goal reached in ${currentState.steps} steps!`);
+                    logToOutput(botId, `Goal reached in ${currentState.steps} steps!`);
                     solutions.push(currentState);
-                    continue;
+                    updateStats(botId, currentState.steps, currentState.keys);
+                    break;
                 }
 
-                if (currentState.steps % 100 === 0) {  // Log every 100 steps
-                    logToOutput(`Exploring state after ${currentState.steps} steps`);
+                if (currentState.steps % 100 === 0) {
+                    logToOutput(botId, `Step ${currentState.steps}: Cyan=${currentState.keys.cyan}, Pink=${currentState.keys.pink}, Green=${currentState.keys.green}, White=${currentState.keys.white}`);
+                    updateStats(botId, currentState.steps, currentState.keys);
                 }
 
-                // Generate potential new states
                 let newStates = [
                     collectKey(currentState, 'cyan'),
                     collectKey(currentState, 'pink'),
@@ -113,36 +155,39 @@
                 const dividedState = divideKeys(currentState);
                 if (dividedState) newStates.push(dividedState);
 
-                // Calculate rewards and keep only the top K states
                 newStates = newStates
                     .map(state => ({ state, reward: calculateReward(state) }))
                     .sort((a, b) => b.reward - a.reward)
                     .slice(0, topKStates)
                     .map(item => item.state);
 
-                // Add only the top K states to the queue
                 newStates.forEach(state => queue.push(state));
                 iterations++;
             }
         }
 
-        async function startSolver() {
-            document.getElementById('result').innerHTML = '';
-            logToOutput("Starting solver...");
-
-            const solutions = [];
-            const queue = [initialState];
+        async function startBot(botId) {
+            const queue = [JSON.parse(JSON.stringify(initialState))];
             const visited = new Set();
+            const solutions = [];
 
-            await processQueue(queue, visited, solutions);
+            logToOutput(botId, "Bot started...");
+            await processQueue(botId, queue, visited, solutions);
 
             if (solutions.length === 0) {
-                logToOutput('No solutions found.');
+                logToOutput(botId, 'No solutions found.');
             } else {
                 solutions.forEach((solution, index) => {
-                    logToOutput(`\nSolution ${index + 1} (Steps: ${solution.steps}): ${solution.path.join(' -> ')}`);
+                    logToOutput(botId, `\nSolution ${index + 1} (Steps: ${solution.steps}): ${solution.path.join(' -> ')}`);
                 });
             }
+        }
+
+        function startAllBots() {
+            startBot(1);
+            startBot(2);
+            startBot(3);
+            startBot(4);
         }
     </script>
 </body>
