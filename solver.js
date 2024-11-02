@@ -7,11 +7,11 @@ const puzzleData = {
     doors: [
         { color: 'green', type: 'normal', lock: { type: 'normal', cost: 5 }, copies: 99, position: "midway" },
         { color: 'red', type: 'frozen', lock: { type: 'aura', cost: 1 }, copies: 99, position: "upper_left" },
-        // More doors here based on puzzle specifics
+        // Add other doors with specifics here
     ],
     keysToCollect: [
         { color: 'green', amount: 5, position: "start" },
-        // Add key locations based on the level specifics
+        // Define all collectible keys in the level based on layout
     ],
     goal: { reached: false, position: "green_check" }
 };
@@ -41,24 +41,37 @@ async function solvePuzzle() {
     }
 }
 
-// Function to collect keys in the puzzle
-function collectKey(key) {
-    puzzleData.keys[key.color] += key.amount;
-    logMessage(`Collected ${key.amount} ${key.color} key(s). New count: ${puzzleData.keys[key.color]}`);
+// Function to collect keys in the puzzle (only if needed)
+function collectKey(key, data) {
+    if (data.keys[key.color] < getRequiredKeys(data, key.color)) {
+        data.keys[key.color] += key.amount;
+        logMessage(`Collected ${key.amount} ${key.color} key(s). New count: ${data.keys[key.color]}`);
+    }
+}
+
+// Helper function to determine the required number of keys to open all doors
+function getRequiredKeys(data, color) {
+    let totalCost = 0;
+    for (const door of data.doors) {
+        if (door.color === color && door.copies > 0) {
+            totalCost += door.lock.cost * door.copies;
+        }
+    }
+    return totalCost;
 }
 
 // Function to open a door based on the key requirements and type
-function openDoor(door) {
+function openDoor(door, data) {
     if (door.copies <= 0) return false; // Skip fully opened doors
 
     // Check aura requirements for frozen, eroded, painted doors
-    if (door.type === 'frozen' && puzzleData.keys.red >= 1) {
-        puzzleData.keys.red -= 1; // Use red aura key to defrost
+    if (door.type === 'frozen' && data.keys.red >= 1) {
+        data.keys.red -= 1; // Use red aura key to defrost
     }
 
     // For normal locks, check if we have enough keys
-    if (door.lock.type === 'normal' && puzzleData.keys[door.color] >= door.lock.cost) {
-        puzzleData.keys[door.color] -= door.lock.cost;
+    if (door.lock.type === 'normal' && data.keys[door.color] >= door.lock.cost) {
+        data.keys[door.color] -= door.lock.cost;
         door.copies -= 1;
         logMessage(`Opened ${door.color} door with lock cost ${door.lock.cost}. Remaining copies: ${door.copies}`);
         return door.copies <= 0; // True if the door is fully opened
@@ -84,14 +97,14 @@ async function bruteForceSolve(data, solutions) {
     while (!data.goal.reached) {
         stepCount++;
 
-        // Example: Collect all keys in the level
+        // Only collect keys if necessary for opening remaining doors
         for (let key of data.keysToCollect) {
-            collectKey(key);
+            collectKey(key, data);
         }
 
         // Attempt to open each door
         for (let door of data.doors) {
-            const doorOpened = openDoor(door);
+            const doorOpened = openDoor(door, data);
             if (doorOpened) {
                 checkGoal(data); // Check if goal reached after opening
             }
