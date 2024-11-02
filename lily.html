@@ -29,21 +29,24 @@
 <div id="log" class="console-output"></div>
 
 <script>
-// Initial puzzle data with complex key requirements
+// Initial puzzle data with cursed door and brown key aura requirements
 const puzzleData = {
     keys: {
         green: { real: 0, imag: 0 },
         red: { real: 0, imag: 0 },
-        cyan: { real: 0, imag: 0 }
+        cyan: { real: 0, imag: 0 },
+        brown: { real: 0, imag: 0 }
     },
     doors: [
         { color: 'combo', type: 'normal', copies: 1, locks: [{ color: 'green', cost: { real: 5, imag: 0 } }, { color: 'red', cost: { real: 0, imag: 3 } }] },
-        { color: 'cyan', type: 'normal', copies: 1, locks: [{ color: 'cyan', cost: { real: -7, imag: 0 } }] }
+        { color: 'cyan', type: 'normal', copies: 1, locks: [{ color: 'cyan', cost: { real: -7, imag: 0 } }] },
+        { color: 'brown', type: 'cursed', copies: 1, locks: [{ color: 'brown', cost: { real: 1, imag: 0 } }] }
     ],
     keysToCollect: [
         { color: 'green', amount: { real: 5, imag: 0 } },
         { color: 'red', amount: { real: 0, imag: 3 } },
-        { color: 'cyan', amount: { real: -7, imag: 0 } }
+        { color: 'cyan', amount: { real: -7, imag: 0 } },
+        { color: 'brown', amount: { real: -1, imag: 0 } }
     ],
     goal: { reached: false }
 };
@@ -66,10 +69,26 @@ function collectKey(data, color, amount) {
     data.keys[color].real += amount.real;
     data.keys[color].imag += amount.imag;
     logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? (amount.real !== 0 ? ' + ' : '') + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
+
+    // Check for brown aura activation/deactivation
+    if (color === 'brown') {
+        if (data.keys.brown.real < 0) {
+            logMessage("Negative brown aura activated! Curses can now be removed from nearby doors.");
+        } else if (data.keys.brown.real > 0) {
+            logMessage("Positive brown aura activated! Nearby doors are cursed.");
+        }
+    }
 }
 
-// Open a door if possible and log result
+// Open a door if possible and log result, considering cursed status
 function openDoor(data, door) {
+    // Check if door is cursed and requires a negative brown aura
+    if (door.type === 'cursed' && data.keys.brown.real >= 0) {
+        logMessage(`Cannot open cursed ${door.color} door without negative brown aura.`);
+        return false;
+    }
+
+    // Check locks for real and imaginary parts
     for (const lock of door.locks) {
         const { color, cost } = lock;
         const playerKey = data.keys[color];
@@ -109,14 +128,14 @@ function checkGoal(data) {
     }
 }
 
-// Test function to simulate puzzle solving with complex key requirements
-async function complexKeyTest() {
-    logMessage("Starting complex key test...");
+// Test function to simulate puzzle solving with cursed door requirements
+async function cursedDoorTest() {
+    logMessage("Starting cursed door test...");
 
     const testData = cloneData(puzzleData);
     const steps = [];
 
-    // Step 1: Collect green and red keys to attempt to open the combo door
+    // Step 1: Collect green, red, and brown keys to attempt to open the doors
     collectKey(testData, 'green', { real: 5, imag: 0 });
     collectKey(testData, 'red', { real: 0, imag: 3 });
     if (openDoor(testData, testData.doors[0])) {
@@ -129,7 +148,13 @@ async function complexKeyTest() {
         steps.push("Opened cyan door with negative requirement.");
     }
 
-    // Step 3: Check if goal is reached
+    // Step 3: Collect negative brown key and open the cursed door
+    collectKey(testData, 'brown', { real: -1, imag: 0 });
+    if (openDoor(testData, testData.doors[2])) {
+        steps.push("Opened cursed brown door with negative aura.");
+    }
+
+    // Step 4: Check if goal is reached
     checkGoal(testData);
 
     if (testData.goal.reached) {
@@ -140,11 +165,8 @@ async function complexKeyTest() {
 }
 
 // Add event listener to the button to start the test
-document.getElementById("startButton").addEventListener("click", () => {
-    logDiv.textContent = ""; // Clear previous logs
-    complexKeyTest(); // Start the complex key test
-});
-</script>
+document.getElementById("startButton").addEventListener("click", cursedDoorTest);
 
+</script>
 </body>
 </html>
