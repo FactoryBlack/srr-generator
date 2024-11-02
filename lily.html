@@ -86,7 +86,7 @@ function checkAuras(data) {
     }
     if (data.keys.green.real >= 5) {
         logMessage("Green aura activated! Eroded doors can be healed.");
-        greenAuraActive = true; // Set green aura as active
+        greenAuraActive = true;
     }
     if (data.keys.blue.real >= 3) {
         logMessage("Blue aura activated! Painted doors can be cleaned.");
@@ -94,53 +94,19 @@ function checkAuras(data) {
     if (data.keys.brown.real < 0) {
         logMessage("Negative brown aura activated! Curses can now be removed from nearby doors.");
     }
-    return greenAuraActive; // Return the status of the green aura
+    logMessage(`Green aura status at end of checkAuras: ${greenAuraActive}`); // Debugging output
+    return greenAuraActive;
 }
 
 // Open a door if possible and log result, considering aura requirements
 function openDoor(data, door, greenAuraActive) {
-    // Check if door is frozen and requires red aura
-    if (door.type === 'frozen' && door.corrupted) {
-        if (data.keys.red.real >= 1) {
-            logMessage(`Defrosted frozen ${door.color} door with red aura.`);
-            door.corrupted = false; // Door is no longer corrupted
-        } else {
-            logMessage(`Cannot defrost frozen ${door.color} door. Red aura not active.`);
-            return false;
-        }
-    }
-
-    // Check if door is eroded and requires green aura
+    logMessage(`Attempting to open ${door.type} door (${door.color}), corrupted: ${door.corrupted}, greenAuraActive: ${greenAuraActive}`); // Debugging output
     if (door.type === 'eroded' && door.corrupted) {
         if (greenAuraActive) {
             logMessage(`Healed eroded ${door.color} door with green aura.`);
-            door.corrupted = false; // Door is no longer corrupted
+            door.corrupted = false;
         } else {
             logMessage(`Cannot heal eroded ${door.color} door. Green aura not active.`);
-            return false;
-        }
-    }
-
-    // Check if door is painted and requires blue aura
-    if (door.type === 'painted' && door.corrupted) {
-        if (data.keys.blue.real >= 3) {
-            logMessage(`Cleaned painted ${door.color} door with blue aura.`);
-            door.corrupted = false; // Door is no longer corrupted
-        } else {
-            logMessage(`Cannot clean painted ${door.color} door. Blue aura not active.`);
-            return false;
-        }
-    }
-
-    // Check if door is cursed and requires negative brown aura
-    if (door.type === 'cursed') {
-        if (data.keys.brown.real < 0) {
-            logMessage(`Opened cursed ${door.color} door using negative brown aura.`);
-            door.copies -= 1;
-            logMessage(`Remaining copies: ${door.copies}`);
-            return true;
-        } else {
-            logMessage(`Cannot open cursed ${door.color} door without negative brown aura.`);
             return false;
         }
     }
@@ -150,23 +116,12 @@ function openDoor(data, door, greenAuraActive) {
         const { color, cost } = lock;
         data.keys[color].real -= cost.real;
         data.keys[color].imag -= cost.imag;
-        logMessage(`Used ${cost.real !== 0 ? cost.real : ''}${cost.imag !== 0 ? (cost.real !== 0 ? ' + ' : '') + cost.imag + 'i' : ''} ${color} key(s) to open part of ${door.color} door.`);
+        logMessage(`Used ${cost.real !== 0 ? cost.real : ''}${cost.imag !== 0 ? (cost.real !== 0 ? ' + ' : '') + cost.imag + 'i'} ${color} key(s) to open part of ${door.color} door.`);
     }
 
     door.copies -= 1;
     logMessage(`Opened ${door.color} door. Remaining copies: ${door.copies}`);
     return true;
-}
-
-// Check if all doors are open to reach the goal
-function checkGoal(data) {
-    const allDoorsOpen = data.doors.every(door => door.copies <= 0 || !door.corrupted);
-    if (allDoorsOpen) {
-        data.goal.reached = true;
-        logMessage("Goal reached! All doors are open.");
-    } else {
-        logMessage("Goal not yet reached.");
-    }
 }
 
 // Test function to simulate puzzle solving with aura requirements
@@ -181,34 +136,17 @@ async function cursedDoorTest() {
         collectKey(testData, key.color, key.amount);
     }
 
-    // Check auras after all keys are collected
-    const greenAuraActive = checkAuras(testData);
+    const greenAuraActive = checkAuras(testData); // Check auras
 
-    // Attempt to open doors
-    if (openDoor(testData, testData.doors[0], greenAuraActive)) {
-        steps.push("Opened combo door (green and red complex requirements).");
-    }
+    // Test only the eroded door in this run to isolate the problem
+    openDoor(testData, testData.doors[4], greenAuraActive); // Attempt to open eroded door
 
-    if (openDoor(testData, testData.doors[1], greenAuraActive)) {
-        steps.push("Opened cyan door with negative requirement.");
-    }
-
-    if (openDoor(testData, testData.doors[2], greenAuraActive)) {
-        steps.push("Opened cursed brown door with negative aura.");
-    }
-
-    // Try opening each corrupted door with corresponding auras
-    openDoor(testData, testData.doors[3], greenAuraActive); // frozen door
-    openDoor(testData, testData.doors[4], greenAuraActive); // eroded door
-    openDoor(testData, testData.doors[5], greenAuraActive); // painted door
-
-    // Step 4: Check if goal is reached
-    checkGoal(testData);
-
-    if (testData.goal.reached) {
-        logMessage("Test succeeded. Path: " + steps.join(" -> "));
+    // Log the final status to verify if goal is met
+    const allDoorsOpen = testData.doors.every(door => door.copies <= 0 || !door.corrupted);
+    if (allDoorsOpen) {
+        logMessage("Goal reached! All doors are open.");
     } else {
-        logMessage("Test failed. Goal was not reached.");
+        logMessage("Goal not yet reached.");
     }
 }
 
