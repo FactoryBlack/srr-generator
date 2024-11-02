@@ -71,6 +71,7 @@
 
     <script>
         const knowledgePool = new Map();
+        const MAX_STEPS = 1000; // Maximum steps before a bot restarts
 
         function logToOutput(botId, message) {
             const outputElement = document.getElementById(`output${botId}`);
@@ -118,7 +119,7 @@
             return null;
         }
 
-        async function processQueue(botId, queue, visited, solutions, failedPaths) {
+        async function processQueue(botId, queue, visited, solutions, failedPaths, explorationBias) {
             const chunkSize = 20;
             const topKStates = 50;
             let iterations = 0;
@@ -132,7 +133,10 @@
                 const currentState = queue.shift();
                 const keys = JSON.stringify(currentState.keys);
 
-                if (visited.has(keys) || failedPaths.has(keys)) continue;
+                if (visited.has(keys) || failedPaths.has(keys) || currentState.steps > MAX_STEPS) {
+                    if (currentState.steps > MAX_STEPS) failedPaths.add(keys); // Mark as failed if exceeded MAX_STEPS
+                    continue;
+                }
                 visited.add(keys);
 
                 if (isGoalCondition(currentState)) {
@@ -148,16 +152,27 @@
                     updateStats(botId, currentState.steps, currentState.keys);
                 }
 
-                let newStates = [
-                    collectKey(currentState, 'cyan'),
-                    collectKey(currentState, 'pink'),
-                    collectKey(currentState, 'green'),
-                    collectKey(currentState, 'white')
-                ];
-                const dividedState = divideKeys(currentState);
-                if (dividedState) newStates.push(dividedState);
+                let newStates = [];
+                switch (explorationBias) {
+                    case 'prioritizeCyan':
+                        newStates.push(collectKey(currentState, 'cyan'));
+                        break;
+                    case 'prioritizeDivide':
+                        if (divideKeys(currentState)) newStates.push(divideKeys(currentState));
+                        break;
+                    case 'prioritizeBalance':
+                        ['cyan', 'pink', 'green', 'white'].forEach(color => {
+                            if (currentState.keys[color] < 5) newStates.push(collectKey(currentState, color));
+                        });
+                        break;
+                    case 'alternateKeys':
+                        ['cyan', 'pink', 'green', 'white'].forEach(color => {
+                            newStates.push(collectKey(currentState, color));
+                        });
+                        break;
+                }
 
-                if (Math.random() < 0.1) {
+                if (Math.random() < 0.2) {  // 20% chance to check the knowledge pool
                     for (const [_, sharedState] of knowledgePool) {
                         if (!visited.has(JSON.stringify(sharedState.keys))) {
                             newStates.push(sharedState);
@@ -179,7 +194,7 @@
                 logToOutput(botId, 'Failed to find a solution, resetting...');
                 failedPaths.add(keys);  // Mark this path as failed
                 queue.push(JSON.parse(JSON.stringify(initialState)));  // Restart with initial state
-                await processQueue(botId, queue, visited, solutions, failedPaths);  // Retry with a new exploration
+                await processQueue(botId, queue, visited, solutions, failedPaths, explorationBias);
             }
         }
 
@@ -189,12 +204,8 @@
             const solutions = [];
             const failedPaths = new Set();
 
-            // Custom initial action based on the exploration bias
-            if (explorationBias === 'prioritizeCyan') queue.push(collectKey(initialState, 'cyan'));
-            if (explorationBias === 'prioritizeDivide') queue.push(divideKeys(initialState));
-
             logToOutput(botId, "Bot started with exploration bias: " + explorationBias);
-            await processQueue(botId, queue, visited, solutions, failedPaths);
+            await processQueue(botId, queue, visited, solutions, failedPaths, explorationBias);
 
             if (solutions.length === 0) {
                 logToOutput(botId, 'No solutions found.');
@@ -208,8 +219,8 @@
         function startAllBots() {
             startBot(1, 'prioritizeCyan');
             startBot(2, 'prioritizeDivide');
-            startBot(3, 'prioritizeGreen');
-            startBot(4, 'prioritizeWhite');
+            startBot(3, 'prioritizeBalance');
+            startBot(4, 'alternateKeys');
         }
     </script>
 </body>
