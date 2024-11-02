@@ -7,14 +7,14 @@
     <style>
         .console-output {
             width: 100%;
-            height: 300px; /* Adjust height as needed */
+            height: 300px;
             overflow-y: auto;
             background-color: #333;
             color: #eee;
             font-family: monospace;
             padding: 10px;
             border: 1px solid #222;
-            white-space: pre-line; /* Preserve line breaks */
+            white-space: pre-line;
         }
 
         #startButton {
@@ -29,27 +29,28 @@
 <div id="log" class="console-output"></div>
 
 <script>
-// Initial puzzle data with multiple doors and keys
+// Initial puzzle data with frozen doors and aura requirement
 const puzzleData = {
-    keys: { green: 0, red: 0 },
+    keys: { green: 0, red: 0, cyan: 0 },
     doors: [
         { color: 'green', type: 'normal', copies: 1, lock: { type: 'normal', cost: 5 } },
-        { color: 'red', type: 'normal', copies: 1, lock: { type: 'normal', cost: 3 } }
+        { color: 'red', type: 'frozen', copies: 1, lock: { type: 'normal', cost: 3 }, defrosted: false },
+        { color: 'cyan', type: 'aura', copies: 1, lock: { type: 'normal', cost: 7 }, auraNeeded: true, auraActive: false }
     ],
     keysToCollect: [
         { color: 'green', amount: 5 },
-        { color: 'red', amount: 3 }
+        { color: 'red', amount: 3 },
+        { color: 'cyan', amount: 7 }
     ],
     goal: { reached: false }
 };
 
-// Get log div
 let logDiv = document.getElementById("log");
 
 // Function to log messages with auto-scroll
 function logMessage(message) {
     logDiv.textContent += message + "\n";
-    logDiv.scrollTop = logDiv.scrollHeight; // Auto-scroll to the bottom
+    logDiv.scrollTop = logDiv.scrollHeight;
 }
 
 // Utility function to clone data without reference issues
@@ -65,6 +66,24 @@ function collectKey(data, color, amount) {
 
 // Open a door if possible and log result
 function openDoor(data, door) {
+    // Check if door is frozen and needs defrosting
+    if (door.type === 'frozen' && !door.defrosted) {
+        if (data.keys.red >= 1) {
+            data.keys.red -= 1;
+            door.defrosted = true;
+            logMessage(`Defrosted red frozen door.`);
+        } else {
+            logMessage(`Not enough red keys to defrost the frozen door.`);
+            return false;
+        }
+    }
+
+    // Check if door needs an aura to open
+    if (door.auraNeeded && !data.auraActive) {
+        logMessage(`Door requires aura effect to open.`);
+        return false;
+    }
+
     if (data.keys[door.color] >= door.lock.cost) {
         data.keys[door.color] -= door.lock.cost;
         door.copies -= 1;
@@ -73,6 +92,14 @@ function openDoor(data, door) {
     } else {
         logMessage(`Not enough ${door.color} keys to open the door.`);
         return false;
+    }
+}
+
+// Activate aura if enough cyan keys are collected
+function checkAuraActivation(data) {
+    if (data.keys.cyan >= 7 && !data.auraActive) {
+        data.auraActive = true;
+        logMessage("Aura activated! Nearby doors can now be affected.");
     }
 }
 
@@ -87,26 +114,33 @@ function checkGoal(data) {
     }
 }
 
-// Test function to simulate puzzle solving with multiple doors and keys
-async function multiDoorTest() {
-    logMessage("Starting multi-door test...");
+// Test function to simulate puzzle solving with frozen doors and aura mechanic
+async function advancedTest() {
+    logMessage("Starting advanced test with frozen door and aura requirement...");
 
     const testData = cloneData(puzzleData);
     const steps = [];
 
-    // Collect green keys and attempt to open the green door
+    // Step 1: Collect green keys and attempt to open the green door
     collectKey(testData, 'green', 5);
     if (openDoor(testData, testData.doors[0])) {
         steps.push("Opened green door.");
     }
 
-    // Collect red keys and attempt to open the red door
+    // Step 2: Collect red keys and attempt to defrost and open the red frozen door
     collectKey(testData, 'red', 3);
     if (openDoor(testData, testData.doors[1])) {
-        steps.push("Opened red door.");
+        steps.push("Defrosted and opened red door.");
     }
 
-    // Check if goal is reached
+    // Step 3: Collect cyan keys to activate aura and open the cyan door
+    collectKey(testData, 'cyan', 7);
+    checkAuraActivation(testData);
+    if (openDoor(testData, testData.doors[2])) {
+        steps.push("Opened cyan door with aura.");
+    }
+
+    // Step 4: Check if goal is reached
     checkGoal(testData);
 
     if (testData.goal.reached) {
@@ -119,7 +153,7 @@ async function multiDoorTest() {
 // Add event listener to the button to start the test
 document.getElementById("startButton").addEventListener("click", () => {
     logDiv.textContent = ""; // Clear previous logs
-    multiDoorTest(); // Start the test
+    advancedTest(); // Start the advanced test
 });
 </script>
 
