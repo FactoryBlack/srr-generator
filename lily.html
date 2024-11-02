@@ -39,7 +39,7 @@ const puzzleData = {
     ],
     keysToCollect: [
         { color: 'green', amount: 5 },
-        { color: 'red', amount: 3 },
+        { color: 'red', amount: 4 }, // Adjusted to ensure enough keys for defrosting and opening
         { color: 'cyan', amount: 7 }
     ],
     goal: { reached: false }
@@ -128,7 +128,7 @@ async function advancedTest() {
     }
 
     // Step 2: Collect red keys and attempt to defrost and open the red frozen door
-    collectKey(testData, 'red', 3);
+    collectKey(testData, 'red', 4); // Updated to ensure both defrosting and opening
     if (openDoor(testData, testData.doors[1])) {
         steps.push("Defrosted and opened red door.");
     }
