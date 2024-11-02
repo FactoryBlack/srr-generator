@@ -2,7 +2,7 @@
     "keys": {
         "green": { "real": 0, "imag": 0 },
         "red": { "real": 0, "imag": 0 },
-        "cyan": { "real": 0, "imag": 0 },
+        "blue": { "real": 0, "imag": 0 },
         "brown": { "real": 0, "imag": 0 },
         "purple": { "real": 0, "imag": 0 }
     },
@@ -24,7 +24,8 @@
     ],
     "keysToCollect": [
         { "color": "green", "amount": { "real": 5, "imag": 0 } },
-        { "color": "red", "amount": { "real": 1, "imag": 0 } },
+        { "color": "red", "amount": { "real": 0, "imag": 3 } },  // Adjusted to ensure combo door opens
+        { "color": "blue", "amount": { "real": 3, "imag": 0 } },  // Adjusted to activate blue aura
         { "color": "cyan", "amount": { "real": -7, "imag": 0 } },
         { "color": "brown", "amount": { "real": -1, "imag": 0 } },
         { "color": "purple", "amount": { "real": 2, "imag": 1 } }
