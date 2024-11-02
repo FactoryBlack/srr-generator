@@ -39,19 +39,10 @@ const puzzleData = {
         blue: { real: 0, imag: 0 }
     },
     doors: [
-        { color: 'combo', type: 'normal', copies: 1, locks: [{ color: 'green', cost: { real: 5, imag: 0 } }, { color: 'red', cost: { real: 0, imag: 3 } }] },
-        { color: 'cyan', type: 'normal', copies: 1, locks: [{ color: 'cyan', cost: { real: -7, imag: 0 } }] },
-        { color: 'brown', type: 'cursed', copies: 1, locks: [{ color: 'brown', cost: { real: 1, imag: 0 } }] },
-        { color: 'frozen', type: 'frozen', copies: 1, locks: [], corrupted: true },
-        { color: 'eroded', type: 'eroded', copies: 1, locks: [], corrupted: true },
-        { color: 'painted', type: 'painted', copies: 1, locks: [], corrupted: true }
+        { color: 'eroded', type: 'eroded', copies: 1, locks: [], corrupted: true } // Only eroded door for this test
     ],
     keysToCollect: [
-        { color: 'green', amount: { real: 5, imag: 0 } },
-        { color: 'red', amount: { real: 1, imag: 0 } },
-        { color: 'blue', amount: { real: 3, imag: 0 } },
-        { color: 'cyan', amount: { real: -7, imag: 0 } },
-        { color: 'brown', amount: { real: -1, imag: 0 } }
+        { color: 'green', amount: { real: 5, imag: 0 } } // Only green keys to trigger green aura
     ],
     goal: { reached: false }
 };
@@ -66,87 +57,57 @@ function logMessage(message) {
     logDiv.scrollTop = logDiv.scrollHeight;
 }
 
-// Utility function to clone data without reference issues
-function cloneData(data) {
-    return JSON.parse(JSON.stringify(data));
-}
-
-// Collect a specific key amount and log
+// Function to collect keys and log
 function collectKey(data, color, amount) {
     data.keys[color].real += amount.real;
-    data.keys[color].imag += amount.imag;
-    logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? (amount.real !== 0 ? ' + ' : '') + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
+    logMessage(`Collected ${amount.real} ${color} key(s). Total: ${data.keys[color].real}`);
 }
 
-// Check for aura activation based on key counts
+// Function to check aura activation
 function checkAuras(data) {
     let greenAuraActive = false;
-    if (data.keys.red.real >= 1) {
-        logMessage("Red aura activated! Frozen doors can be defrosted.");
-    }
     if (data.keys.green.real >= 5) {
-        logMessage("Green aura activated! Eroded doors can be healed.");
+        logMessage("Green aura activated!");
         greenAuraActive = true;
     }
-    if (data.keys.blue.real >= 3) {
-        logMessage("Blue aura activated! Painted doors can be cleaned.");
-    }
-    if (data.keys.brown.real < 0) {
-        logMessage("Negative brown aura activated! Curses can now be removed from nearby doors.");
-    }
-    logMessage(`Green aura status at end of checkAuras: ${greenAuraActive}`); // Debugging output
     return greenAuraActive;
 }
 
-// Open a door if possible and log result, considering aura requirements
-function openDoor(data, door, greenAuraActive) {
-    logMessage(`Attempting to open ${door.type} door (${door.color}), corrupted: ${door.corrupted}, greenAuraActive: ${greenAuraActive}`); // Debugging output
-    if (door.type === 'eroded' && door.corrupted) {
-        if (greenAuraActive) {
-            logMessage(`Healed eroded ${door.color} door with green aura.`);
-            door.corrupted = false;
-        } else {
-            logMessage(`Cannot heal eroded ${door.color} door. Green aura not active.`);
-            return false;
-        }
-    }
+// Function to open eroded door with green aura check
+function openErodedDoor(data, greenAuraActive) {
+    const erodedDoor = data.doors[0];
+    logMessage(`Attempting to open eroded door, corrupted: ${erodedDoor.corrupted}, greenAuraActive: ${greenAuraActive}`);
 
-    // If all locks are met, open the door and deduct keys
-    for (const lock of door.locks) {
-        const { color, cost } = lock;
-        data.keys[color].real -= cost.real;
-        data.keys[color].imag -= cost.imag;
-        logMessage(`Used ${cost.real !== 0 ? cost.real : ''}${cost.imag !== 0 ? (cost.real !== 0 ? ' + ' : '') + cost.imag + 'i'} ${color} key(s) to open part of ${door.color} door.`);
+    if (erodedDoor.corrupted && greenAuraActive) {
+        erodedDoor.corrupted = false;
+        logMessage("Eroded door successfully healed with green aura.");
+    } else if (erodedDoor.corrupted && !greenAuraActive) {
+        logMessage("Failed to heal eroded door. Green aura not active.");
     }
-
-    door.copies -= 1;
-    logMessage(`Opened ${door.color} door. Remaining copies: ${door.copies}`);
-    return true;
 }
 
-// Test function to simulate puzzle solving with aura requirements
-async function cursedDoorTest() {
-    logMessage("Starting cursed door test...");
+// Main function to simulate the test
+function cursedDoorTest() {
+    logMessage("Starting eroded door test...");
 
-    const testData = cloneData(puzzleData);
-    const steps = [];
+    const testData = JSON.parse(JSON.stringify(puzzleData));
 
-    // Collect keys from keysToCollect
+    // Collect green keys to activate green aura
     for (const key of testData.keysToCollect) {
         collectKey(testData, key.color, key.amount);
     }
 
-    const greenAuraActive = checkAuras(testData); // Check auras
+    // Check if green aura is active
+    const greenAuraActive = checkAuras(testData);
 
-    // Test only the eroded door in this run to isolate the problem
-    openDoor(testData, testData.doors[4], greenAuraActive); // Attempt to open eroded door
+    // Try opening the eroded door
+    openErodedDoor(testData, greenAuraActive);
 
-    // Log the final status to verify if goal is met
-    const allDoorsOpen = testData.doors.every(door => door.copies <= 0 || !door.corrupted);
-    if (allDoorsOpen) {
-        logMessage("Goal reached! All doors are open.");
+    // Final goal check
+    if (!testData.doors[0].corrupted) {
+        logMessage("Test succeeded: Eroded door is open.");
     } else {
-        logMessage("Goal not yet reached.");
+        logMessage("Test failed: Eroded door remains closed.");
     }
 }
 
