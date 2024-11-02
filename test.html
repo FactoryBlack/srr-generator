@@ -5,9 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>I Wanna Lockpick Puzzle Solver</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        #output { margin-top: 20px; white-space: pre-wrap; }
-        button { margin: 10px 0; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        #output {
+            margin-top: 20px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #ddd;
+        }
+        .solution {
+            background-color: #e9ecef;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .solution h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #0056b3;
+        }
+        .solution p {
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -35,9 +73,14 @@
             if (solutions.length === 0) {
                 outputDiv.innerHTML = "No solutions found within the step limit.";
             } else {
-                outputDiv.innerHTML = "All solutions where pink + green = 28:\n\n" + solutions.map((sol, idx) =>
-                    `Solution ${idx + 1}: pink = ${sol.pink}, green = ${sol.green}\nSteps: ${sol.path.join(" ➔ ")}\n\n`
-                ).join("");
+                outputDiv.innerHTML = solutions.map((sol, idx) => `
+                    <div class="solution">
+                        <h3>Solution ${idx + 1}</h3>
+                        <p><strong>Pink:</strong> ${sol.pink}, <strong>Green:</strong> ${sol.green}</p>
+                        <p><strong>Steps Required:</strong> ${sol.path.length}</p>
+                        <p><strong>Path:</strong> ${sol.path.join(" ➔ ")}</p>
+                    </div>
+                `).join("");
             }
         }
 
