@@ -1,11 +1,11 @@
 {
     "keys": {
+        "pink": { "real": 0, "imag": 0 },
         "green": { "real": 0, "imag": 0 },
+        "cyan": { "real": 0, "imag": 0 },
         "red": { "real": 0, "imag": 0 },
-        "blue": { "real": 0, "imag": 0 },
         "brown": { "real": 0, "imag": 0 },
-        "purple": { "real": 0, "imag": 0 },
-        "cyan": { "real": 0, "imag": 0 }
+        "yellow": { "real": 0, "imag": 0 }
     },
     "doors": [
         {
@@ -15,13 +15,44 @@
             "locks": [
                 { "color": "green", "cost": { "real": 5, "imag": 0 } },
                 { "color": "red", "cost": { "real": 0, "imag": 3 } }
-            ]
+            ],
+            "corrupted": false
         },
-        { "color": "cyan", "type": "normal", "copies": 99, "locks": [{ "color": "cyan", "cost": { "real": -7, "imag": 0 } }] },
-        { "color": "brown", "type": "cursed", "copies": 99, "locks": [{ "color": "brown", "cost": { "real": 1, "imag": 0 } }] },
-        { "color": "painted", "type": "painted", "copies": 99, "locks": [], "corrupted": true },
-        { "color": "frozen", "type": "frozen", "copies": 99, "locks": [], "corrupted": true },
-        { "color": "eroded", "type": "eroded", "copies": 99, "locks": [], "corrupted": true }
+        {
+            "color": "cyan",
+            "type": "normal",
+            "copies": 99,
+            "locks": [{ "color": "cyan", "cost": { "real": -7, "imag": 0 } }],
+            "corrupted": false
+        },
+        {
+            "color": "brown",
+            "type": "cursed",
+            "copies": 99,
+            "locks": [{ "color": "brown", "cost": { "real": 1, "imag": 0 } }],
+            "corrupted": false
+        },
+        {
+            "color": "frozen",
+            "type": "frozen",
+            "copies": 99,
+            "locks": [],
+            "corrupted": true
+        },
+        {
+            "color": "eroded",
+            "type": "eroded",
+            "copies": 99,
+            "locks": [],
+            "corrupted": true
+        },
+        {
+            "color": "painted",
+            "type": "painted",
+            "copies": 99,
+            "locks": [],
+            "corrupted": true
+        }
     ],
     "keysToCollect": [
         { "color": "green", "amount": { "real": 5, "imag": 0 } },
@@ -33,6 +64,7 @@
     ],
     "goal": {
         "reached": false,
-        "required_doors": ["combo", "cyan", "brown", "painted", "frozen", "eroded"]
+        "required_doors": ["combo", "cyan", "brown", "frozen", "eroded", "painted"],
+        "description": "Reach the green check mark"
     }
 }
