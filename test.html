@@ -41,6 +41,12 @@
     </div>
 
     <script>
+        // Function to log messages directly to the output area
+        function logToOutput(message) {
+            const resultElement = document.getElementById('result');
+            resultElement.innerHTML += message + '\n';
+        }
+
         // Define initial state for the puzzle
         const initialState = {
             keys: { white: 0, cyan: 0, pink: 0, green: 0 },
@@ -57,7 +63,7 @@
             newState.keys[color]++;
             newState.steps += 1;
             newState.path.push(`Collect ${color} key`);
-            console.log(`Collected ${color} key: New count = ${newState.keys[color]}`);
+            logToOutput(`Collected ${color} key: New count = ${newState.keys[color]}`);
             return newState;
         }
 
@@ -69,7 +75,7 @@
                 newState.keys.green /= newState.keys.white;
                 newState.steps += 1;
                 newState.path.push(`Divide pink and green by white (${newState.keys.white})`);
-                console.log(`Divided pink and green by white: pink = ${newState.keys.pink}, green = ${newState.keys.green}`);
+                logToOutput(`Divided pink and green by white: pink = ${newState.keys.pink}, green = ${newState.keys.green}`);
                 return newState;
             }
             return null; // Cannot divide if conditions are not met
@@ -116,17 +122,20 @@
 
         // Start solver and display results
         function startSolver() {
-            console.clear();
+            // Clear previous output
+            document.getElementById('result').innerHTML = '';
+            logToOutput("Starting solver...");
+
             const solutions = bruteForceSolver(initialState);
             const resultElement = document.getElementById('result');
             solutions.sort((a, b) => a.steps - b.steps);
 
             if (solutions.length === 0) {
-                resultElement.innerHTML = 'No solutions found. Please check target key counts and ensure puzzle logic is correct.';
+                logToOutput('No solutions found. Please check target key counts and ensure puzzle logic is correct.');
             } else {
-                resultElement.innerHTML = '';
                 solutions.forEach((solution, index) => {
-                    resultElement.innerHTML += `Solution ${index + 1} (Steps: ${solution.steps}): ${solution.path.join(' -> ')}\n`;
+                    logToOutput(`\nSolution ${index + 1} (Steps: ${solution.steps}):`);
+                    logToOutput(solution.path.join(' -> '));
                 });
             }
         }
