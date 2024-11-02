@@ -1,190 +1,829 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Wanna Lockpick Puzzle Solver</title>
-    <style>
-        .console-output {
-            width: 100%;
-            height: 300px;
-            overflow-y: auto;
-            background-color: #333;
-            color: #eee;
-            font-family: monospace;
-            padding: 10px;
-            border: 1px solid #222;
-            white-space: pre-line;
-        }
-        #startButton {
-            margin-bottom: 10px;
-        }
-    </style>
-</head>
-<body>
+// script.js
 
-<h1>I Wanna Lockpick Puzzle Solver</h1>
-<label for="levelSelect">Select Level:</label>
-<select id="levelSelect">
-    <option value="new_level.json">New Level</option>
-</select>
-<button id="loadLevelButton">Load Level</button>
-<button id="startButton">Start Solver</button>
-<div id="log" class="console-output"></div>
+const socket = io();
+let isCreator = false;
+let currentRoomID = null;
+let currentJoinButton = null;
+let teamGenerated = false;
 
-<script>
-// Load level data
-let puzzleData = {};
-document.getElementById("loadLevelButton").addEventListener("click", async () => {
-    const level = document.getElementById("levelSelect").value;
-    try {
-        const response = await fetch(level);
-        puzzleData = await response.json();
-        logMessage(`Loaded ${level}`);
-    } catch (error) {
-        logMessage(`Error loading level data: ${error.message}`);
+let userVoted = false;
+let voteDuration = 60; // 60 seconds
+let voteInterval = null;
+let revealedNames = new Set();
+
+let totalMembers = 0;
+
+/* Functions to Show and Hide Elements */
+function showElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) element.classList.remove('hidden');
+}
+
+function hideElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) element.classList.add('hidden');
+}
+
+/* Handle Creator Status */
+socket.on('creatorStatus', (data) => {
+    isCreator = data.isCreator;
+    if (isCreator) {
+        showElement("teamGenerationSection");
+        showElement("generateTeamsContainer");
+        showElement("creatorNameSection");
+
+        // Add the Generate Teams button
+        setupGenerateTeamsButton();
+    } else {
+        showElement("teamGenerationSection");
+        hideElement("generateTeamsContainer");
+        hideElement("creatorNameSection");
     }
 });
 
-let logDiv = document.getElementById("log");
-function logMessage(message) {
-    const messageElement = document.createElement("div");
-    messageElement.textContent = message;
-    logDiv.appendChild(messageElement);
-    logDiv.scrollTop = logDiv.scrollHeight;
-}
+/* Function to Setup Generate Teams Button */
+function setupGenerateTeamsButton() {
+    const generateTeamsContainer = document.getElementById('generateTeamsContainer');
+    generateTeamsContainer.innerHTML = '';
 
-function cloneData(data) {
-    return JSON.parse(JSON.stringify(data));
-}
-
-// Collect keys function
-function collectKey(data, color, amount) {
-    if (!data.keys[color]) {
-        logMessage(`Error: Key color '${color}' is not defined in data.keys.`);
-        return;
-    }
-    data.keys[color].real += amount.real;
-    data.keys[color].imag += amount.imag;
-    logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? (amount.real !== 0 ? ' + ' : '') + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
-}
-
-// Check auras with detailed logging
-function checkAuras(data) {
-    let greenAuraActive = data.keys.green.real >= 5;
-    let redAuraActive = data.keys.red.real >= 1;
-    let blueAuraActive = data.keys.blue.real >= 3;
-    let brownAuraActive = data.keys.brown.real < 0;
-
-    if (redAuraActive) logMessage("Red aura activated! Frozen doors can be defrosted.");
-    if (greenAuraActive) logMessage("Green aura activated! Eroded doors can be healed.");
-    if (blueAuraActive) logMessage("Blue aura activated! Painted doors can be cleaned.");
-    if (brownAuraActive) logMessage("Negative brown aura activated! Curses can now be removed from nearby doors.");
-
-    return { greenAuraActive, redAuraActive, blueAuraActive, brownAuraActive };
-}
-
-// Open doors with aura checks and logging
-function openDoor(data, door, auras) {
-    logMessage(`Attempting to open ${door.color} door. Type: ${door.type}, Corrupted: ${door.corrupted ?? 'N/A'}`);
-
-    if (door.type === 'frozen' && door.corrupted) {
-        if (auras.redAuraActive) {
-            logMessage(`Defrosted frozen ${door.color} door with red aura.`);
-            door.corrupted = false;
+    // Add the "Generate Teams" button
+    const generateTeamsButton = document.createElement('button');
+    generateTeamsButton.id = 'generateTeams';
+    generateTeamsButton.textContent = 'Generate Teams';
+    generateTeamsButton.classList.add('button-primary');
+    generateTeamsButton.addEventListener('click', () => {
+        if (isCreator && currentRoomID) {
+            socket.emit('generateTeams', { roomID: currentRoomID });
+            console.log("Requested team generation.");
         } else {
-            logMessage(`Cannot defrost frozen ${door.color} door. Red aura not active.`);
-            return false;
+            alert("Only the room creator can generate teams.");
         }
-    }
-
-    if (door.type === 'eroded' && door.corrupted) {
-        if (auras.greenAuraActive) {
-            logMessage(`Healed eroded ${door.color} door with green aura.`);
-            door.corrupted = false;
-        } else {
-            logMessage(`Cannot heal eroded ${door.color} door. Green aura not active.`);
-            return false;
-        }
-    }
-
-    if (door.type === 'painted' && door.corrupted) {
-        if (auras.blueAuraActive) {
-            logMessage(`Cleaned painted ${door.color} door with blue aura.`);
-            door.corrupted = false;
-        } else {
-            logMessage(`Cannot clean painted ${door.color} door. Blue aura not active.`);
-            return false;
-        }
-    }
-
-    if (door.type === 'cursed') {
-        if (auras.brownAuraActive) {
-            logMessage(`Opened cursed ${door.color} door using negative brown aura.`);
-            door.copies -= 1;
-            logMessage(`Remaining copies: ${door.copies}`);
-            return true;
-        } else {
-            logMessage(`Cannot open cursed ${door.color} door without negative brown aura.`);
-            return false;
-        }
-    }
-
-    for (const lock of door.locks) {
-        const { color, cost } = lock;
-        if (!data.keys[color]) {
-            logMessage(`Error: Key color '${color}' is not defined in data.keys.`);
-            return false;
-        }
-        data.keys[color].real -= cost.real;
-        data.keys[color].imag -= cost.imag;
-        logMessage(`Used ${cost.real !== 0 ? cost.real : ''}${cost.imag !== 0 ? (cost.real !== 0 ? ' + ' : '') + cost.imag + 'i' : ''} ${color} key(s) to open part of ${door.color} door.`);
-    }
-
-    door.copies -= 1;
-    logMessage(`Opened ${door.color} door. Remaining copies: ${door.copies}`);
-    return true;
+    });
+    generateTeamsContainer.appendChild(generateTeamsButton);
 }
 
-// Goal check with detailed logging
-function checkGoal(data) {
-    if (!data.goal || !Array.isArray(data.goal.required_doors)) {
-        logMessage("Error: required_doors is not defined in goal or is not an array.");
-        return;
+/* Event Listener for the Add Name Button */
+document.getElementById("addName").addEventListener("click", () => {
+    const nameInput = document.getElementById("creatorNameInput");
+    const name = nameInput.value.trim();
+    if (name && currentRoomID) {
+        // Check for duplicate names
+        if (isNameDuplicate(name)) {
+            alert("This name already exists in the room. Please enter a different name.");
+            console.log(`Attempted to add duplicate name: ${name}`);
+            return;
+        }
+        socket.emit('addName', { roomID: currentRoomID, name });
+        nameInput.value = ''; // Clear the input field
+    } else {
+        alert("Please enter a name to add.");
+    }
+});
+
+/* Function to Check for Duplicate Names */
+function isNameDuplicate(name) {
+    const nameListDiv = document.getElementById("nameList");
+    const existingNames = Array.from(nameListDiv.querySelectorAll('.user-name'))
+        .map(span => span.textContent.trim().toLowerCase());
+    return existingNames.includes(name.toLowerCase());
+}
+
+/* Join or Create Room Function */
+function joinRoom(roomID, isPublic = null, teamSize = null, joinButton = null) {
+    // If already in a room, leave it first
+    if (currentRoomID) {
+        leaveRoom(currentRoomID, currentJoinButton);
     }
 
-    const remainingDoors = data.goal.required_doors.filter(color => {
-        const door = data.doors.find(d => d.color === color);
-        return door && (door.copies > 0 || door.corrupted);
+    // Reset UI before joining a new room
+    resetUI();
+
+    currentRoomID = roomID;
+    if (isPublic === null) {
+        isPublic = document.getElementById('isPublic').checked;
+    }
+    if (teamSize === null) {
+        teamSize = parseInt(document.getElementById('teamSizeSelect').value, 10);
+    }
+    socket.emit('joinRoom', { roomID, isPublic, teamSize });
+
+    // Update the member info title with the room ID
+    document.getElementById("memberInfoTitle").textContent = `${roomID} Room Information`;
+
+    // Show relevant sections
+    showElement("submitNameSection");
+    showElement("memberInfoSection");
+    showElement("teamGenerationSection");
+    showElement("chatSection");
+
+    // Check for cached name and pre-fill the input
+    const cachedName = localStorage.getItem('cachedName');
+    if (cachedName) {
+        document.getElementById('nameInput').value = cachedName;
+    }
+
+    // Update event listeners
+    socket.off('updateNames').on('updateNames', ({ users, creatorId }) => {
+        updateNameList(users, creatorId);
+    });
+    socket.off('displayTeams').on('displayTeams', displayTeams);
+    socket.off('revealName').on('revealName', ({ memberId, memberName }) => {
+        handleRevealName(memberId, memberName);
+    });
+    socket.off('revealAllNames').on('revealAllNames', (teams) => {
+        handleRevealAllNames(teams);
+    });
+    socket.off('voteUpdate').on('voteUpdate', ({ votedUsernames }) => {
+        updateVotedMembers(votedUsernames);
+    });
+    socket.off('enableConfirmReroll').on('enableConfirmReroll', () => {
+        showConfirmRerollButtons();
+    });
+    socket.off('teamsRerolled').on('teamsRerolled', (teams) => {
+        handleTeamsRerolled(teams);
     });
 
-    if (remainingDoors.length === 0) {
-        data.goal.reached = true;
-        logMessage("Goal reached! All necessary doors are open.");
+    if (joinButton) {
+        joinButton.textContent = 'Leave Room';
+        joinButton.onclick = function () {
+            leaveRoom(roomID, joinButton);
+        };
+        currentJoinButton = joinButton;
+    }
+
+    console.log(`Joined room: ${roomID}`);
+}
+
+/* Leave Room Function */
+function leaveRoom(roomID, joinButton) {
+    socket.emit('leaveRoom', { roomID });
+    resetUI();
+    if (joinButton) {
+        joinButton.textContent = 'Join Room';
+        joinButton.onclick = function () {
+            joinRoom(roomID, true, null, joinButton);
+        };
+    }
+}
+
+/* Update Name List Function */
+function updateNameList(users, creatorId) {
+    // Exclude creator from totalMembers
+    totalMembers = users.filter(user => user.id !== creatorId).length;
+    const nameListDiv = document.getElementById("nameList");
+    nameListDiv.innerHTML = '';
+    users.forEach(user => {
+        const userElement = document.createElement('p');
+        userElement.classList.add('user-entry');
+
+        // Create a container for the name and badge
+        const nameContainer = document.createElement('div');
+        nameContainer.classList.add('user-name-container');
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = user.name;
+        nameSpan.classList.add('user-name');
+        nameContainer.appendChild(nameSpan);
+
+        // Add AFKQ badge if applicable
+        if (user.afkq) {
+            const badgeSpan = document.createElement('span');
+            badgeSpan.classList.add('afkq-badge');
+            badgeSpan.textContent = 'AFKQ';
+            nameContainer.appendChild(badgeSpan);
+        }
+
+        // Add 'Host' badge if the user is the creator
+        if (user.id === creatorId) {
+            const hostBadge = document.createElement('span');
+            hostBadge.classList.add('host-badge');
+            hostBadge.textContent = 'Host';
+            nameContainer.appendChild(hostBadge);
+        }
+
+        userElement.appendChild(nameContainer);
+
+        // Add 'Kick' button for creator
+        if (isCreator && user.id !== socket.id) {
+            const kickButton = document.createElement('button');
+            kickButton.textContent = 'Kick';
+            kickButton.classList.add('kick-button');
+            kickButton.addEventListener('click', () => {
+                kickUser(user.id);
+            });
+            userElement.appendChild(kickButton);
+        } else {
+            // Add a placeholder to keep the height consistent
+            const placeholder = document.createElement('div');
+            placeholder.style.width = '50px'; // Adjust width as needed
+            userElement.appendChild(placeholder);
+        }
+        nameListDiv.appendChild(userElement);
+    });
+    console.log("Updated name list.");
+}
+
+/* Display Teams Function */
+function displayTeams(teams) {
+    const teamListDiv = document.getElementById("teamList");
+    teamListDiv.innerHTML = '';
+    revealedNames.clear();
+    teamGenerated = true;
+
+    // Enable Team Chat Tab
+    document.getElementById('teamChatTab').disabled = false;
+
+    teams.forEach((team, i) => {
+        const teamElement = document.createElement('div');
+        teamElement.classList.add('team');
+
+        const teamHeader = document.createElement('h3');
+        teamHeader.textContent = `Team ${i + 1}`;
+        teamElement.appendChild(teamHeader);
+
+        const memberList = document.createElement('ul');
+        team.forEach((memberName, index) => {
+            const memberItem = document.createElement('li');
+            const memberId = `team${i}-member${index}`;
+            memberItem.id = memberId;
+
+            // Initially mask the names
+            memberItem.textContent = '???';
+
+            // If creator, add a "Reveal" button
+            if (isCreator) {
+                const revealButton = document.createElement('button');
+                revealButton.textContent = 'Reveal';
+                revealButton.classList.add('reveal-button');
+                revealButton.addEventListener('click', () => {
+                    socket.emit('revealName', { roomID: currentRoomID, memberId, memberName });
+                });
+                memberItem.appendChild(revealButton);
+            }
+
+            memberList.appendChild(memberItem);
+        });
+        teamElement.appendChild(memberList);
+        teamListDiv.appendChild(teamElement);
+    });
+
+    // If creator, update the generate teams container
+    if (isCreator) {
+        // Remove "Generate Teams" button
+        const generateTeamsContainer = document.getElementById('generateTeamsContainer');
+        generateTeamsContainer.innerHTML = ''; // Clear previous content
+        showElement('generateTeamsContainer');
+
+        // Show Vote Counter
+        showVoteCounter();
+    }
+
+    // Show the Vote to Reroll button to participants only
+    if (!isCreator) {
+        showVoteToRerollButton();
+    }
+
+    console.log("Displayed teams.");
+}
+
+/* Show Vote to Reroll Button for Participants */
+function showVoteToRerollButton() {
+    const teamListDiv = document.getElementById("teamList");
+
+    const voteButton = document.createElement('button');
+    voteButton.textContent = 'Vote to Reroll';
+    voteButton.classList.add('vote-reroll-button');
+    voteButton.addEventListener('click', () => {
+        if (!userVoted) {
+            socket.emit('voteReroll', { roomID: currentRoomID });
+            userVoted = true;
+            voteButton.disabled = true;
+        }
+    });
+
+    teamListDiv.appendChild(voteButton);
+
+    // Start the countdown timer
+    startVoteTimer(voteButton);
+}
+
+/* Start Vote Timer */
+function startVoteTimer(voteButton) {
+    let timeLeft = voteDuration;
+
+    voteInterval = setInterval(() => {
+        timeLeft--;
+        const percentage = (timeLeft / voteDuration) * 100;
+        voteButton.style.background = `linear-gradient(to right, #FA2A55 ${percentage}%, #FFFFFF ${percentage}%)`;
+
+        if (timeLeft <= 0) {
+            clearInterval(voteInterval);
+            if (voteButton) {
+                voteButton.remove();
+            }
+            userVoted = false;
+        }
+    }, 1000);
+}
+
+/* Show Vote Counter for Creator */
+function showVoteCounter() {
+    const container = document.getElementById('generateTeamsContainer');
+
+    if (!container) {
+        console.error('generateTeamsContainer not found.');
+        return;
+    }
+
+    // Remove existing content
+    container.innerHTML = '';
+
+    // Create vote counter label
+    const voteCounter = document.createElement('span');
+    voteCounter.id = 'voteCounter';
+    voteCounter.innerHTML = 'Votes Required: <span class="accent-color">0</span>';
+    voteCounter.style.marginLeft = '10px';
+    voteCounter.style.fontSize = '16px';
+
+    container.appendChild(voteCounter);
+}
+
+/* Show Confirmation Buttons */
+function showConfirmRerollButtons() {
+    const container = document.getElementById('generateTeamsContainer');
+    if (!container) return;
+
+    // Remove existing content
+    container.innerHTML = '';
+
+    // Create confirmation text
+    const confirmText = document.createElement('span');
+    confirmText.textContent = 'Confirm Reroll?';
+    confirmText.style.fontSize = '16px';
+    confirmText.style.marginRight = '10px';
+
+    // Create "Yes" button
+    const yesButton = document.createElement('button');
+    yesButton.textContent = 'Yes';
+    yesButton.classList.add('button-primary', 'confirm-button', 'button-inline');
+    yesButton.addEventListener('click', () => {
+        socket.emit('confirmReroll', { roomID: currentRoomID });
+        // Remove buttons after action
+        container.innerHTML = '';
+    });
+
+    // Create "No" button
+    const noButton = document.createElement('button');
+    noButton.textContent = 'No';
+    noButton.classList.add('button-primary', 'confirm-button', 'button-inline');
+    noButton.addEventListener('click', () => {
+        // Reset the UI
+        container.innerHTML = '';
+        // Show Vote Counter again
+        showVoteCounter();
+    });
+
+    container.appendChild(confirmText);
+    container.appendChild(yesButton);
+    container.appendChild(noButton);
+}
+
+/* Update Voted Members */
+/* Update Voted Members */
+function updateVotedMembers(votedUsernames) {
+    // Update vote counter if creator
+    if (isCreator) {
+        const voteCounter = document.getElementById('voteCounter');
+        if (voteCounter) {
+            const votesNeeded = Math.ceil(0.8 * totalMembers);
+            const votesRemaining = votesNeeded - votedUsernames.length;
+            const votesRemainingText = votesRemaining > 0 ? votesRemaining : 0;
+            voteCounter.innerHTML = `Votes Required: <span class="accent-color">${votesRemainingText}</span>`;
+        }
+
+        // Check if votes reach 80% or more
+        if (votedUsernames.length >= Math.ceil(0.8 * totalMembers) && totalMembers > 0) {
+            // Show confirmation buttons
+            showConfirmRerollButtons();
+        }
+    }
+
+    // Highlight voted members for all participants
+    // Clear previous votes
+    const nameElements = document.querySelectorAll('.user-name');
+    nameElements.forEach(element => {
+        element.classList.remove('voted-member');
+    });
+
+    // Highlight users who have voted
+    votedUsernames.forEach(username => {
+        nameElements.forEach(element => {
+            if (element.textContent.trim() === username.trim()) {
+                element.classList.add('voted-member');
+            }
+        });
+    });
+}
+
+/* Handle Teams Rerolled */
+function handleTeamsRerolled(teams) {
+    // Reset userVoted and clear any existing votes
+    userVoted = false;
+    clearInterval(voteInterval);
+
+    // Remove the Vote to Reroll button if it exists
+    const voteButton = document.querySelector('.vote-reroll-button');
+    if (voteButton) {
+        voteButton.remove();
+    }
+
+    // Remove vote counter and confirm button if creator
+    if (isCreator) {
+        const container = document.getElementById('generateTeamsContainer');
+        if (container) container.innerHTML = '';
+    }
+
+    // Clear accent color from names
+    const votedMembers = document.querySelectorAll('.voted-member');
+    votedMembers.forEach(member => {
+        member.classList.remove('voted-member');
+    });
+
+    // Display the new teams
+    displayTeams(teams);
+}
+
+/* Handle Reveal Name Event */
+function handleRevealName(memberId, memberName) {
+    const memberItem = document.getElementById(memberId);
+    if (memberItem && !revealedNames.has(memberId)) {
+        // Remove existing content
+        memberItem.textContent = memberName;
+        revealedNames.add(memberId);
+        console.log(`Revealed name: ${memberName}`);
+
+        // Remove the 'Reveal' button if present
+        const revealButton = memberItem.querySelector('.reveal-button');
+        if (revealButton) {
+            revealButton.remove();
+        }
+    }
+}
+
+socket.on('revealName', ({ memberId, memberName }) => {
+    handleRevealName(memberId, memberName);
+});
+
+/* Handle Reveal All Names Event */
+function handleRevealAllNames(teams) {
+    teams.forEach((team, i) => {
+        team.forEach((memberName, index) => {
+            const memberId = `team${i}-member${index}`;
+            const memberItem = document.getElementById(memberId);
+            if (memberItem && !revealedNames.has(memberId)) {
+                memberItem.textContent = memberName;
+                revealedNames.add(memberId);
+
+                // Remove the 'Reveal' button if present
+                const revealButton = memberItem.querySelector('.reveal-button');
+                if (revealButton) {
+                    revealButton.remove();
+                }
+            }
+        });
+    });
+    console.log("Revealed all names.");
+}
+
+socket.on('revealAllNames', (teams) => {
+    handleRevealAllNames(teams);
+});
+
+/* Kick User Function */
+function kickUser(userID) {
+    if (isCreator && currentRoomID) {
+        socket.emit('kickUser', { roomID: currentRoomID, userID });
+        console.log(`Kicked user: ${userID}`);
+    }
+}
+
+/* Handle Events When a User is Kicked, Room is Closed, or Join is Denied */
+socket.on('kicked', (message) => {
+    alert(message);
+    resetUI();
+    console.log("You have been kicked from the room.");
+});
+
+socket.on('roomClosed', () => {
+    alert("The room has been closed by the creator.");
+    resetUI();
+    console.log("Room has been closed by the creator.");
+});
+
+socket.on('joinDenied', (message) => {
+    alert(message);
+    console.log("Join denied: " + message);
+});
+
+/* Reset UI Function */
+function resetUI() {
+    hideElement("submitNameSection");
+    hideElement("memberInfoSection");
+    hideElement("teamGenerationSection");
+    hideElement("chatSection");
+    hideElement("creatorNameSection"); // Hide the creatorNameSection
+    document.getElementById("nameList").innerHTML = "";
+    document.getElementById("teamList").innerHTML = "";
+    document.getElementById("memberCount").innerHTML =
+        `<span class="member-stat">Total Members: <span id="totalMembers">0</span></span><br>
+         <span class="member-stat">Named: <span id="namedMembers">0</span></span><br>
+         <span class="member-stat">Unnamed: <span id="unnamedMembers">0</span></span>`;
+    document.getElementById("memberInfoTitle").textContent = "Member Count";
+
+    // Reset the join button if applicable
+    if (currentJoinButton) {
+        currentJoinButton.disabled = false;
+        currentJoinButton.textContent = 'Join Room';
+        currentJoinButton.onclick = function () {
+            const roomID = currentJoinButton.getAttribute('data-room-id');
+            joinRoom(roomID, true, null, currentJoinButton);
+        };
+        currentJoinButton = null;
+    }
+
+    // Reset chat variables
+    resetChat();
+
+    // Reset variables
+    currentRoomID = null;
+    isCreator = false;
+    teamGenerated = false;
+    revealedNames = new Set();
+    totalMembers = 0;
+
+    // Remove any event listeners
+    socket.off('updateNames');
+    socket.off('displayTeams');
+    socket.off('revealName');
+    socket.off('revealAllNames');
+    socket.off('voteUpdate');
+    socket.off('enableConfirmReroll');
+    socket.off('teamsRerolled');
+
+    // Reset vote variables
+    userVoted = false;
+    clearInterval(voteInterval);
+
+    // Remove any vote-related elements
+    const voteButton = document.querySelector('.vote-reroll-button');
+    if (voteButton) {
+        voteButton.remove();
+    }
+
+    hideElement("generateTeamsContainer"); // Hide the generateTeamsContainer
+
+    // Remove vote counter and confirm button if creator
+    const container = document.getElementById('generateTeamsContainer');
+    if (container) container.innerHTML = '';
+
+    // Clear accent color from names
+    const votedMembers = document.querySelectorAll('.voted-member');
+    votedMembers.forEach(member => {
+        member.classList.remove('voted-member');
+    });
+
+    console.log("UI has been reset.");
+}
+
+/* Handle Active Rooms */
+socket.on('activeRooms', (publicRooms) => {
+    const roomsList = document.getElementById("roomsList");
+    const noRoomsMessage = document.getElementById("noRoomsMessage");
+
+    if (publicRooms.length === 0) {
+        roomsList.innerHTML = '';
+        showElement("noRoomsMessage");
     } else {
-        logMessage("Goal not yet reached. Remaining doors to be opened or uncorrupted: " + remainingDoors.join(", "));
+        roomsList.innerHTML = '';
+        hideElement("noRoomsMessage");
+        publicRooms.forEach(room => {
+            const roomItem = document.createElement('li');
+            roomItem.textContent = `${room.roomID} - Team Size: ${room.teamSize}`;
+
+            const joinButton = document.createElement('button');
+            joinButton.id = `joinRoomButton-${room.roomID}`;
+            joinButton.setAttribute('data-room-id', room.roomID);
+            joinButton.textContent = 'Join Room';
+            joinButton.addEventListener('click', function () {
+                joinRoom(room.roomID, true, room.teamSize, this);
+            });
+
+            // If the user is already in this room
+            if (currentRoomID === room.roomID) {
+                joinButton.textContent = 'Leave Room';
+                joinButton.onclick = function () {
+                    leaveRoom(room.roomID, joinButton);
+                };
+                currentJoinButton = joinButton;
+            }
+
+            roomItem.appendChild(joinButton);
+            roomsList.appendChild(roomItem);
+        });
+    }
+
+    console.log("Updated active public rooms.");
+});
+
+/* Update Member Count */
+socket.on('memberCount', ({ total, named, unnamed }) => {
+    document.getElementById("totalMembers").textContent = total;
+    document.getElementById("namedMembers").textContent = named;
+    document.getElementById("unnamedMembers").textContent = unnamed;
+    console.log(`Member count updated: Total - ${total}, Named - ${named}, Unnamed - ${unnamed}`);
+});
+
+/* Join Room Button Event Listener */
+document.getElementById("joinRoom").addEventListener("click", () => {
+    const roomIDInput = document.getElementById("roomID");
+    const roomID = roomIDInput.value.trim();
+    if (roomID.length >= 3 && roomID.length <= 6) {
+        joinRoom(roomID);
+    } else {
+        alert("Please enter a Room ID between 3 and 6 characters.");
+    }
+});
+
+/* Submit Name Button Event Listener */
+document.getElementById("submitName").addEventListener("click", () => {
+    const nameInput = document.getElementById("nameInput");
+    const name = nameInput.value.trim();
+    const afkq = document.getElementById("afkqTool").checked;
+    if (name && currentRoomID) {
+        socket.emit('submitName', { roomID: currentRoomID, name, afkq });
+        nameInput.value = ''; // Clear the input field
+        console.log(`Submitted name: ${name}, AFKQ: ${afkq}`);
+
+        // Save the name to localStorage
+        localStorage.setItem('cachedName', name);
+    } else {
+        alert("Please enter your name.");
+    }
+});
+
+/* Chat Functionality */
+let currentChatTab = 'roomChat';
+let roomChatUnread = 0;
+let teamChatUnread = 0;
+
+/* Switch Chat Tabs */
+document.getElementById('roomChatTab').addEventListener('click', () => {
+    switchChatTab('roomChat');
+});
+
+document.getElementById('teamChatTab').addEventListener('click', () => {
+    if (!teamGenerated) {
+        alert('Team Chat will be available after teams are generated.');
+        return;
+    }
+    switchChatTab('teamChat');
+});
+
+function switchChatTab(tab) {
+    currentChatTab = tab;
+    document.querySelectorAll('.chat-tab').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tab + 'Tab').classList.add('active');
+
+    document.querySelectorAll('.chat-window').forEach(div => hideElement(div.id));
+    showElement(tab);
+
+    // Reset unread count
+    if (tab === 'roomChat') {
+        roomChatUnread = 0;
+        updateChatBadge('roomChatBadge', roomChatUnread);
+    } else if (tab === 'teamChat') {
+        teamChatUnread = 0;
+        updateChatBadge('teamChatBadge', teamChatUnread);
     }
 }
 
-// Solver function
-async function cursedDoorTest() {
-    logMessage("Starting solver...");
-
-    const testData = cloneData(puzzleData);
-    for (const key of testData.keysToCollect) {
-        collectKey(testData, key.color, key.amount);
+/* Send Message */
+document.getElementById('roomChatSend').addEventListener('click', () => {
+    const message = document.getElementById('roomChatInput').value.trim();
+    if (message) {
+        socket.emit('roomChatMessage', { roomID: currentRoomID, message });
+        document.getElementById('roomChatInput').value = '';
     }
+});
 
-    const auras = checkAuras(testData);
-
-    for (const door of testData.doors) {
-        openDoor(testData, door, auras);
+document.getElementById('teamChatSend').addEventListener('click', () => {
+    const message = document.getElementById('teamChatInput').value.trim();
+    if (message) {
+        socket.emit('teamChatMessage', { roomID: currentRoomID, message });
+        document.getElementById('teamChatInput').value = '';
     }
+});
 
-    checkGoal(testData);
+/* Receive Messages */
+socket.on('roomChatMessage', ({ sender, message }) => {
+    displayChatMessage('roomChatMessages', sender, message);
+    if (currentChatTab !== 'roomChat') {
+        roomChatUnread++;
+        updateChatBadge('roomChatBadge', roomChatUnread);
+    }
+});
+
+socket.on('teamChatMessage', ({ sender, message }) => {
+    displayChatMessage('teamChatMessages', sender, message);
+    if (currentChatTab !== 'teamChat') {
+        teamChatUnread++;
+        updateChatBadge('teamChatBadge', teamChatUnread);
+    }
+});
+
+/* Display Chat Message */
+function displayChatMessage(chatMessagesId, sender, message) {
+    const chatMessagesDiv = document.getElementById(chatMessagesId);
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('chat-message');
+
+    const senderSpan = document.createElement('span');
+    senderSpan.classList.add('message-sender');
+    senderSpan.textContent = sender + ': ';
+
+    const messageSpan = document.createElement('span');
+    messageSpan.classList.add('message-text');
+    messageSpan.textContent = message;
+
+    messageElement.appendChild(senderSpan);
+    messageElement.appendChild(messageSpan);
+    chatMessagesDiv.appendChild(messageElement);
+
+    // Scroll to the bottom
+    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
 }
 
-document.getElementById("startButton").addEventListener("click", cursedDoorTest);
-</script>
-</body>
-</html>
+/* Update Chat Badge */
+function updateChatBadge(badgeId, count) {
+    const badge = document.getElementById(badgeId);
+    if (count > 0) {
+        badge.textContent = count;
+        badge.classList.remove('hidden');
+    } else {
+        badge.textContent = '0';
+        badge.classList.add('hidden');
+    }
+}
+
+/* Reset Chat Variables */
+function resetChat() {
+    currentChatTab = 'roomChat';
+    roomChatUnread = 0;
+    teamChatUnread = 0;
+    teamGenerated = false;
+
+    document.getElementById('roomChatMessages').innerHTML = '';
+    document.getElementById('teamChatMessages').innerHTML = '';
+    updateChatBadge('roomChatBadge', 0);
+    updateChatBadge('teamChatBadge', 0);
+
+    document.getElementById('teamChatTab').disabled = true;
+    hideElement('teamChat');
+    switchChatTab('roomChat');
+}
+
+/* Event Listeners for Enter Key Press */
+// Join or Create Room
+document.getElementById('roomID').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        document.getElementById('joinRoom').click();
+    }
+});
+
+// Submit Name
+document.getElementById('nameInput').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        document.getElementById('submitName').click();
+    }
+});
+
+// Add Name (Creator)
+document.getElementById('creatorNameInput').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        document.getElementById('addName').click();
+    }
+});
+
+// Room Chat Send
+document.getElementById('roomChatInput').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        document.getElementById('roomChatSend').click();
+    }
+});
+
+// Team Chat Send
+document.getElementById('teamChatInput').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        document.getElementById('teamChatSend').click();
+    }
+});
