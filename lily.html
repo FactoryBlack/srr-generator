@@ -77,27 +77,10 @@ function checkAuras(data) {
     let blueAuraActive = data.keys.blue.real >= 3;
     let brownAuraActive = data.keys.brown.real < 0;
 
-    if (redAuraActive) {
-        logMessage("Red aura activated! Frozen doors can be defrosted.");
-    } else {
-        logMessage("Red aura not active. Red keys available: " + data.keys.red.real);
-    }
-
-    if (greenAuraActive) {
-        logMessage("Green aura activated! Eroded doors can be healed.");
-    } else {
-        logMessage("Green aura not active. Green keys available: " + data.keys.green.real);
-    }
-
-    if (blueAuraActive) {
-        logMessage("Blue aura activated! Painted doors can be cleaned.");
-    } else {
-        logMessage("Blue aura not active. Blue keys available: " + data.keys.blue.real);
-    }
-
-    if (brownAuraActive) {
-        logMessage("Negative brown aura activated! Curses can now be removed from nearby doors.");
-    }
+    if (redAuraActive) logMessage("Red aura activated! Frozen doors can be defrosted.");
+    if (greenAuraActive) logMessage("Green aura activated! Eroded doors can be healed.");
+    if (blueAuraActive) logMessage("Blue aura activated! Painted doors can be cleaned.");
+    if (brownAuraActive) logMessage("Negative brown aura activated! Curses can now be removed from nearby doors.");
 
     return { greenAuraActive, redAuraActive, blueAuraActive, brownAuraActive };
 }
