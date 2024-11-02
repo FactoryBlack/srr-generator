@@ -33,14 +33,19 @@
 <div id="log" class="console-output"></div>
 
 <script>
-// Load level data
+// Enhanced level loading with detailed logging
 let puzzleData = {};
 document.getElementById("loadLevelButton").addEventListener("click", async () => {
     const level = document.getElementById("levelSelect").value;
+    logMessage(`Attempting to load level: ${level}`);
+
     try {
         const response = await fetch(level);
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
         puzzleData = await response.json();
-        logMessage(`Loaded ${level}`);
+        logMessage(`Successfully loaded level: ${level}`);
     } catch (error) {
         logMessage(`Error loading level data: ${error.message}`);
     }
@@ -53,6 +58,8 @@ function logMessage(message) {
     logDiv.appendChild(messageElement);
     logDiv.scrollTop = logDiv.scrollHeight;
 }
+
+// The rest of the code remains unchanged, so I’ll continue with the updated logging...
 
 function cloneData(data) {
     return JSON.parse(JSON.stringify(data));
@@ -110,7 +117,7 @@ function openDoor(data, door, auras) {
             logMessage(`Cleaned painted ${door.color} door with blue aura.`);
             door.corrupted = false;
         } else {
-            logMessage(`Cannot clean painted ${door.color} door. Missing required aura.`);
+            logMessage(`Cannot clean painted ${door.color} door. Blue aura not active.`);
             return false;
         }
     }
