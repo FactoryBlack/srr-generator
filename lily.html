@@ -76,6 +76,9 @@ function collectKey(data, color, amount) {
     data.keys[color].real += amount.real;
     data.keys[color].imag += amount.imag;
     logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? (amount.real !== 0 ? ' + ' : '') + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
+
+    // Check for aura activation after each key collection
+    checkAuras(data);
 }
 
 // Check for aura activation based on key counts
@@ -190,6 +193,9 @@ async function cursedDoorTest() {
     if (openDoor(testData, testData.doors[2])) {
         steps.push("Opened cursed brown door with negative aura.");
     }
+
+    // Check auras before attempting to open corrupted doors
+    checkAuras(testData);
 
     // Try opening each corrupted door with corresponding auras
     openDoor(testData, testData.doors[3]); // frozen door
