@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Target Sum Finder</title>
+    <title>Target Sum Finder with Steps</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -43,11 +43,17 @@
             margin-bottom: 10px;
             border-radius: 5px;
         }
+        .feasible-sum h3 {
+            color: #0056b3;
+        }
+        .feasible-sum p {
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
-    <h1>Target Sum Finder</h1>
-    <p>Identify feasible target sums that allow configurations to reach manageable values using the puzzle's addition and division mechanics.</p>
+    <h1>Target Sum Finder with Steps</h1>
+    <p>Identify feasible target sums and calculate the steps required to reach each one.</p>
 
     <button onclick="findFeasibleSums()">Find Feasible Sums</button>
     <div id="output">Output will appear here...</div>
@@ -61,17 +67,21 @@
 
             // Run the algorithm for each possible target sum
             for (let targetSum = 2; targetSum <= maxSum; targetSum++) {
-                if (exploreTargetSum(targetSum)) {
-                    feasibleSums.push(targetSum);
+                const result = exploreTargetSum(targetSum);
+                if (result) {
+                    feasibleSums.push(result);
                 }
             }
 
             // Display the results
             outputDiv.innerHTML = `
                 <h3>Feasible Sums Found:</h3>
-                ${feasibleSums.length > 0 ? feasibleSums.map(sum => `
+                ${feasibleSums.length > 0 ? feasibleSums.map((result, idx) => `
                     <div class="feasible-sum">
-                        <strong>Target Sum:</strong> ${sum}
+                        <h3>Solution ${idx + 1}</h3>
+                        <p><strong>Target Sum:</strong> ${result.sum}</p>
+                        <p><strong>Steps Required:</strong> ${result.path.length}</p>
+                        <p><strong>Path:</strong> ${result.path.join(" ➔ ")}</p>
                     </div>
                 `).join("") : "No feasible sums found."}
             `;
@@ -81,12 +91,14 @@
             let pink = 1, green = 1, cyan = 1;
             let states = new Set();
             let foundTarget = false;
+            let solutionPath = [];
 
-            function explore(pink, green, cyan) {
+            function explore(pink, green, cyan, path) {
                 // Check if we reach the target sum
                 if (pink + green === targetSum) {
                     if (checkDivisibility(pink, green)) {
                         foundTarget = true;
+                        solutionPath = path.slice();
                         return;
                     }
                 }
@@ -97,18 +109,22 @@
                 states.add(state);
 
                 // Recursive additions
-                explore(pink + cyan, green, cyan + 1); // Add cyan to pink
-                explore(pink, green + cyan, cyan + 1); // Add cyan to green
+                explore(pink + cyan, green, cyan + 1, [...path, "add cyan to pink"]); // Add cyan to pink
+                explore(pink, green + cyan, cyan + 1, [...path, "add cyan to green"]); // Add cyan to green
 
                 // Division operation if pink and cyan are both divisible by white (2)
                 if (pink % 2 === 0 && cyan % 2 === 0) {
-                    explore(pink / 2, green, cyan / 2);
+                    explore(pink / 2, green, cyan / 2, [...path, "divide pink and cyan by 2"]);
                 }
             }
 
             // Start exploring from initial values
-            explore(pink, green, cyan);
-            return foundTarget;
+            explore(pink, green, cyan, []);
+            if (foundTarget) {
+                return { sum: targetSum, path: solutionPath };
+            } else {
+                return null;
+            }
         }
 
         function checkDivisibility(pink, green) {
