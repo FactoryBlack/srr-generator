@@ -31,6 +31,11 @@ function logMessage(message) {
     logDiv.textContent = message;
 }
 
+// Deep clone of the puzzle state for backtracking
+function cloneData(data) {
+    return JSON.parse(JSON.stringify(data));
+}
+
 // Main solver function
 async function solvePuzzle() {
     logMessage("Starting puzzle solver...");
@@ -103,11 +108,13 @@ function checkGoal(data) {
     }
 }
 
-// Exploration function for trying out paths
+// Exploration function with backtracking for trying out paths
 async function explorePaths(data, solutions) {
     let stepCount = 0;
+    const states = [cloneData(data)]; // Stack for backtracking
 
-    while (!data.goal.reached) {
+    while (states.length > 0 && !data.goal.reached) {
+        data = states.pop(); // Restore previous state for backtracking
         stepCount++;
 
         // Prioritize collecting only necessary keys
@@ -119,10 +126,9 @@ async function explorePaths(data, solutions) {
         // Check if the goal has been reached
         checkGoal(data);
 
-        // If no doors were opened and no more keys are needed, stop to prevent infinite loop
-        if (!doorOpened && data.keysToCollect.every(key => data.keys[key.color] >= getRequiredKeys(data, key.color))) {
-            logMessage("No more doors to open or keys to collect.");
-            break;
+        // Save the current state if progress was made
+        if (doorOpened || !data.goal.reached) {
+            states.push(cloneData(data));
         }
 
         // Log and yield every 1000 steps
@@ -133,6 +139,10 @@ async function explorePaths(data, solutions) {
 
         // Stop if max steps reached
         if (stepCount > 100000) break;
+    }
+
+    if (data.goal.reached) {
+        solutions.push({ steps: stepCount, data });
     }
 }
 
