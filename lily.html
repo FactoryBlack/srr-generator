@@ -1,209 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Wanna Lockpick Puzzle Solver</title>
-    <style>
-        .console-output {
-            width: 100%;
-            height: 300px;
-            overflow-y: auto;
-            background-color: #333;
-            color: #eee;
-            font-family: monospace;
-            padding: 10px;
-            border: 1px solid #222;
-            white-space: pre-line;
-        }
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>I Wanna Lockpick Puzzle Solver</title>
+      <style>
+         .console-output {
+         width: 100%;
+         height: 300px;
+         overflow-y: auto;
+         background-color: #333;
+         color: #eee;
+         font-family: monospace;
+         padding: 10px;
+         border: 1px solid #222;
+         white-space: pre-line;
+         }
+         #startButton {
+         margin-bottom: 10px;
+         }
+      </style>
+   </head>
+   <body>
+      <h1>I Wanna Lockpick Puzzle Solver</h1>
+      <button id="startButton">Start Solver</button>
+      <div id="log" class="console-output"></div>
+      <script>
+         // Initial puzzle data with cursed door and brown key aura requirements
+         const puzzleData = {
+             keys: {
+                 green: { real: 0, imag: 0 },
+                 red: { real: 0, imag: 0 },
+                 cyan: { real: 0, imag: 0 },
+                 brown: { real: 0, imag: 0 },
+                 blue: { real: 0, imag: 0 }
+             },
+             doors: [
+                 { color: 'combo', type: 'normal', copies: 1, locks: [{ color: 'green', cost: { real: 5, imag: 0 } }, { color: 'red', cost: { real: 0, imag: 3 } }] },
+                 { color: 'cyan', type: 'normal', copies: 1, locks: [{ color: 'cyan', cost: { real: -7, imag: 0 } }] },
+                 { color: 'brown', type: 'cursed', copies: 1, locks: [{ color: 'brown', cost: { real: 1, imag: 0 } }] },
+                 { color: 'frozen', type: 'frozen', copies: 1, locks: [], corrupted: true },
+                 { color: 'eroded', type: 'eroded', copies: 1, locks: [], corrupted: true },
+                 { color: 'painted', type: 'painted', copies: 1, locks: [], corrupted: true }
+             ],
+             keysToCollect: [
+                 { color: 'green', amount: { real: 5, imag: 0 } },
+                 { color: 'red', amount: { real: 1, imag: 0 } },
+                 { color: 'blue', amount: { real: 3, imag: 0 } },
+                 { color: 'cyan', amount: { real: -7, imag: 0 } },
+                 { color: 'brown', amount: { real: -1, imag: 0 } }
+             ],
+             specialKeys: [
+                 { type: 'signflip', color: 'red' },
+                 { type: 'rotor', color: 'cyan' }
+             ],
+             goal: { reached: false }
+         };
 
-        #startButton {
-            margin-bottom: 10px;
-        }
-    </style>
-</head>
-<body>
+         let logDiv = document.getElementById("log");
 
-<h1>I Wanna Lockpick Puzzle Solver</h1>
-<button id="startButton">Start Solver</button>
-<div id="log" class="console-output"></div>
+         // Function to log messages with auto-scroll
+         function logMessage(message) {
+             const messageElement = document.createElement("div");
+             messageElement.textContent = message;
+             logDiv.appendChild(messageElement);
+             logDiv.scrollTop = logDiv.scrollHeight;
+         }
 
-<script>
-// Initial puzzle data with cursed door and brown key aura requirements
-const puzzleData = {
-    keys: {
-        green: { real: 0, imag: 0 },
-        red: { real: 0, imag: 0 },
-        cyan: { real: 0, imag: 0 },
-        brown: { real: 0, imag: 0 },
-        blue: { real: 0, imag: 0 } // Added blue for Painted doors
-    },
-    doors: [
-        { color: 'combo', type: 'normal', copies: 1, locks: [{ color: 'green', cost: { real: 5, imag: 0 } }, { color: 'red', cost: { real: 0, imag: 3 } }] },
-        { color: 'cyan', type: 'normal', copies: 1, locks: [{ color: 'cyan', cost: { real: -7, imag: 0 } }] },
-        { color: 'brown', type: 'cursed', copies: 1, locks: [{ color: 'brown', cost: { real: 1, imag: 0 } }] },
-        { color: 'frozen', type: 'frozen', copies: 1, locks: [], corrupted: true },
-        { color: 'eroded', type: 'eroded', copies: 1, locks: [], corrupted: true },
-        { color: 'painted', type: 'painted', copies: 1, locks: [], corrupted: true }
-    ],
-    keysToCollect: [
-        { color: 'green', amount: { real: 5, imag: 0 } },
-        { color: 'red', amount: { real: 1, imag: 0 } },
-        { color: 'blue', amount: { real: 3, imag: 0 } },
-        { color: 'cyan', amount: { real: -7, imag: 0 } },
-        { color: 'brown', amount: { real: -1, imag: 0 } }
-    ],
-    specialKeys: [
-        { type: 'signflip', color: 'red' },
-        { type: 'rotor', color: 'cyan' }
-    ],
-    goal: { reached: false }
-};
+         // Utility function to clone data without reference issues
+         function cloneData(data) {
+             return JSON.parse(JSON.stringify(data));
+         }
 
-let logDiv = document.getElementById("log");
+         // Collect a specific key amount and log
+         function collectKey(data, color, amount) {
+             data.keys[color].real += amount.real;
+             data.keys[color].imag += amount.imag;
+             logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? (amount.real !== 0 ? ' + ' : '') + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
 
-// Function to log messages with auto-scroll
-function logMessage(message) {
-    const messageElement = document.createElement("div");
-    messageElement.textContent = message;
-    logDiv.appendChild(messageElement);
-    logDiv.scrollTop = logDiv.scrollHeight;
-}
+             // Check for aura activation
+             checkAuras(data);
+         }
 
-// Utility function to clone data without reference issues
-function cloneData(data) {
-    return JSON.parse(JSON.stringify(data));
-}
+         // Check for aura activation based on key counts
+         function checkAuras(data) {
+             if (data.keys.red.real >= 1) {
+                 logMessage("Red aura activated! Frozen doors can be defrosted.");
+             }
+             if (data.keys.green.real >= 5) {
+                 logMessage("Green aura activated! Eroded doors can be healed.");
+             }
+             if (data.keys.blue.real >= 3) {
+                 logMessage("Blue aura activated! Painted doors can be cleaned.");
+             }
+             if (data.keys.brown.real < 0) {
+                 logMessage("Negative brown aura activated! Curses can now be removed from nearby doors.");
+             }
+         }
 
-// Collect a specific key amount and log
-function collectKey(data, color, amount) {
-    data.keys[color].real += amount.real;
-    data.keys[color].imag += amount.imag;
-    logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? (amount.real !== 0 ? ' + ' : '') + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
+         // Open a door if possible and log result, considering aura requirements
+         function openDoor(data, door) {
+             // Check if door is frozen and requires red aura
+             if (door.type === 'frozen' && door.corrupted) {
+                 if (data.keys.red.real >= 1) {
+                     logMessage(`Defrosted frozen ${door.color} door with red aura.`);
+                     door.corrupted = false;
+                 } else {
+                     logMessage(`Cannot defrost frozen ${door.color} door. Red aura not active.`);
+                     return false;
+                 }
+             }
 
-    // Check for aura activation
-    checkAuras(data);
-}
+             // Check if door is eroded and requires green aura
+             if (door.type === 'eroded' && door.corrupted) {
+                 if (data.keys.green.real >= 5) {
+                     logMessage(`Healed eroded ${door.color} door with green aura.`);
+                     door.corrupted = false;
+                 } else {
+                     logMessage(`Cannot heal eroded ${door.color} door. Green aura not active.`);
+                     return false;
+                 }
+             }
 
-// Check for aura activation based on key counts
-function checkAuras(data) {
-    if (data.keys.red.real >= 1) {
-        logMessage("Red aura activated! Frozen doors can be defrosted.");
-    }
-    if (data.keys.green.real >= 5) {
-        logMessage("Green aura activated! Eroded doors can be healed.");
-    }
-    if (data.keys.blue.real >= 3) {
-        logMessage("Blue aura activated! Painted doors can be cleaned.");
-    }
-    if (data.keys.brown.real < 0) {
-        logMessage("Negative brown aura activated! Curses can now be removed from nearby doors.");
-    }
-}
+             // Check if door is painted and requires blue aura
+             if (door.type === 'painted' && door.corrupted) {
+                 if (data.keys.blue.real >= 3) {
+                     logMessage(`Cleaned painted ${door.color} door with blue aura.`);
+                     door.corrupted = false;
+                 } else {
+                     logMessage(`Cannot clean painted ${door.color} door. Blue aura not active.`);
+                     return false;
+                 }
+             }
 
-// Open a door if possible and log result, considering aura requirements
-function openDoor(data, door) {
-    // Check if door is frozen and requires red aura
-    if (door.type === 'frozen' && door.corrupted) {
-        if (data.keys.red.real >= 1) {
-            logMessage(`Defrosted frozen ${door.color} door with red aura.`);
-            door.corrupted = false;
-        } else {
-            logMessage(`Cannot defrost frozen ${door.color} door. Red aura not active.`);
-            return false;
-        }
-    }
+             // Check if door is cursed and requires negative brown aura
+             if (door.type === 'cursed') {
+                 if (data.keys.brown.real < 0) {
+                     logMessage(`Opened cursed ${door.color} door using negative brown aura.`);
+                     door.copies -= 1;
+                     logMessage(`Remaining copies: ${door.copies}`);
+                     return true;
+                 } else {
+                     logMessage(`Cannot open cursed ${door.color} door without negative brown aura.`);
+                     return false;
+                 }
+             }
 
-    // Check if door is eroded and requires green aura
-    if (door.type === 'eroded' && door.corrupted) {
-        if (data.keys.green.real >= 5) {
-            logMessage(`Healed eroded ${door.color} door with green aura.`);
-            door.corrupted = false;
-        } else {
-            logMessage(`Cannot heal eroded ${door.color} door. Green aura not active.`);
-            return false;
-        }
-    }
+             // If all locks are met, open the door and deduct keys
+             for (const lock of door.locks) {
+                 const { color, cost } = lock;
+                 data.keys[color].real -= cost.real;
+                 data.keys[color].imag -= cost.imag;
+                 logMessage(`Used ${cost.real !== 0 ? cost.real : ''}${cost.imag !== 0 ? (cost.real !== 0 ? ' + ' : '') + cost.imag + 'i' : ''} ${color} key(s) to open part of ${door.color} door.`);
+             }
 
-    // Check if door is painted and requires blue aura
-    if (door.type === 'painted' && door.corrupted) {
-        if (data.keys.blue.real >= 3) {
-            logMessage(`Cleaned painted ${door.color} door with blue aura.`);
-            door.corrupted = false;
-        } else {
-            logMessage(`Cannot clean painted ${door.color} door. Blue aura not active.`);
-            return false;
-        }
-    }
+             door.copies -= 1;
+             logMessage(`Opened ${door.color} door. Remaining copies: ${door.copies}`);
+             return true;
+         }
 
-    // Check if door is cursed and requires negative brown aura
-    if (door.type === 'cursed') {
-        if (data.keys.brown.real < 0) {
-            logMessage(`Opened cursed ${door.color} door using negative brown aura.`);
-            door.copies -= 1;
-            logMessage(`Remaining copies: ${door.copies}`);
-            return true;
-        } else {
-            logMessage(`Cannot open cursed ${door.color} door without negative brown aura.`);
-            return false;
-        }
-    }
+         // Test function to simulate puzzle solving with aura requirements
+         async function cursedDoorTest() {
+             logMessage("Starting cursed door test...");
 
-    // If all locks are met, open the door and deduct keys
-    for (const lock of door.locks) {
-        const { color, cost } = lock;
-        data.keys[color].real -= cost.real;
-        data.keys[color].imag -= cost.imag;
-        logMessage(`Used ${cost.real !== 0 ? cost.real : ''}${cost.imag !== 0 ? (cost.real !== 0 ? ' + ' : '') + cost.imag + 'i' : ''} ${color} key(s) to open part of ${door.color} door.`);
-    }
+             const testData = cloneData(puzzleData);
+             const steps = [];
 
-    door.copies -= 1;
-    logMessage(`Opened ${door.color} door. Remaining copies: ${door.copies}`);
-    return true;
-}
+             // Collect keys for auras and doors
+             collectKey(testData, 'green', { real: 5, imag: 0 });
+             collectKey(testData, 'red', { real: 1, imag: 0 });
+             collectKey(testData, 'blue', { real: 3, imag: 0 });
+             if (openDoor(testData, testData.doors[0])) {
+                 steps.push("Opened combo door (green and red complex requirements).");
+             }
 
-// Test function to simulate puzzle solving with aura requirements
-async function cursedDoorTest() {
-    logMessage("Starting cursed door test...");
+             collectKey(testData, 'cyan', { real: -7, imag: 0 });
+             if (openDoor(testData, testData.doors[1])) {
+                 steps.push("Opened cyan door with negative requirement.");
+             }
 
-    const testData = cloneData(puzzleData);
-    const steps = [];
+             collectKey(testData, 'brown', { real: -1, imag: 0 });
+             if (openDoor(testData, testData.doors[2])) {
+                 steps.push("Opened cursed brown door with negative aura.");
 
-    collectKey(testData, 'green', { real: 5, imag: 0 });
-    collectKey(testData, 'red', { real: 1, imag: 0 });
-    collectKey(testData, 'blue', { real: 3, imag: 0 });
-    if (openDoor(testData, testData.doors[0])) {
-        steps.push("Opened combo door (green and red complex requirements).");
-    }
+                 // Try opening each corrupted door with corresponding auras
+                 openDoor(testData, testData.doors[3]); // frozen door
+                 openDoor(testData, testData.doors[4]); // eroded door
+                 openDoor(testData, testData.doors[5]); // painted door
 
-    collectKey(testData, 'cyan', { real: -7, imag: 0 });
-    if (openDoor(testData, testData.doors[1])) {
-        steps.push("Opened cyan door with negative requirement.");
-    }
+                 // Step 4: Check if goal is reached
+                 checkGoal(testData);
 
-    collectKey(testData, 'brown', { real: -1, imag: 0 });
-    if (openDoor(testData, testData.doors[2])) {
-        steps.push("Opened cursed brown door with negative aura.");
-    }
+                 if (testData.goal.reached) {
+                     logMessage("Test succeeded. Path: " + steps.join(" -> "));
+                 } else {
+                     logMessage("Test failed. Goal was not reached.");
+                 }
+             }
 
-    // Try opening each corrupted door with corresponding auras
-    openDoor(testData, testData.doors[3]); // frozen door
-    openDoor(testData, testData.doors[4]); // eroded door
-    openDoor(testData, testData.doors[5]); // painted door
+             // Add event listener to the button to start the test
+             document.getElementById("startButton").addEventListener("click", cursedDoorTest);
 
-    // Step 4: Check if goal is reached
-    checkGoal(testData);
 
-    if (testData.goal.reached) {
-        logMessage("Test succeeded. Path: " + steps.join(" -> "));
-    } else {
-        logMessage("Test failed. Goal was not reached.");
-    }
-}
-
-// Add event listener to the button to start the test
-document.getElementById("startButton").addEventListener("click", cursedDoorTest);
-
-</script>
-</body>
+      </script>
+   </body>
 </html>
