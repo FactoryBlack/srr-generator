@@ -85,6 +85,7 @@ function checkAuras(data) {
 // Open doors with aura checks and logging
 function openDoor(data, door, auras) {
     logMessage(`Attempting to open ${door.color} door. Type: ${door.type}, Corrupted: ${door.corrupted ?? 'N/A'}`);
+    logMessage(`Current key state: Green: ${data.keys.green.real}, Red: ${data.keys.red.real}, Blue: ${data.keys.blue.real}, Brown: ${data.keys.brown.real}`);
 
     if (door.type === 'frozen' && door.corrupted) {
         if (auras.redAuraActive) {
@@ -120,6 +121,7 @@ function openDoor(data, door, auras) {
         if (auras.brownAuraActive) {
             logMessage(`Opened cursed ${door.color} door using negative brown aura.`);
             door.copies -= 1;
+            logMessage(`Remaining copies: ${door.copies}`);
             return true;
         } else {
             logMessage(`Cannot open cursed ${door.color} door without negative brown aura.`);
