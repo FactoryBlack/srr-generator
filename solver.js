@@ -40,20 +40,28 @@ async function solvePuzzle() {
 
 // Attempt to open a door based on current keys
 function openDoor(door, keys) {
+    if (door.copies <= 0) {
+        return false; // Skip already opened doors
+    }
+
     if (door.type === 'frozen' && keys.red >= 1) {
         keys.red -= 1; // Use red aura key to defrost the door
     }
+
     if (door.lock.type === 'normal' && keys[door.color] >= door.lock.cost) {
         keys[door.color] -= door.lock.cost;
         door.copies -= 1;
+        logMessage(`Opened ${door.color} door with lock cost ${door.lock.cost}. Remaining copies: ${door.copies}`);
         return door.copies <= 0; // Return true if door is fully opened
     }
+
     return false;
 }
 
 // Simulate collecting a key
 function collectKey(keyType, amount, keys) {
     keys[keyType] += amount;
+    logMessage(`Collected ${amount} ${keyType} key(s). New count: ${keys[keyType]}`);
 }
 
 // Brute-force solving with non-blocking iteration
@@ -67,13 +75,12 @@ async function bruteForceSolve(data, solutions) {
         for (let door of data.doors) {
             const doorOpened = openDoor(door, data.keys);
             if (doorOpened) {
-                logMessage(`Opened ${door.color} door with lock cost ${door.lock.cost}.`);
                 checkGoal(data);
             }
         }
 
         // Simulate picking up a key as part of the path
-        collectKey('green', 5, data.keys);  // Example: Collecting a green key
+        collectKey('green', 5, data.keys);  // Example: Collecting a green key once per loop
 
         // Log progress and allow yield
         if (stepCount % 1000 === 0) {
@@ -91,6 +98,7 @@ function checkGoal(data) {
     // If the green tick is reached, update the goal state
     if (data.keys.green >= 7) { // Placeholder for goal condition
         data.goal.reached = true;
+        logMessage("Goal reached!");
     }
 }
 
