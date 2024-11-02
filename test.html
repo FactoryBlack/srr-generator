@@ -59,8 +59,8 @@
             const newState = JSON.parse(JSON.stringify(state));
             newState.keys[color]++;
             newState.steps += 1;
-            newState.path.push(`Collect ${color} key`);
-            logToOutput(`Collected ${color} key: New count = ${newState.keys[color]}`);
+            newState.path.push(`Collected ${color} key (Total ${color} keys: ${newState.keys[color]})`);
+            logToOutput(`Action ${newState.steps}: Collected ${color} key. New count of ${color} keys: ${newState.keys[color]}`);
             return newState;
         }
 
@@ -70,9 +70,11 @@
                 newState.keys.pink /= newState.keys.white;
                 newState.keys.green /= newState.keys.white;
                 newState.steps += 1;
-                newState.path.push(`Divide pink and green by white (${newState.keys.white})`);
-                logToOutput(`Divided pink and green by white: pink = ${newState.keys.pink}, green = ${newState.keys.green}`);
+                newState.path.push(`Divided pink and green keys by white (Total pink: ${newState.keys.pink}, green: ${newState.keys.green})`);
+                logToOutput(`Action ${newState.steps}: Divided pink and green by white. New pink: ${newState.keys.pink}, new green: ${newState.keys.green}`);
                 return newState;
+            } else {
+                logToOutput(`Action ${state.steps + 1}: Cannot divide pink and green by white (Condition not met)`);
             }
             return null;
         }
@@ -86,13 +88,13 @@
         }
 
         async function processQueue(queue, visited, solutions) {
-            const chunkSize = 100; // Process 100 states at a time
+            const chunkSize = 100;
             let iterations = 0;
 
             while (queue.length > 0) {
                 if (iterations >= chunkSize) {
                     iterations = 0;
-                    await new Promise(resolve => setTimeout(resolve, 0)); // Yield control to the browser
+                    await new Promise(resolve => setTimeout(resolve, 0));
                 }
 
                 const currentState = queue.shift();
@@ -102,9 +104,12 @@
                 visited.add(keys);
 
                 if (isGoalReached(currentState)) {
+                    logToOutput(`Goal reached in ${currentState.steps} steps!`);
                     solutions.push(currentState);
                     continue;
                 }
+
+                logToOutput(`Exploring new state with ${currentState.steps} steps taken. Current key counts: Cyan=${currentState.keys.cyan}, Pink=${currentState.keys.pink}, Green=${currentState.keys.green}, White=${currentState.keys.white}`);
 
                 // Add actions to queue
                 queue.push(collectKey(currentState, 'cyan'));
