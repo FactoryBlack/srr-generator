@@ -1,16 +1,19 @@
-// Puzzle data and solver setup
-
+// Puzzle data setup for this specific level
 const puzzleData = {
     keys: {
         white: 0, orange: 0, purple: 0, cyan: 0, pink: 0, black: 0,
         red: 0, green: 0, blue: 0, brown: 0, master: 0, glitch: 0
     },
     doors: [
-        { color: 'green', type: 'normal', lock: { type: 'normal', cost: 5 }, copies: 99 },
-        { color: 'red', type: 'frozen', lock: { type: 'aura', cost: 1 }, copies: 99 },
-        // More doors here based on level specifics
+        { color: 'green', type: 'normal', lock: { type: 'normal', cost: 5 }, copies: 99, position: "midway" },
+        { color: 'red', type: 'frozen', lock: { type: 'aura', cost: 1 }, copies: 99, position: "upper_left" },
+        // More doors here based on puzzle specifics
     ],
-    goal: { reached: false } // Define the condition for reaching the goal
+    keysToCollect: [
+        { color: 'green', amount: 5, position: "start" },
+        // Add key locations based on the level specifics
+    ],
+    goal: { reached: false, position: "green_check" }
 };
 
 let logDiv = document.getElementById("log");
@@ -38,71 +41,74 @@ async function solvePuzzle() {
     }
 }
 
-// Attempt to open a door based on current keys
-function openDoor(door, keys) {
-    if (door.copies <= 0) {
-        return false; // Skip already opened doors
+// Function to collect keys in the puzzle
+function collectKey(key) {
+    puzzleData.keys[key.color] += key.amount;
+    logMessage(`Collected ${key.amount} ${key.color} key(s). New count: ${puzzleData.keys[key.color]}`);
+}
+
+// Function to open a door based on the key requirements and type
+function openDoor(door) {
+    if (door.copies <= 0) return false; // Skip fully opened doors
+
+    // Check aura requirements for frozen, eroded, painted doors
+    if (door.type === 'frozen' && puzzleData.keys.red >= 1) {
+        puzzleData.keys.red -= 1; // Use red aura key to defrost
     }
 
-    if (door.type === 'frozen' && keys.red >= 1) {
-        keys.red -= 1; // Use red aura key to defrost the door
-    }
-
-    if (door.lock.type === 'normal' && keys[door.color] >= door.lock.cost) {
-        keys[door.color] -= door.lock.cost;
+    // For normal locks, check if we have enough keys
+    if (door.lock.type === 'normal' && puzzleData.keys[door.color] >= door.lock.cost) {
+        puzzleData.keys[door.color] -= door.lock.cost;
         door.copies -= 1;
         logMessage(`Opened ${door.color} door with lock cost ${door.lock.cost}. Remaining copies: ${door.copies}`);
-        return door.copies <= 0; // Return true if door is fully opened
+        return door.copies <= 0; // True if the door is fully opened
     }
 
     return false;
 }
 
-// Simulate collecting a key
-function collectKey(keyType, amount, keys) {
-    keys[keyType] += amount;
-    logMessage(`Collected ${amount} ${keyType} key(s). New count: ${keys[keyType]}`);
+// Function to check if the goal (reaching green check) has been met
+function checkGoal(data) {
+    // Assuming reaching the green check mark requires unlocking all relevant doors
+    const allDoorsOpen = data.doors.every(door => door.copies <= 0);
+    if (allDoorsOpen) {
+        data.goal.reached = true;
+        logMessage("Goal reached! Reached the green check mark.");
+    }
 }
 
-// Brute-force solving with non-blocking iteration
+// Brute-force solving function to explore paths
 async function bruteForceSolve(data, solutions) {
     let stepCount = 0;
 
     while (!data.goal.reached) {
         stepCount++;
 
-        // Example interactions
+        // Example: Collect all keys in the level
+        for (let key of data.keysToCollect) {
+            collectKey(key);
+        }
+
+        // Attempt to open each door
         for (let door of data.doors) {
-            const doorOpened = openDoor(door, data.keys);
+            const doorOpened = openDoor(door);
             if (doorOpened) {
-                checkGoal(data);
+                checkGoal(data); // Check if goal reached after opening
             }
         }
 
-        // Simulate picking up a key as part of the path
-        collectKey('green', 5, data.keys);  // Example: Collecting a green key once per loop
-
-        // Log progress and allow yield
+        // Log progress and allow yield every 1000 steps
         if (stepCount % 1000 === 0) {
             logMessage(`Checked ${stepCount} paths...`);
             await new Promise(resolve => setTimeout(resolve, 0));
         }
 
-        // Stop if goal is reached or no more actions available
+        // Stop if the goal is reached or if the maximum steps are reached
         if (data.goal.reached || stepCount > 100000) break;
     }
 }
 
-// Define what reaching the goal means
-function checkGoal(data) {
-    // If the green tick is reached, update the goal state
-    if (data.keys.green >= 7) { // Placeholder for goal condition
-        data.goal.reached = true;
-        logMessage("Goal reached!");
-    }
-}
-
-// Display a solution
+// Display the best solution found
 function displaySolution(solution) {
     logMessage(`Best solution found in ${solution.steps} steps.`);
 }
