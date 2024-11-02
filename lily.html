@@ -48,6 +48,10 @@ const puzzleData = {
         { color: 'cyan', amount: { real: -7, imag: 0 } },
         { color: 'brown', amount: { real: -1, imag: 0 } }
     ],
+    specialKeys: [
+        { type: 'signflip', color: 'red' },
+        { type: 'rotor', color: 'cyan' }
+    ],
     goal: { reached: false }
 };
 
@@ -82,19 +86,32 @@ function collectKey(data, color, amount) {
     }
 }
 
+// Apply special key effects (Signflip and Rotor)
+function applySpecialKey(data, specialKey) {
+    const { color, type } = specialKey;
+    let key = data.keys[color];
+
+    if (type === 'signflip') {
+        // Flip the sign of both real and imaginary parts
+        key.real *= -1;
+        key.imag *= -1;
+        logMessage(`Applied signflip to ${color} key(s). New total: ${key.real} + ${key.imag}i`);
+    } else if (type === 'rotor') {
+        // Rotate the key count by multiplying by i
+        let oldReal = key.real;
+        key.real = -key.imag;
+        key.imag = oldReal;
+        logMessage(`Applied rotor to ${color} key(s). New total: ${key.real} + ${key.imag}i`);
+    }
+}
+
 // Open a door if possible and log result, considering cursed status
 function openDoor(data, door) {
-    // Check if door is cursed and can be opened with negative brown aura
-    if (door.type === 'cursed') {
-        if (data.keys.brown.real < 0) {
-            logMessage(`Opened cursed ${door.color} door using negative brown aura.`);
-            door.copies -= 1;
-            logMessage(`Remaining copies: ${door.copies}`);
-            return true;
-        } else {
-            logMessage(`Cannot open cursed ${door.color} door without negative brown aura.`);
-            return false;
-        }
+    if (door.type === 'cursed' && data.keys.brown.real < 0) {
+        logMessage(`Opened cursed ${door.color} door using negative brown aura.`);
+        door.copies -= 1;
+        logMessage(`Remaining copies: ${door.copies}`);
+        return true;
     }
 
     // Check locks for real and imaginary parts
@@ -113,7 +130,6 @@ function openDoor(data, door) {
         }
     }
 
-    // If all locks are met, open the door and deduct keys
     for (const lock of door.locks) {
         const { color, cost } = lock;
         data.keys[color].real -= cost.real;
@@ -137,31 +153,32 @@ function checkGoal(data) {
     }
 }
 
-// Test function to simulate puzzle solving with cursed door requirements
+// Test function to simulate puzzle solving with cursed door requirements and special keys
 async function cursedDoorTest() {
     logMessage("Starting cursed door test...");
 
     const testData = cloneData(puzzleData);
     const steps = [];
 
-    // Step 1: Collect green, red, and brown keys to attempt to open the doors
     collectKey(testData, 'green', { real: 5, imag: 0 });
     collectKey(testData, 'red', { real: 0, imag: 3 });
     if (openDoor(testData, testData.doors[0])) {
         steps.push("Opened combo door (green and red complex requirements).");
     }
 
-    // Step 2: Collect cyan keys and open the cyan door with negative requirement
     collectKey(testData, 'cyan', { real: -7, imag: 0 });
     if (openDoor(testData, testData.doors[1])) {
         steps.push("Opened cyan door with negative requirement.");
     }
 
-    // Step 3: Collect negative brown key and open the cursed door
     collectKey(testData, 'brown', { real: -1, imag: 0 });
     if (openDoor(testData, testData.doors[2])) {
         steps.push("Opened cursed brown door with negative aura.");
     }
+
+    // Test applying special keys
+    applySpecialKey(testData, { type: 'signflip', color: 'red' });
+    applySpecialKey(testData, { type: 'rotor', color: 'cyan' });
 
     // Step 4: Check if goal is reached
     checkGoal(testData);
