@@ -70,13 +70,12 @@
     </div>
 
     <script>
-        // Shared knowledge pool for cross-bot learning
         const knowledgePool = new Map();
 
         function logToOutput(botId, message) {
             const outputElement = document.getElementById(`output${botId}`);
             outputElement.innerHTML += message + '\n';
-            outputElement.scrollTop = outputElement.scrollHeight; // Auto-scroll to the latest message
+            outputElement.scrollTop = outputElement.scrollHeight;
         }
 
         function updateStats(botId, steps, keys) {
@@ -119,7 +118,7 @@
             return null;
         }
 
-        async function processQueue(botId, queue, visited, solutions) {
+        async function processQueue(botId, queue, visited, solutions, failedPaths) {
             const chunkSize = 20;
             const topKStates = 50;
             let iterations = 0;
@@ -133,14 +132,14 @@
                 const currentState = queue.shift();
                 const keys = JSON.stringify(currentState.keys);
 
-                if (visited.has(keys)) continue;
+                if (visited.has(keys) || failedPaths.has(keys)) continue;
                 visited.add(keys);
 
                 if (isGoalCondition(currentState)) {
                     logToOutput(botId, `Goal reached in ${currentState.steps} steps!`);
                     solutions.push(currentState);
                     updateStats(botId, currentState.steps, currentState.keys);
-                    knowledgePool.set(keys, currentState); // Share this state with other bots
+                    knowledgePool.set(keys, currentState);
                     continue;
                 }
 
@@ -158,8 +157,7 @@
                 const dividedState = divideKeys(currentState);
                 if (dividedState) newStates.push(dividedState);
 
-                // Pull in knowledge from other bots
-                if (Math.random() < 0.1) {  // Occasionally check the knowledge pool
+                if (Math.random() < 0.1) {
                     for (const [_, sharedState] of knowledgePool) {
                         if (!visited.has(JSON.stringify(sharedState.keys))) {
                             newStates.push(sharedState);
@@ -176,15 +174,27 @@
                 newStates.forEach(state => queue.push(state));
                 iterations++;
             }
+
+            if (solutions.length === 0) {
+                logToOutput(botId, 'Failed to find a solution, resetting...');
+                failedPaths.add(keys);  // Mark this path as failed
+                queue.push(JSON.parse(JSON.stringify(initialState)));  // Restart with initial state
+                await processQueue(botId, queue, visited, solutions, failedPaths);  // Retry with a new exploration
+            }
         }
 
-        async function startBot(botId) {
+        async function startBot(botId, explorationBias) {
             const queue = [JSON.parse(JSON.stringify(initialState))];
             const visited = new Set();
             const solutions = [];
+            const failedPaths = new Set();
 
-            logToOutput(botId, "Bot started...");
-            await processQueue(botId, queue, visited, solutions);
+            // Custom initial action based on the exploration bias
+            if (explorationBias === 'prioritizeCyan') queue.push(collectKey(initialState, 'cyan'));
+            if (explorationBias === 'prioritizeDivide') queue.push(divideKeys(initialState));
+
+            logToOutput(botId, "Bot started with exploration bias: " + explorationBias);
+            await processQueue(botId, queue, visited, solutions, failedPaths);
 
             if (solutions.length === 0) {
                 logToOutput(botId, 'No solutions found.');
@@ -196,10 +206,10 @@
         }
 
         function startAllBots() {
-            startBot(1);
-            startBot(2);
-            startBot(3);
-            startBot(4);
+            startBot(1, 'prioritizeCyan');
+            startBot(2, 'prioritizeDivide');
+            startBot(3, 'prioritizeGreen');
+            startBot(4, 'prioritizeWhite');
         }
     </script>
 </body>
