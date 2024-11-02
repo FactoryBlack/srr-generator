@@ -1,5 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Wanna Lockpick Puzzle Solver</title>
+    <style>
+        .console-output {
+            width: 100%;
+            height: 300px;
+            overflow-y: auto;
+            background-color: #333;
+            color: #eee;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #222;
+            white-space: pre-line;
+        }
+
+        #startButton {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>I Wanna Lockpick Puzzle Solver</h1>
+<label for="levelSelect">Select Level:</label>
+<select id="levelSelect">
+    <option value="new_level.json">New Level</option>
+</select>
+<button id="loadLevelButton">Load Level</button>
+<button id="startButton">Start Solver</button>
+<div id="log" class="console-output"></div>
+
 <script>
-// Collect a specific key amount and log
+// Load level data
+let puzzleData = {};
+document.getElementById("loadLevelButton").addEventListener("click", async () => {
+    const level = document.getElementById("levelSelect").value;
+    try {
+        const response = await fetch(level);
+        puzzleData = await response.json();
+        logMessage(`Loaded ${level}`);
+    } catch (error) {
+        logMessage(`Error loading level data: ${error.message}`);
+    }
+});
+
+let logDiv = document.getElementById("log");
+function logMessage(message) {
+    const messageElement = document.createElement("div");
+    messageElement.textContent = message;
+    logDiv.appendChild(messageElement);
+    logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+function cloneData(data) {
+    return JSON.parse(JSON.stringify(data));
+}
+
+// Collect keys function
 function collectKey(data, color, amount) {
     if (!data.keys[color]) {
         logMessage(`Error: Key color '${color}' is not defined in data.keys.`);
@@ -10,7 +70,7 @@ function collectKey(data, color, amount) {
     logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? (amount.real !== 0 ? ' + ' : '') + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
 }
 
-// Check auras with logging
+// Check auras with detailed logging
 function checkAuras(data) {
     let greenAuraActive = false;
     let redAuraActive = false;
@@ -20,22 +80,16 @@ function checkAuras(data) {
     if (data.keys.red.real >= 1) {
         logMessage("Red aura activated! Frozen doors can be defrosted.");
         redAuraActive = true;
-    } else {
-        logMessage("Red aura not active.");
     }
 
     if (data.keys.green.real >= 5) {
         logMessage("Green aura activated! Eroded doors can be healed.");
         greenAuraActive = true;
-    } else {
-        logMessage("Green aura not active.");
     }
 
     if (data.keys.blue.real >= 3) {
         logMessage("Blue aura activated! Painted doors can be cleaned.");
         blueAuraActive = true;
-    } else {
-        logMessage("Blue aura not active.");
     }
 
     if (data.keys.brown.real < 0) {
@@ -84,7 +138,6 @@ function openDoor(data, door, auras) {
         if (auras.brownAuraActive) {
             logMessage(`Opened cursed ${door.color} door using negative brown aura.`);
             door.copies -= 1;
-            logMessage(`Remaining copies: ${door.copies}`);
             return true;
         } else {
             logMessage(`Cannot open cursed ${door.color} door without negative brown aura.`);
@@ -110,13 +163,21 @@ function openDoor(data, door, auras) {
 
 // Goal check with detailed logging
 function checkGoal(data) {
-    const remainingDoors = data.doors.filter(door => door.copies > 0 || door.corrupted);
+    if (!data.goal || !Array.isArray(data.goal.required_doors)) {
+        logMessage("Error: required_doors is not defined in goal or is not an array.");
+        return;
+    }
+
+    const remainingDoors = data.goal.required_doors.filter(color => {
+        const door = data.doors.find(d => d.color === color);
+        return door && (door.copies > 0 || door.corrupted);
+    });
+
     if (remainingDoors.length === 0) {
         data.goal.reached = true;
         logMessage("Goal reached! All necessary doors are open.");
     } else {
-        const remainingDescriptions = remainingDoors.map(door => `${door.color} (Copies: ${door.copies}, Corrupted: ${door.corrupted})`);
-        logMessage("Goal not yet reached. Remaining doors to be opened or uncorrupted: " + remainingDescriptions.join(", "));
+        logMessage("Goal not yet reached. Remaining doors to be opened or uncorrupted: " + remainingDoors.join(", "));
     }
 }
 
@@ -140,3 +201,5 @@ async function cursedDoorTest() {
 
 document.getElementById("startButton").addEventListener("click", cursedDoorTest);
 </script>
+</body>
+</html>
