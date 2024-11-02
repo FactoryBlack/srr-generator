@@ -26,12 +26,9 @@ const puzzleData = {
 
 let logDiv = document.getElementById("log");
 
-// Utility to log messages to the page
+// Utility to display only the latest log message
 function logMessage(message) {
-    const logEntry = document.createElement("div");
-    logEntry.textContent = message;
-    logDiv.appendChild(logEntry);
-    logDiv.scrollTop = logDiv.scrollHeight;
+    logDiv.textContent = message;
 }
 
 // Main solver function
@@ -131,7 +128,7 @@ async function explorePaths(data, solutions) {
         // Log and yield every 1000 steps
         if (stepCount % 1000 === 0) {
             logMessage(`Checked ${stepCount} paths...`);
-            await new Promise(resolve => setTimeout(resolve, 0));
+            await new Promise(resolve => setTimeout(resolve, 50)); // Brief delay to keep the UI responsive
         }
 
         // Stop if max steps reached
