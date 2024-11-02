@@ -32,11 +32,21 @@ function cloneData(data) {
     return JSON.parse(JSON.stringify(data));
 }
 
+// Create a hash for the current state to avoid repeating it
+function stateHash(data) {
+    return JSON.stringify({
+        keys: data.keys,
+        doors: data.doors.map(d => ({ color: d.color, copies: d.copies })),
+        goalReached: data.goal.reached
+    });
+}
+
 async function solvePuzzle() {
     logMessage("Starting puzzle solver...");
     const solutions = [];
+    const seenStates = new Set();
 
-    await explorePaths(puzzleData, solutions);
+    await explorePaths(puzzleData, solutions, seenStates);
 
     if (solutions.length > 0) {
         logMessage(`Found ${solutions.length} solution(s). Displaying the best solution...`);
@@ -52,7 +62,6 @@ function openAvailableDoors(data, path) {
         if (door.copies > 0) {
             if (door.type === 'frozen' && data.keys.red >= 1) {
                 data.keys.red -= 1;
-                logMessage(`Defrosted red frozen door.`);
                 path.push(`Defrosted ${door.color} frozen door.`);
                 doorOpened = true;
                 continue;
@@ -61,7 +70,6 @@ function openAvailableDoors(data, path) {
             if (door.lock.type === 'normal' && data.keys[door.color] >= door.lock.cost) {
                 data.keys[door.color] -= door.lock.cost;
                 door.copies -= 1;
-                logMessage(`Opened ${door.color} door. Remaining copies: ${door.copies}`);
                 path.push(`Opened ${door.color} door.`);
                 doorOpened = true;
                 continue;
@@ -76,7 +84,6 @@ function collectNecessaryKeys(data, path) {
         const requiredKeys = getRequiredKeys(data, key.color);
         if (data.keys[key.color] < requiredKeys) {
             data.keys[key.color] += key.amount;
-            logMessage(`Collected ${key.amount} ${key.color} key(s).`);
             path.push(`Collected ${key.amount} ${key.color} key(s).`);
         }
     }
@@ -96,11 +103,10 @@ function checkGoal(data) {
     const allDoorsOpen = data.doors.every(door => door.copies <= 0);
     if (allDoorsOpen && !data.goal.reached) {
         data.goal.reached = true;
-        logMessage("Goal reached! The path to the green check mark is now clear.");
     }
 }
 
-async function explorePaths(data, solutions) {
+async function explorePaths(data, solutions, seenStates) {
     let stepCount = 0;
     const states = [{ state: cloneData(data), path: [] }];
 
@@ -108,6 +114,10 @@ async function explorePaths(data, solutions) {
         const { state, path } = states.pop();
         data = state;
         stepCount++;
+
+        const currentStateHash = stateHash(data);
+        if (seenStates.has(currentStateHash)) continue;
+        seenStates.add(currentStateHash);
 
         collectNecessaryKeys(data, path);
         const doorOpened = openAvailableDoors(data, path);
@@ -118,7 +128,7 @@ async function explorePaths(data, solutions) {
         }
 
         if (stepCount % 1000 === 0) {
-            logMessage(`Checked ${stepCount} paths... Latest path: ${path.join(" -> ")}`);
+            logMessage(`Checked ${stepCount} paths... Latest path: ${path.slice(-10).join(" -> ")}`);
             await new Promise(resolve => setTimeout(resolve, 50));
         }
 
