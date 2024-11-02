@@ -55,7 +55,9 @@ let logDiv = document.getElementById("log");
 
 // Function to log messages with auto-scroll
 function logMessage(message) {
-    logDiv.textContent += message + "\n";
+    const messageElement = document.createElement("div");
+    messageElement.textContent = message;
+    logDiv.appendChild(messageElement);
     logDiv.scrollTop = logDiv.scrollHeight;
 }
 
