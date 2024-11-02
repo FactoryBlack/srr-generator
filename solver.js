@@ -1,25 +1,13 @@
+// Basic puzzle data for a minimal test scenario
 const puzzleData = {
-    keys: {
-        green: 0,
-        red: 0,
-        cyan: 0,
-        black: 0,
-        pink: 0,
-        gold: 0 // Master key
-    },
+    keys: { green: 0, red: 0 },
     doors: [
-        { color: 'green', type: 'normal', copies: 99, lock: { type: 'normal', cost: 5 } },
-        { color: 'red', type: 'frozen', copies: 1, lock: { type: 'aura', cost: 1 } },
-        { color: 'pink', type: 'normal', copies: 99, lock: { type: 'normal', cost: 3 } },
-        { color: 'cyan', type: 'normal', copies: 99, lock: { type: 'normal', cost: 7 } },
-        { color: 'black', type: 'normal', copies: 99, lock: { type: 'normal', cost: 9 } },
+        { color: 'green', type: 'normal', copies: 1, lock: { type: 'normal', cost: 5 } }
     ],
     keysToCollect: [
-        { color: 'green', amount: 5, position: "start" },
-        { color: 'red', amount: 1, position: "mid" },
-        { color: 'cyan', amount: 7, position: "upper_left" },
+        { color: 'green', amount: 5 }
     ],
-    goal: { reached: false, position: "green_check" }
+    goal: { reached: false }
 };
 
 let logDiv = document.getElementById("log");
@@ -32,103 +20,60 @@ function cloneData(data) {
     return JSON.parse(JSON.stringify(data));
 }
 
-async function solvePuzzle() {
-    logMessage("Starting puzzle solver...");
-    const solutions = [];
+// Function to test basic key collection
+function collectKey(data, color, amount) {
+    data.keys[color] += amount;
+    logMessage(`Collected ${amount} ${color} key(s). Total: ${data.keys[color]}`);
+}
 
-    await explorePaths(puzzleData, solutions);
-
-    if (solutions.length > 0) {
-        logMessage(`Found ${solutions.length} solution(s). Displaying the best solution...`);
-        displaySolution(solutions[0]);
+// Function to open a door if requirements are met
+function openDoor(data, door) {
+    if (data.keys[door.color] >= door.lock.cost) {
+        data.keys[door.color] -= door.lock.cost;
+        door.copies -= 1;
+        logMessage(`Opened ${door.color} door. Remaining copies: ${door.copies}`);
+        return true;
     } else {
-        logMessage("No solution found.");
+        logMessage(`Not enough ${door.color} keys to open the door.`);
+        return false;
     }
 }
 
-function openAvailableDoors(data, path) {
-    let doorOpened = false;
-    for (const door of data.doors) {
-        if (door.copies > 0) {
-            if (door.type === 'frozen' && data.keys.red >= 1) {
-                data.keys.red -= 1;
-                path.push(`Defrosted ${door.color} frozen door.`);
-                doorOpened = true;
-                continue;
-            }
-
-            if (door.lock.type === 'normal' && data.keys[door.color] >= door.lock.cost) {
-                data.keys[door.color] -= door.lock.cost;
-                door.copies -= 1;
-                path.push(`Opened ${door.color} door.`);
-                doorOpened = true;
-                continue;
-            }
-        }
-    }
-    return doorOpened;
-}
-
-function collectNecessaryKeys(data, path) {
-    for (let key of data.keysToCollect) {
-        const requiredKeys = getRequiredKeys(data, key.color);
-        if (data.keys[key.color] < requiredKeys) {
-            data.keys[key.color] += key.amount;
-            path.push(`Collected ${key.amount} ${key.color} key(s).`);
-        }
-    }
-}
-
-function getRequiredKeys(data, color) {
-    let totalCost = 0;
-    for (const door of data.doors) {
-        if (door.color === color && door.copies > 0) {
-            totalCost += door.lock.cost * door.copies;
-        }
-    }
-    return totalCost;
-}
-
+// Function to check if goal is reached (all doors opened)
 function checkGoal(data) {
     const allDoorsOpen = data.doors.every(door => door.copies <= 0);
-    if (allDoorsOpen && !data.goal.reached) {
+    if (allDoorsOpen) {
         data.goal.reached = true;
+        logMessage("Goal reached! All doors are open.");
+    } else {
+        logMessage("Goal not yet reached.");
     }
 }
 
-async function explorePaths(data, solutions) {
-    let stepCount = 0;
-    const states = [{ state: cloneData(data), path: [] }];
+// Testing function to simulate a simple puzzle-solving scenario
+async function simpleTest() {
+    logMessage("Starting simplified test...");
 
-    while (states.length > 0 && !data.goal.reached) {
-        const { state, path } = states.pop();
-        data = state;
-        stepCount++;
+    const testData = cloneData(puzzleData);
+    const steps = [];
 
-        // Log the exploration step
-        logMessage(`Exploring step ${stepCount}, Path: ${path.join(" -> ")}`);
+    // Step 1: Collect a key
+    collectKey(testData, 'green', 5);
 
-        collectNecessaryKeys(data, path);
-        const doorOpened = openAvailableDoors(data, path);
-        checkGoal(data);
-
-        if (doorOpened || !data.goal.reached) {
-            states.push({ state: cloneData(data), path: [...path] });
-        }
-
-        if (stepCount % 1000 === 0) {
-            logMessage(`Checked ${stepCount} paths... Latest path: ${path.slice(-10).join(" -> ")}`);
-            await new Promise(resolve => setTimeout(resolve, 50));
-        }
-
-        if (stepCount > 100000) break;
+    // Step 2: Attempt to open the door
+    if (openDoor(testData, testData.doors[0])) {
+        steps.push("Opened green door.");
     }
 
-    if (data.goal.reached) {
-        solutions.push({ steps: stepCount, path });
+    // Step 3: Check if goal is reached
+    checkGoal(testData);
+
+    if (testData.goal.reached) {
+        logMessage("Test succeeded. Path: " + steps.join(" -> "));
+    } else {
+        logMessage("Test failed. Goal was not reached.");
     }
 }
 
-function displaySolution(solution) {
-    logMessage(`Best solution found in ${solution.steps} steps. Path: ${solution.path.join(" -> ")}`);
-}
+// Run the simplified test
+simpleTest();
