@@ -7,11 +7,11 @@ const puzzleData = {
     doors: [
         { color: 'green', type: 'normal', lock: { type: 'normal', cost: 5 }, copies: 99, position: "midway" },
         { color: 'red', type: 'frozen', lock: { type: 'aura', cost: 1 }, copies: 99, position: "upper_left" },
-        // Add other doors with specifics here
+        // Define other doors as needed
     ],
     keysToCollect: [
         { color: 'green', amount: 5, position: "start" },
-        // Define all collectible keys in the level based on layout
+        // Define additional key locations based on level layout
     ],
     goal: { reached: false, position: "green_check" }
 };
@@ -46,10 +46,11 @@ function collectKey(key, data) {
     if (data.keys[key.color] < getRequiredKeys(data, key.color)) {
         data.keys[key.color] += key.amount;
         logMessage(`Collected ${key.amount} ${key.color} key(s). New count: ${data.keys[key.color]}`);
+        checkGoal(data); // Check for goal after collecting each key
     }
 }
 
-// Helper function to determine the required number of keys to open all doors
+// Helper function to determine the required number of keys to open all doors of a given color
 function getRequiredKeys(data, color) {
     let totalCost = 0;
     for (const door of data.doors) {
@@ -74,6 +75,7 @@ function openDoor(door, data) {
         data.keys[door.color] -= door.lock.cost;
         door.copies -= 1;
         logMessage(`Opened ${door.color} door with lock cost ${door.lock.cost}. Remaining copies: ${door.copies}`);
+        checkGoal(data); // Check for goal after opening each door
         return door.copies <= 0; // True if the door is fully opened
     }
 
@@ -100,15 +102,18 @@ async function bruteForceSolve(data, solutions) {
         // Only collect keys if necessary for opening remaining doors
         for (let key of data.keysToCollect) {
             collectKey(key, data);
+            if (data.goal.reached) break; // Stop if goal reached
         }
+
+        if (data.goal.reached) break; // Check if goal was reached during key collection
 
         // Attempt to open each door
         for (let door of data.doors) {
             const doorOpened = openDoor(door, data);
-            if (doorOpened) {
-                checkGoal(data); // Check if goal reached after opening
-            }
+            if (data.goal.reached) break; // Stop if goal reached
         }
+
+        if (data.goal.reached) break; // Check if goal was reached during door opening
 
         // Log progress and allow yield every 1000 steps
         if (stepCount % 1000 === 0) {
@@ -116,8 +121,8 @@ async function bruteForceSolve(data, solutions) {
             await new Promise(resolve => setTimeout(resolve, 0));
         }
 
-        // Stop if the goal is reached or if the maximum steps are reached
-        if (data.goal.reached || stepCount > 100000) break;
+        // Stop if the maximum steps are reached
+        if (stepCount > 100000) break;
     }
 }
 
