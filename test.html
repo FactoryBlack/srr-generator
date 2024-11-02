@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exhaustive Puzzle Solution Finder</title>
+    <title>Game Mechanics Explorer</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -56,8 +56,8 @@
     </style>
 </head>
 <body>
-    <h1>Exhaustive Puzzle Solution Finder</h1>
-    <p>Find and rank all reachable configurations by steps taken, without targeting specific values.</p>
+    <h1>Game Mechanics Explorer</h1>
+    <p>Explore all configurations based on game mechanics and rank them by steps taken.</p>
 
     <button onclick="findAllConfigurations()">Find All Configurations</button>
     <div id="progress">Progress: Waiting to start...</div>
@@ -65,51 +65,47 @@
 
     <script>
         function findAllConfigurations() {
-            const maxDepth = 50; // Limit the maximum depth of exploration
-            const maxStates = 10000; // Limit the number of states to explore
+            const maxDepth = 50; // Maximum depth of exploration
+            const maxStates = 10000; // Maximum number of states to explore
             const configurations = {};
             const outputDiv = document.getElementById('output');
             const progressDiv = document.getElementById('progress');
             outputDiv.innerHTML = "Exploring all configurations...";
             progressDiv.innerHTML = "Progress: Starting exploration...";
 
-            function exploreConfigurations() {
-                const queue = [{ pink: 1, green: 1, cyan: 1, path: [], depth: 0 }];
-                const states = new Set();
+            const queue = [{ pink: 1, green: 1, cyan: 1, path: [], depth: 0 }];
+            const states = new Set();
 
-                while (queue.length > 0 && states.size < maxStates) {
-                    const { pink, green, cyan, path, depth } = queue.shift();
+            while (queue.length > 0 && states.size < maxStates) {
+                const { pink, green, cyan, path, depth } = queue.shift();
 
-                    // Avoid cycles by tracking visited states
-                    const stateKey = `${pink},${green}`;
-                    if (states.has(stateKey) || depth > maxDepth) continue;
-                    states.add(stateKey);
+                // Avoid re-exploring the same configuration by tracking unique states
+                const stateKey = `${pink},${green},${cyan}`;
+                if (states.has(stateKey) || depth > maxDepth) continue;
+                states.add(stateKey);
 
-                    // Track the shortest path to each unique configuration
-                    if (!configurations[stateKey] || configurations[stateKey].path.length > path.length) {
-                        configurations[stateKey] = { pink, green, path: path.slice() };
-                    }
-
-                    // Add operations to queue for exploration
-                    queue.push({ pink: pink + cyan, green, cyan: cyan + 1, path: [...path, "add cyan to pink"], depth: depth + 1 });
-                    queue.push({ pink, green: green + cyan, cyan: cyan + 1, path: [...path, "add cyan to green"], depth: depth + 1 });
-
-                    // Division operation if pink and cyan are both divisible by 2
-                    if (pink % 2 === 0 && cyan % 2 === 0) {
-                        queue.push({ pink: pink / 2, green, cyan: cyan / 2, path: [...path, "divide pink and cyan by 2"], depth: depth + 1 });
-                    }
-
-                    // Update progress
-                    if (states.size % 100 === 0) {
-                        progressDiv.innerHTML = `Progress: Explored ${states.size} unique states.`;
-                    }
+                // Track the shortest path to each unique configuration
+                if (!configurations[stateKey] || configurations[stateKey].path.length > path.length) {
+                    configurations[stateKey] = { pink, green, cyan, path: path.slice() };
                 }
 
-                displayResults(configurations);
-                progressDiv.innerHTML = "Progress: Exploration complete!";
+                // Addition operations (Top machine)
+                queue.push({ pink: pink + cyan, green, cyan: cyan + 1, path: [...path, "add cyan to pink"], depth: depth + 1 });
+                queue.push({ pink, green: green + cyan, cyan: cyan + 1, path: [...path, "add cyan to green"], depth: depth + 1 });
+
+                // Division operation (Bottom machine): Divide pink and cyan by 2 if both are even
+                if (pink % 2 === 0 && cyan % 2 === 0) {
+                    queue.push({ pink: pink / 2, green, cyan: cyan / 2, path: [...path, "divide pink and cyan by 2"], depth: depth + 1 });
+                }
+
+                // Update progress
+                if (states.size % 100 === 0) {
+                    progressDiv.innerHTML = `Progress: Explored ${states.size} unique states.`;
+                }
             }
 
-            exploreConfigurations();
+            displayResults(configurations);
+            progressDiv.innerHTML = "Progress: Exploration complete!";
         }
 
         function displayResults(configurations) {
@@ -120,7 +116,7 @@
                 ${sortedConfigs.length > 0 ? sortedConfigs.map((config, idx) => `
                     <div class="solution">
                         <h3>Configuration ${idx + 1}</h3>
-                        <p><strong>Pink:</strong> ${config.pink}, <strong>Green:</strong> ${config.green}</p>
+                        <p><strong>Pink:</strong> ${config.pink}, <strong>Green:</strong> ${config.green}, <strong>Cyan:</strong> ${config.cyan}</p>
                         <p><strong>Steps Required:</strong> ${config.path.length}</p>
                         <p><strong>Path:</strong> ${config.path.join(" ➔ ")}</p>
                     </div>
