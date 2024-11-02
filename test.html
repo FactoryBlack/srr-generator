@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>I Wanna Lockpick Puzzle Solver</title>
     <style>
+        /* General styling for page layout */
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -17,34 +18,54 @@
             padding: 15px;
             border-radius: 8px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
         }
+        /* Styling for buttons */
         button {
             margin: 10px 0;
             padding: 10px 15px;
             font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s;
         }
         button:hover {
-            background-color: #ddd;
+            background-color: #0056b3;
         }
+        /* Styling each solution block */
         .solution {
             background-color: #e9ecef;
             padding: 10px;
             margin-bottom: 10px;
             border-radius: 5px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
         }
+        /* Styling for solution titles */
         .solution h3 {
             margin: 0;
             font-size: 18px;
-            color: #0056b3;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
         }
+        /* Styling for output text */
         .solution p {
             margin: 5px 0;
+            line-height: 1.6;
+        }
+        /* Highlighting important information */
+        strong {
+            color: #0056b3;
+        }
+        /* Styling for headers */
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
         }
     </style>
 </head>
@@ -52,7 +73,7 @@
     <h1>I Wanna Lockpick Puzzle Solver</h1>
     <p>Explore all possible states where the sum of pink and green equals 28, starting from (1, 1, 1) with additions and divisions.</p>
 
-    <label for="maxSteps">Maximum Steps:</label>
+    <label for="maxSteps">Maximum Exploration Depth (max steps):</label>
     <input type="number" id="maxSteps" value="100" min="1">
     <button onclick="exploreStates()">Explore States</button>
     <button onclick="stopExploration()">Stop Exploration</button>
@@ -68,19 +89,23 @@
             const outputDiv = document.getElementById('output');
             outputDiv.innerHTML = "Exploring states...";
 
-            const solutions = bruteForceExplore(maxSteps);
+            const { solutions, explorationDepth } = bruteForceExplore(maxSteps);
 
             if (solutions.length === 0) {
-                outputDiv.innerHTML = "No solutions found within the step limit.";
+                outputDiv.innerHTML = `<p>No solutions found within the exploration depth of <strong>${explorationDepth}</strong>.</p>`;
             } else {
-                outputDiv.innerHTML = solutions.map((sol, idx) => `
-                    <div class="solution">
-                        <h3>Solution ${idx + 1}</h3>
-                        <p><strong>Pink:</strong> ${sol.pink}, <strong>Green:</strong> ${sol.green}</p>
-                        <p><strong>Steps Required:</strong> ${sol.path.length}</p>
-                        <p><strong>Path:</strong> ${sol.path.join(" ➔ ")}</p>
-                    </div>
-                `).join("");
+                outputDiv.innerHTML = `
+                    <p><strong>Exploration Depth:</strong> ${explorationDepth}</p>
+                    <p><strong>Solutions Found:</strong> ${solutions.length}</p>
+                    ${solutions.map((sol, idx) => `
+                        <div class="solution">
+                            <h3>Solution ${idx + 1}</h3>
+                            <p><strong>Pink:</strong> ${sol.pink}, <strong>Green:</strong> ${sol.green}</p>
+                            <p><strong>Steps Required:</strong> ${sol.path.length}</p>
+                            <p><strong>Path:</strong> ${sol.path.join(" ➔ ")}</p>
+                        </div>
+                    `).join("")}
+                `;
             }
         }
 
@@ -110,7 +135,7 @@
                     // Check if we've hit the max set size to prevent overflow
                     if (reachedStates.size >= MAX_SET_SIZE) {
                         stop = true;
-                        return solutions;
+                        return { solutions, explorationDepth: step };
                     }
 
                     // Prune states with pink or green greater than MAX_PINK_GREEN
@@ -139,7 +164,7 @@
                 step++;
             }
 
-            return solutions;
+            return { solutions, explorationDepth: step };
         }
     </script>
 </body>
