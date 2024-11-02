@@ -22,9 +22,18 @@ function cloneData(data) {
 
 // Function to test basic key collection
 function collectKey(data, color, amount) {
-    data.keys[color] += amount;
-    logMessage(`Collected ${amount} ${color} key(s). Total: ${data.keys[color]}`);
+    // Check if the color key exists in data.keys
+    if (!data.keys[color]) {
+        logMessage(`Error: Key color '${color}' is not defined in data.keys.`);
+        return;
+    }
+
+    // Proceed with key collection if the color exists
+    data.keys[color].real += amount.real;
+    data.keys[color].imag += amount.imag;
+    logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? ' + ' + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
 }
+
 
 // Function to open a door if requirements are met
 function openDoor(data, door) {
