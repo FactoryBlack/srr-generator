@@ -68,28 +68,29 @@ function collectKey(data, color, amount) {
 function checkAuras(data) {
     let auras = { greenAura: false, redAura: false, blueAura: false, negativeBrownAura: false };
 
-    if (data.keys.red.real >= 1 || data.keys.red.imag >= 1) {
+    if (data.keys.red && (data.keys.red.real >= 1 || data.keys.red.imag >= 1)) {
         logMessage("Red aura activated!");
         auras.redAura = true;
     }
 
-    if (data.keys.green.real >= 5) {
+    if (data.keys.green && data.keys.green.real >= 5) {
         logMessage("Green aura activated!");
         auras.greenAura = true;
     }
 
-    if (data.keys.blue.real >= 3) {
+    if (data.keys.blue && data.keys.blue.real >= 3) {
         logMessage("Blue aura activated!");
         auras.blueAura = true;
     }
 
-    if (data.keys.brown.real < 0) {
+    if (data.keys.brown && data.keys.brown.real < 0) {
         logMessage("Negative brown aura activated!");
         auras.negativeBrownAura = true;
     }
 
     return auras;
 }
+
 
 // Function to open doors, including combo, aura-based, cursed, and master-keyed doors
 function openDoor(data, door, auras) {
