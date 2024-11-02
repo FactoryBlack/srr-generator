@@ -44,7 +44,7 @@
         function logToOutput(message) {
             const resultElement = document.getElementById('result');
             resultElement.innerHTML += message + '\n';
-            resultElement.scrollTop = resultElement.scrollHeight; // Auto-scroll to the latest message
+            resultElement.scrollTop = resultElement.scrollHeight;
         }
 
         const initialState = {
@@ -85,12 +85,16 @@
             );
         }
 
-        async function bruteForceSolver(state) {
-            const solutions = [];
-            const queue = [state];
-            const visited = new Set();
+        async function processQueue(queue, visited, solutions) {
+            const chunkSize = 100; // Process 100 states at a time
+            let iterations = 0;
 
             while (queue.length > 0) {
+                if (iterations >= chunkSize) {
+                    iterations = 0;
+                    await new Promise(resolve => setTimeout(resolve, 0)); // Yield control to the browser
+                }
+
                 const currentState = queue.shift();
                 const keys = JSON.stringify(currentState.keys);
 
@@ -102,25 +106,26 @@
                     continue;
                 }
 
+                // Add actions to queue
                 queue.push(collectKey(currentState, 'cyan'));
 
                 const dividedState = divideKeys(currentState);
                 if (dividedState) queue.push(dividedState);
 
-                // Yield control back to the browser every 100 iterations
-                if (queue.length % 100 === 0) {
-                    await new Promise(resolve => setTimeout(resolve, 0));
-                }
+                iterations++;
             }
-
-            return solutions;
         }
 
         async function startSolver() {
             document.getElementById('result').innerHTML = '';
             logToOutput("Starting solver...");
 
-            const solutions = await bruteForceSolver(initialState);
+            const solutions = [];
+            const queue = [initialState];
+            const visited = new Set();
+
+            await processQueue(queue, visited, solutions);
+
             solutions.sort((a, b) => a.steps - b.steps);
 
             if (solutions.length === 0) {
