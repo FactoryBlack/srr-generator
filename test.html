@@ -41,15 +41,16 @@
     </div>
 
     <script>
+        // Define puzzle initial state and goal
         const initialState = {
-            position: { x: 0, y: 0 },
+            position: { x: 0, y: 0 }, // Starting coordinates of Lily
             keys: { white: 0, cyan: 0, pink: 0, green: 0 },
             steps: 0,
             path: []
         };
 
-        const goalPosition = { x: 0, y: 0 }; // Replace with the actual goal coordinates
-        const bounds = { x: 10, y: 10 }; // Define the puzzle boundaries
+        const goalPosition = { x: 2, y: 2 }; // Set goal coordinates (change as needed)
+        const bounds = { x: 10, y: 10 }; // Define puzzle area bounds
 
         function move(state, direction) {
             const newState = JSON.parse(JSON.stringify(state));
@@ -60,19 +61,22 @@
                 case 'right': newState.position.x += 1; break;
             }
 
+            // Check bounds
             if (newState.position.x < 0 || newState.position.x >= bounds.x ||
                 newState.position.y < 0 || newState.position.y >= bounds.y) {
-                return null; // Out of bounds, discard move
+                return null;
             }
 
             newState.steps += 1;
             newState.path.push(direction);
+            console.log(`Moved ${direction} to (${newState.position.x}, ${newState.position.y})`);
             return newState;
         }
 
         function collectKey(state, color) {
             const newState = JSON.parse(JSON.stringify(state));
             newState.keys[color]++;
+            console.log(`Collected ${color} key: New count = ${newState.keys[color]}`);
             return newState;
         }
 
@@ -80,9 +84,10 @@
             const newState = JSON.parse(JSON.stringify(state));
             if (newState.keys[color] >= requirement) {
                 newState.keys[color] -= requirement;
+                console.log(`Opened ${color} door, remaining ${color} keys: ${newState.keys[color]}`);
                 return newState;
             }
-            return null; // Can't open the door
+            return null; // Door can't be opened
         }
 
         function bruteForceSolver(state) {
@@ -95,25 +100,25 @@
                 const { x, y } = currentState.position;
                 const keys = JSON.stringify(currentState.keys);
 
-                // Skip if this state has been visited
+                // Check if this state has been visited
                 const stateKey = `${x},${y},${keys}`;
                 if (visited.has(stateKey)) continue;
                 visited.add(stateKey);
 
-                // Check if goal reached
+                // Check if goal is reached
                 if (currentState.position.x === goalPosition.x && currentState.position.y === goalPosition.y) {
                     solutions.push(currentState);
                     continue;
                 }
 
-                // Try each direction
+                // Generate new states for each direction
                 const directions = ['up', 'down', 'left', 'right'];
                 directions.forEach(direction => {
                     const newState = move(currentState, direction);
                     if (newState) queue.push(newState);
                 });
 
-                // Example actions: collect a cyan key or open a pink door with 1 key required
+                // Example: try collecting a cyan key and opening a pink door
                 queue.push(collectKey(currentState, 'cyan'));
                 const doorState = openDoor(currentState, 'pink', 1);
                 if (doorState) queue.push(doorState);
@@ -123,14 +128,19 @@
         }
 
         function startSolver() {
+            console.clear();
             const solutions = bruteForceSolver(initialState);
             const resultElement = document.getElementById('result');
             solutions.sort((a, b) => a.steps - b.steps);
 
-            resultElement.innerHTML = '';
-            solutions.forEach((solution, index) => {
-                resultElement.innerHTML += `Solution ${index + 1} (Steps: ${solution.steps}): ${solution.path.join(' -> ')}\n`;
-            });
+            if (solutions.length === 0) {
+                resultElement.innerHTML = 'No solutions found. Please check goal coordinates and ensure puzzle layout is correct.';
+            } else {
+                resultElement.innerHTML = '';
+                solutions.forEach((solution, index) => {
+                    resultElement.innerHTML += `Solution ${index + 1} (Steps: ${solution.steps}): ${solution.path.join(' -> ')}\n`;
+                });
+            }
         }
     </script>
 </body>
