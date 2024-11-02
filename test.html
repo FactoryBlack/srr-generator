@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Wanna Lockpick Solver - Collaborative Multi-Bot</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Wanna Lockpick Solver - Adaptive Multi-Bot with Image Parsing</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,12 +42,13 @@
     </style>
 </head>
 <body>
-    <h1>I Wanna Lockpick Solver - Collaborative Multi-Bot</h1>
-    <p>Click "Start All Bots" to run four collaborative solvers, each with its own log and stats.</p>
-    <button onclick="startAllBots()">Start All Bots</button>
+    <h1>I Wanna Lockpick Solver - Adaptive Multi-Bot with Image Parsing</h1>
+    <p>Upload a puzzle screenshot for analysis and click "Start All Bots" to run collaborative solvers.</p>
+    <input type="file" id="puzzleImage" accept="image/*">
+    <button onclick="analyzePuzzle()">Analyze Puzzle</button>
+    <button onclick="startAllBots()" disabled id="startButton">Start All Bots</button>
 
     <div id="solver-container">
-        <!-- Containers for each bot -->
         <div id="bot1" class="bot-container">
             <h2>Bot 1</h2>
             <div id="output1" class="output"></div>
@@ -69,9 +71,10 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
     <script>
+        let initialPuzzleState = null;
         const knowledgePool = new Map();
-        const MAX_STEPS = 1000; // Maximum steps before a bot restarts
 
         function logToOutput(botId, message) {
             const outputElement = document.getElementById(`output${botId}`);
@@ -84,7 +87,25 @@
             statsElement.innerHTML = `Steps: ${steps} | Keys - Cyan: ${keys.cyan}, Pink: ${keys.pink}, Green: ${keys.green}, White: ${keys.white}`;
         }
 
-        const initialState = { keys: { white: 0, cyan: 0, pink: 0, green: 0 }, steps: 0, path: [] };
+        async function analyzePuzzle() {
+            const fileInput = document.getElementById('puzzleImage');
+            const file = fileInput.files[0];
+            if (!file) return alert("Please upload a puzzle image.");
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                const imageSrc = e.target.result;
+                const result = await Tesseract.recognize(imageSrc, 'eng');
+                const text = result.data.text;
+
+                // TODO: Parse text to create initial game state based on recognized keys, doors, and conditions.
+                // For now, we'll assume a dummy parsed state
+                initialPuzzleState = { keys: { cyan: 0, pink: 0, green: 0, white: 0 }, steps: 0, path: [] };
+                logToOutput(1, `Puzzle analyzed. Initial state: ${JSON.stringify(initialPuzzleState)}`);
+                document.getElementById("startButton").disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
 
         function isGoalCondition(state) {
             const minKeys = 5;
@@ -119,7 +140,7 @@
             return null;
         }
 
-        async function processQueue(botId, queue, visited, solutions, failedPaths, explorationBias) {
+        async function processQueue(botId, queue, visited, solutions, explorationWeight) {
             const chunkSize = 20;
             const topKStates = 50;
             let iterations = 0;
@@ -133,10 +154,7 @@
                 const currentState = queue.shift();
                 const keys = JSON.stringify(currentState.keys);
 
-                if (visited.has(keys) || failedPaths.has(keys) || currentState.steps > MAX_STEPS) {
-                    if (currentState.steps > MAX_STEPS) failedPaths.add(keys); // Mark as failed if exceeded MAX_STEPS
-                    continue;
-                }
+                if (visited.has(keys)) continue;
                 visited.add(keys);
 
                 if (isGoalCondition(currentState)) {
@@ -148,36 +166,19 @@
                 }
 
                 if (currentState.steps % 100 === 0) {
-                    logToOutput(botId, `Step ${currentState.steps}: Cyan=${currentState.keys.cyan}, Pink=${currentState.keys.pink}, Green=${currentState.keys.green}, White=${currentState.keys.white}`);
+                    logToOutput(botId, `Step ${currentState.steps}: ${JSON.stringify(currentState.keys)}`);
                     updateStats(botId, currentState.steps, currentState.keys);
                 }
 
-                let newStates = [];
-                switch (explorationBias) {
-                    case 'prioritizeCyan':
-                        newStates.push(collectKey(currentState, 'cyan'));
-                        break;
-                    case 'prioritizeDivide':
-                        if (divideKeys(currentState)) newStates.push(divideKeys(currentState));
-                        break;
-                    case 'prioritizeBalance':
-                        ['cyan', 'pink', 'green', 'white'].forEach(color => {
-                            if (currentState.keys[color] < 5) newStates.push(collectKey(currentState, color));
-                        });
-                        break;
-                    case 'alternateKeys':
-                        ['cyan', 'pink', 'green', 'white'].forEach(color => {
-                            newStates.push(collectKey(currentState, color));
-                        });
-                        break;
-                }
-
-                if (Math.random() < 0.2) {  // 20% chance to check the knowledge pool
-                    for (const [_, sharedState] of knowledgePool) {
-                        if (!visited.has(JSON.stringify(sharedState.keys))) {
-                            newStates.push(sharedState);
-                        }
-                    }
+                let newStates = [
+                    ...Array(explorationWeight.cyan).fill().map(() => collectKey(currentState, 'cyan')),
+                    ...Array(explorationWeight.pink).fill().map(() => collectKey(currentState, 'pink')),
+                    ...Array(explorationWeight.green).fill().map(() => collectKey(currentState, 'green')),
+                    ...Array(explorationWeight.white).fill().map(() => collectKey(currentState, 'white'))
+                ];
+                if (Math.random() < explorationWeight.divide) {
+                    const dividedState = divideKeys(currentState);
+                    if (dividedState) newStates.push(dividedState);
                 }
 
                 newStates = newStates
@@ -189,23 +190,15 @@
                 newStates.forEach(state => queue.push(state));
                 iterations++;
             }
-
-            if (solutions.length === 0) {
-                logToOutput(botId, 'Failed to find a solution, resetting...');
-                failedPaths.add(keys);  // Mark this path as failed
-                queue.push(JSON.parse(JSON.stringify(initialState)));  // Restart with initial state
-                await processQueue(botId, queue, visited, solutions, failedPaths, explorationBias);
-            }
         }
 
-        async function startBot(botId, explorationBias) {
-            const queue = [JSON.parse(JSON.stringify(initialState))];
+        async function startBot(botId, explorationWeight) {
+            const queue = [JSON.parse(JSON.stringify(initialPuzzleState))];
             const visited = new Set();
             const solutions = [];
-            const failedPaths = new Set();
 
-            logToOutput(botId, "Bot started with exploration bias: " + explorationBias);
-            await processQueue(botId, queue, visited, solutions, failedPaths, explorationBias);
+            logToOutput(botId, "Bot started with exploration weight: " + JSON.stringify(explorationWeight));
+            await processQueue(botId, queue, visited, solutions, explorationWeight);
 
             if (solutions.length === 0) {
                 logToOutput(botId, 'No solutions found.');
@@ -217,10 +210,10 @@
         }
 
         function startAllBots() {
-            startBot(1, 'prioritizeCyan');
-            startBot(2, 'prioritizeDivide');
-            startBot(3, 'prioritizeBalance');
-            startBot(4, 'alternateKeys');
+            startBot(1, { cyan: 3, pink: 1, green: 1, white: 1, divide: 0.3 });
+            startBot(2, { cyan: 1, pink: 3, green: 1, white: 1, divide: 0.3 });
+            startBot(3, { cyan: 1, pink: 1, green: 3, white: 1, divide: 0.3 });
+            startBot(4, { cyan: 1, pink: 1, green: 1, white: 3, divide: 0.3 });
         }
     </script>
 </body>
