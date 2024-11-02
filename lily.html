@@ -76,9 +76,6 @@ function collectKey(data, color, amount) {
     data.keys[color].real += amount.real;
     data.keys[color].imag += amount.imag;
     logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? (amount.real !== 0 ? ' + ' : '') + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
-
-    // Check for aura activation after each key collection
-    checkAuras(data);
 }
 
 // Check for aura activation based on key counts
@@ -176,21 +173,20 @@ async function cursedDoorTest() {
     const testData = cloneData(puzzleData);
     const steps = [];
 
-    // Collect keys for auras and doors
-    collectKey(testData, 'green', { real: 5, imag: 0 });
-    collectKey(testData, 'red', { real: 1, imag: 0 });
-    collectKey(testData, 'blue', { real: 3, imag: 0 });
+    // Collect keys from keysToCollect
+    for (const key of testData.keysToCollect) {
+        collectKey(testData, key.color, key.amount);
+    }
 
+    // Attempt to open doors
     if (openDoor(testData, testData.doors[0])) {
         steps.push("Opened combo door (green and red complex requirements).");
     }
 
-    collectKey(testData, 'cyan', { real: -7, imag: 0 });
     if (openDoor(testData, testData.doors[1])) {
         steps.push("Opened cyan door with negative requirement.");
     }
 
-    collectKey(testData, 'brown', { real: -1, imag: 0 });
     if (openDoor(testData, testData.doors[2])) {
         steps.push("Opened cursed brown door with negative aura.");
     }
