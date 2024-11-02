@@ -1,0 +1,32 @@
+{
+    "keys": {
+        "green": { "real": 0, "imag": 0 },
+        "red": { "real": 0, "imag": 0 },
+        "blue": { "real": 0, "imag": 0 },
+        "brown": { "real": 0, "imag": 0 },
+        "master": { "real": 1, "imag": 0 }
+    },
+    "doors": [
+        {
+            "color": "combo",
+            "type": "combo",
+            "copies": 1,
+            "locks": [
+                { "color": "green", "cost": { "real": 5, "imag": 0 } },
+                { "color": "red", "cost": { "real": 0, "imag": 3 } }
+            ]
+        },
+        { "color": "eroded", "type": "eroded", "copies": 1, "locks": [], "corrupted": true },
+        { "color": "frozen", "type": "frozen", "copies": 1, "locks": [], "corrupted": true },
+        { "color": "painted", "type": "painted", "copies": 1, "locks": [], "corrupted": true },
+        { "color": "cursed", "type": "cursed", "copies": 1, "locks": [], "corrupted": true }
+    ],
+    "keysToCollect": [
+        { "color": "green", "amount": { "real": 5, "imag": 0 } },
+        { "color": "red", "amount": { "real": 0, "imag": 3 } },
+        { "color": "blue", "amount": { "real": 3, "imag": 0 } },
+        { "color": "brown", "amount": { "real": -1, "imag": 0 } },
+        { "color": "master", "amount": { "real": 1, "imag": 0 } }
+    ],
+    "goal": { "reached": false }
+}

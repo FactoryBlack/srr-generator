@@ -25,47 +25,37 @@
 <body>
 
 <h1>I Wanna Lockpick Puzzle Solver</h1>
-<button id="startButton">Start Solver</button>
+<label for="levelSelect">Select Level:</label>
+<select id="levelSelect">
+    <option value="level1.json">Level 1</option>
+    <!-- Future levels can be added here as new options -->
+</select>
+<button id="loadLevelButton">Load Level</button>
+<button id="startButton" disabled>Start Solver</button>
 <div id="log" class="console-output"></div>
 
 <script>
-// Initial puzzle data with a combo door, aura-based doors, cursed door, and master key
-const puzzleData = {
-    keys: {
-        green: { real: 0, imag: 0 },
-        red: { real: 0, imag: 0 },
-        blue: { real: 0, imag: 0 },
-        brown: { real: 0, imag: 0 },
-        master: { real: 1, imag: 0 }  // Assuming 1 master key for this test
-    },
-    doors: [
-        { color: 'combo', type: 'combo', copies: 1, locks: [
-            { color: 'green', cost: { real: 5, imag: 0 } },
-            { color: 'red', cost: { real: 0, imag: 3 } }
-        ]},
-        { color: 'eroded', type: 'eroded', copies: 1, locks: [], corrupted: true },
-        { color: 'frozen', type: 'frozen', copies: 1, locks: [], corrupted: true },
-        { color: 'painted', type: 'painted', copies: 1, locks: [], corrupted: true },
-        { color: 'cursed', type: 'cursed', copies: 1, locks: [], corrupted: true }
-    ],
-    keysToCollect: [
-        { color: 'green', amount: { real: 5, imag: 0 } },
-        { color: 'red', amount: { real: 0, imag: 3 } },
-        { color: 'blue', amount: { real: 3, imag: 0 } },
-        { color: 'brown', amount: { real: -1, imag: 0 } },
-        { color: 'master', amount: { real: 1, imag: 0 } }  // Collecting 1 master key
-    ],
-    goal: { reached: false }
-};
-
-let logDiv = document.getElementById("log");
+let puzzleData;  // This will hold the loaded level data
 
 // Function to log messages with auto-scroll
 function logMessage(message) {
+    const logDiv = document.getElementById("log");
     const messageElement = document.createElement("div");
     messageElement.textContent = message;
     logDiv.appendChild(messageElement);
     logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+// Function to fetch level data from JSON
+async function loadLevelData(levelFile) {
+    try {
+        const response = await fetch(levelFile);
+        puzzleData = await response.json();
+        logMessage(`Loaded ${levelFile}`);
+        document.getElementById("startButton").disabled = false;
+    } catch (error) {
+        logMessage(`Error loading level data: ${error}`);
+    }
 }
 
 // Function to collect keys and log
@@ -75,135 +65,28 @@ function collectKey(data, color, amount) {
     logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? ' + ' + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
 }
 
-// Function to check aura activation
-function checkAuras(data) {
-    let auras = { greenAura: false, redAura: false, blueAura: false, negativeBrownAura: false };
+// Load selected level on button click
+document.getElementById("loadLevelButton").addEventListener("click", () => {
+    const levelFile = document.getElementById("levelSelect").value;
+    loadLevelData(levelFile);
+});
 
-    if (data.keys.red.real >= 1 || data.keys.red.imag >= 1) {
-        logMessage("Red aura activated!");
-        auras.redAura = true;
-    }
-
-    if (data.keys.green.real >= 5) {
-        logMessage("Green aura activated!");
-        auras.greenAura = true;
-    }
-
-    if (data.keys.blue.real >= 3) {
-        logMessage("Blue aura activated!");
-        auras.blueAura = true;
-    }
-
-    if (data.keys.brown.real < 0) {
-        logMessage("Negative brown aura activated!");
-        auras.negativeBrownAura = true;
-    }
-
-    return auras;
-}
-
-// Function to open doors, including combo, aura-based, cursed, and master-keyed doors
-function openDoor(data, door, auras) {
-    logMessage(`Attempting to open ${door.type} door (${door.color}), corrupted: ${door.corrupted}`);
-
-    if (door.type === 'combo') {
-        for (const lock of door.locks) {
-            const { color, cost } = lock;
-            const playerKey = data.keys[color];
-
-            if (playerKey.real < cost.real || playerKey.imag < cost.imag) {
-                logMessage(`Failed to open combo door. Insufficient ${color} keys. Required: ${cost.real} + ${cost.imag}i, Available: ${playerKey.real} + ${playerKey.imag}i`);
-                return false;
-            }
-        }
-
-        for (const lock of door.locks) {
-            const { color, cost } = lock;
-            data.keys[color].real -= cost.real;
-            data.keys[color].imag -= cost.imag;
-            logMessage(`Used ${cost.real !== 0 ? cost.real : ''}${cost.imag !== 0 ? ' + ' + cost.imag + 'i' : ''} ${color} key(s) to open combo door.`);
-        }
-
-        door.copies -= 1;
-        logMessage("Combo door opened successfully.");
-    }
-
-    if (door.type === 'eroded' && door.corrupted && auras.greenAura) {
-        door.corrupted = false;
-        logMessage("Eroded door successfully healed with green aura.");
-    } else if (door.type === 'eroded' && door.corrupted && !auras.greenAura) {
-        logMessage("Failed to heal eroded door. Green aura not active.");
-    }
-
-    if (door.type === 'frozen' && door.corrupted && auras.redAura) {
-        door.corrupted = false;
-        logMessage("Frozen door successfully defrosted with red aura.");
-    } else if (door.type === 'frozen' && door.corrupted && !auras.redAura) {
-        logMessage("Failed to defrost frozen door. Red aura not active.");
-    }
-
-    if (door.type === 'painted' && door.corrupted && auras.blueAura) {
-        door.corrupted = false;
-        logMessage("Painted door successfully cleaned with blue aura.");
-    } else if (door.type === 'painted' && door.corrupted && !auras.blueAura) {
-        logMessage("Failed to clean painted door. Blue aura not active.");
-    }
-
-    if (door.type === 'cursed' && auras.negativeBrownAura) {
-        door.copies -= 1;
-        logMessage("Cursed door opened successfully with negative brown aura.");
-    } else if (door.type === 'cursed' && !auras.negativeBrownAura) {
-        logMessage("Failed to open cursed door. Negative brown aura not active.");
-    }
-}
-
-// Function to use master keys on any door
-function useMasterKey(data, door) {
-    if (data.keys.master.real > 0 && door.copies > 0) {
-        door.copies -= 1;
-        data.keys.master.real -= 1;
-        logMessage(`Used 1 master key on ${door.color} door. Remaining copies: ${door.copies}`);
-    } else if (data.keys.master.real < 0) {
-        door.copies += 1;
-        data.keys.master.real += 1;
-        logMessage(`Used -1 master key on ${door.color} door. Increased copies to: ${door.copies}`);
-    }
-}
-
-// Main function to simulate the test
+// Main function to start the puzzle solver
 function cursedDoorTest() {
-    logMessage("Starting test with master key...");
+    logMessage("Starting solver...");
 
-    const testData = JSON.parse(JSON.stringify(puzzleData));
+    const testData = JSON.parse(JSON.stringify(puzzleData));  // Clone puzzle data
 
     // Collect keys for each requirement
     for (const key of testData.keysToCollect) {
         collectKey(testData, key.color, key.amount);
     }
 
-    // Check auras after collecting keys
-    const auras = checkAuras(testData);
-
-    // Attempt to open each door
-    for (const door of testData.doors) {
-        openDoor(testData, door, auras);
-    }
-
-    // Use master key on remaining doors
-    for (const door of testData.doors) {
-        if (door.copies > 0) useMasterKey(testData, door);
-    }
-
-    // Final goal check
-    const allDoorsOpen = testData.doors.every(door => door.copies <= 0 || !door.corrupted);
-    if (allDoorsOpen) {
-        logMessage("Test succeeded: All doors, including master-keyed, are open.");
-    } else {
-        logMessage("Test failed: Some doors remain closed.");
-    }
+    // Placeholder: This is where the rest of the solver logic would go
+    logMessage("Solving the puzzle based on loaded data...");
 }
 
-// Add event listener to the button to start the test
+// Add event listener to start the solver
 document.getElementById("startButton").addEventListener("click", cursedDoorTest);
 
 </script>
