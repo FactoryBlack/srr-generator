@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="viewport" content="width=device-width, initial-scale=1.0">
     <title>I Wanna Lockpick Solver - Multi-Bot</title>
     <style>
         body {
@@ -88,7 +87,7 @@
             const minKeys = 5;
             const balanced = Object.values(state.keys).every(count => count >= minKeys);
             const canDivide = state.keys.white > 0 && state.keys.pink % state.keys.white === 0 && state.keys.green % state.keys.white === 0;
-            return balanced || canDivide;
+            return balanced && canDivide;
         }
 
         function calculateReward(state) {
@@ -138,7 +137,7 @@
                     logToOutput(botId, `Goal reached in ${currentState.steps} steps!`);
                     solutions.push(currentState);
                     updateStats(botId, currentState.steps, currentState.keys);
-                    break;
+                    continue;  // Continue exploring even after finding a goal condition
                 }
 
                 if (currentState.steps % 100 === 0) {
