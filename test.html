@@ -49,6 +49,11 @@
         .feasible-sum p {
             margin: 5px 0;
         }
+        #progress {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #555;
+        }
     </style>
 </head>
 <body>
@@ -56,25 +61,44 @@
     <p>Identify feasible target sums and calculate the steps required to reach each one.</p>
 
     <button onclick="findFeasibleSums()">Find Feasible Sums</button>
+    <div id="progress">Progress: Waiting to start...</div>
     <div id="output">Output will appear here...</div>
 
     <script>
         function findFeasibleSums() {
             const maxSum = 50; // Define upper bound for testing possible target sums
             const maxDepth = 50; // Limit the maximum depth of exploration
+            const maxStates = 10000; // Limit the number of states to explore
             const feasibleSums = [];
             const outputDiv = document.getElementById('output');
+            const progressDiv = document.getElementById('progress');
             outputDiv.innerHTML = "Exploring possible sums...";
+            progressDiv.innerHTML = "Progress: Starting exploration...";
 
-            // Run the algorithm for each possible target sum
-            for (let targetSum = 2; targetSum <= maxSum; targetSum++) {
-                const result = exploreTargetSum(targetSum, maxDepth);
-                if (result) {
-                    feasibleSums.push(result);
+            let targetSum = 2;
+
+            function exploreNextTarget() {
+                if (targetSum > maxSum) {
+                    displayResults(feasibleSums);
+                    progressDiv.innerHTML = "Progress: Exploration complete!";
+                    return;
                 }
+
+                const result = exploreTargetSum(targetSum, maxDepth, maxStates);
+                if (result) feasibleSums.push(result);
+
+                // Update progress after exploring each target sum
+                progressDiv.innerHTML = `Progress: Checked target sum ${targetSum}. Feasible sums found: ${feasibleSums.length}`;
+
+                targetSum++;
+                setTimeout(exploreNextTarget, 10); // Use setTimeout to keep the UI responsive
             }
 
-            // Display the results
+            exploreNextTarget();
+        }
+
+        function displayResults(feasibleSums) {
+            const outputDiv = document.getElementById('output');
             outputDiv.innerHTML = `
                 <h3>Feasible Sums Found:</h3>
                 ${feasibleSums.length > 0 ? feasibleSums.map((result, idx) => `
@@ -88,14 +112,14 @@
             `;
         }
 
-        function exploreTargetSum(targetSum, maxDepth) {
-            const stack = [{ pink: 1, green: 1, cyan: 1, path: [], depth: 0 }];
+        function exploreTargetSum(targetSum, maxDepth, maxStates) {
+            const queue = [{ pink: 1, green: 1, cyan: 1, path: [], depth: 0 }];
             const states = new Set();
             let foundTarget = false;
             let solutionPath = [];
 
-            while (stack.length > 0) {
-                const { pink, green, cyan, path, depth } = stack.pop();
+            while (queue.length > 0 && states.size < maxStates) {
+                const { pink, green, cyan, path, depth } = queue.shift();
 
                 // Check if maximum depth is reached
                 if (depth > maxDepth) continue;
@@ -114,13 +138,13 @@
                 if (states.has(state)) continue;
                 states.add(state);
 
-                // Add operations to stack for exploration
-                stack.push({ pink: pink + cyan, green, cyan: cyan + 1, path: [...path, "add cyan to pink"], depth: depth + 1 });
-                stack.push({ pink, green: green + cyan, cyan: cyan + 1, path: [...path, "add cyan to green"], depth: depth + 1 });
+                // Add operations to queue for exploration
+                queue.push({ pink: pink + cyan, green, cyan: cyan + 1, path: [...path, "add cyan to pink"], depth: depth + 1 });
+                queue.push({ pink, green: green + cyan, cyan: cyan + 1, path: [...path, "add cyan to green"], depth: depth + 1 });
 
                 // Division operation if pink and cyan are both divisible by white (2)
                 if (pink % 2 === 0 && cyan % 2 === 0) {
-                    stack.push({ pink: pink / 2, green, cyan: cyan / 2, path: [...path, "divide pink and cyan by 2"], depth: depth + 1 });
+                    queue.push({ pink: pink / 2, green, cyan: cyan / 2, path: [...path, "divide pink and cyan by 2"], depth: depth + 1 });
                 }
             }
 
