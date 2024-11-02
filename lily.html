@@ -29,17 +29,21 @@
 <div id="log" class="console-output"></div>
 
 <script>
-// Initial puzzle data with a combo door requirement
+// Initial puzzle data with complex key requirements
 const puzzleData = {
-    keys: { green: 0, red: 0, cyan: 0 },
+    keys: {
+        green: { real: 0, imag: 0 },
+        red: { real: 0, imag: 0 },
+        cyan: { real: 0, imag: 0 }
+    },
     doors: [
-        { color: 'combo', type: 'normal', copies: 1, locks: [{ color: 'green', cost: 5 }, { color: 'red', cost: 3 }] },
-        { color: 'cyan', type: 'normal', copies: 1, locks: [{ color: 'cyan', cost: 7 }] }
+        { color: 'combo', type: 'normal', copies: 1, locks: [{ color: 'green', cost: { real: 5, imag: 0 } }, { color: 'red', cost: { real: 0, imag: 3 } }] },
+        { color: 'cyan', type: 'normal', copies: 1, locks: [{ color: 'cyan', cost: { real: -7, imag: 0 } }] }
     ],
     keysToCollect: [
-        { color: 'green', amount: 5 },
-        { color: 'red', amount: 3 },
-        { color: 'cyan', amount: 7 }
+        { color: 'green', amount: { real: 5, imag: 0 } },
+        { color: 'red', amount: { real: 0, imag: 3 } },
+        { color: 'cyan', amount: { real: -7, imag: 0 } }
     ],
     goal: { reached: false }
 };
@@ -59,16 +63,24 @@ function cloneData(data) {
 
 // Collect a specific key amount and log
 function collectKey(data, color, amount) {
-    data.keys[color] += amount;
-    logMessage(`Collected ${amount} ${color} key(s). Total: ${data.keys[color]}`);
+    data.keys[color].real += amount.real;
+    data.keys[color].imag += amount.imag;
+    logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? (amount.real !== 0 ? ' + ' : '') + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
 }
 
 // Open a door if possible and log result
 function openDoor(data, door) {
     for (const lock of door.locks) {
         const { color, cost } = lock;
-        if (data.keys[color] < cost) {
-            logMessage(`Not enough ${color} keys to open ${door.color} door. Required: ${cost}, Available: ${data.keys[color]}`);
+        const playerKey = data.keys[color];
+
+        if (
+            (cost.real > 0 && playerKey.real < cost.real) ||
+            (cost.real < 0 && playerKey.real > cost.real) ||
+            (cost.imag > 0 && playerKey.imag < cost.imag) ||
+            (cost.imag < 0 && playerKey.imag > cost.imag)
+        ) {
+            logMessage(`Not enough ${color} keys to open ${door.color} door. Required: ${cost.real !== 0 ? cost.real : ''}${cost.imag !== 0 ? (cost.real !== 0 ? ' + ' : '') + cost.imag + 'i' : ''}, Available: ${playerKey.real} + ${playerKey.imag}i`);
             return false;
         }
     }
@@ -76,8 +88,9 @@ function openDoor(data, door) {
     // If all locks are met, open the door and deduct keys
     for (const lock of door.locks) {
         const { color, cost } = lock;
-        data.keys[color] -= cost;
-        logMessage(`Used ${cost} ${color} key(s) to open part of ${door.color} door.`);
+        data.keys[color].real -= cost.real;
+        data.keys[color].imag -= cost.imag;
+        logMessage(`Used ${cost.real !== 0 ? cost.real : ''}${cost.imag !== 0 ? (cost.real !== 0 ? ' + ' : '') + cost.imag + 'i' : ''} ${color} key(s) to open part of ${door.color} door.`);
     }
 
     door.copies -= 1;
@@ -96,24 +109,24 @@ function checkGoal(data) {
     }
 }
 
-// Test function to simulate puzzle solving with combo door logic
-async function comboDoorTest() {
-    logMessage("Starting combo door test...");
+// Test function to simulate puzzle solving with complex key requirements
+async function complexKeyTest() {
+    logMessage("Starting complex key test...");
 
     const testData = cloneData(puzzleData);
     const steps = [];
 
-    // Step 1: Collect green keys and red keys to attempt to open the combo door
-    collectKey(testData, 'green', 5);
-    collectKey(testData, 'red', 3);
+    // Step 1: Collect green and red keys to attempt to open the combo door
+    collectKey(testData, 'green', { real: 5, imag: 0 });
+    collectKey(testData, 'red', { real: 0, imag: 3 });
     if (openDoor(testData, testData.doors[0])) {
-        steps.push("Opened combo door (green and red requirements).");
+        steps.push("Opened combo door (green and red complex requirements).");
     }
 
-    // Step 2: Collect cyan keys and open the cyan door
-    collectKey(testData, 'cyan', 7);
+    // Step 2: Collect cyan keys and open the cyan door with negative requirement
+    collectKey(testData, 'cyan', { real: -7, imag: 0 });
     if (openDoor(testData, testData.doors[1])) {
-        steps.push("Opened cyan door.");
+        steps.push("Opened cyan door with negative requirement.");
     }
 
     // Step 3: Check if goal is reached
@@ -129,7 +142,7 @@ async function comboDoorTest() {
 // Add event listener to the button to start the test
 document.getElementById("startButton").addEventListener("click", () => {
     logDiv.textContent = ""; // Clear previous logs
-    comboDoorTest(); // Start the combo door test
+    complexKeyTest(); // Start the complex key test
 });
 </script>
 
