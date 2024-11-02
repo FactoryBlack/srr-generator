@@ -31,5 +31,8 @@
         { "color": "brown", "amount": { "real": -1, "imag": 0 } },
         { "color": "purple", "amount": { "real": 2, "imag": 1 } }
     ],
-    "goal": { "reached": false }
+    "goal": {
+      "reached": false,
+      "required_doors": ["combo", "cyan", "brown", "painted", "frozen", "eroded", "any_additional_needed"]
+    }
 }
