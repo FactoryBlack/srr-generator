@@ -102,7 +102,7 @@ function checkAuras(data) {
 
 // Open doors with aura checks and logging
 function openDoor(data, door, auras) {
-    logMessage(`Attempting to open ${door.color} door. Type: ${door.type}, Corrupted: ${door.corrupted}`);
+    logMessage(`Attempting to open ${door.color} door. Type: ${door.type}, Corrupted: ${door.corrupted !== undefined ? door.corrupted : "N/A"}`);
 
     if (door.type === 'frozen' && door.corrupted) {
         if (auras.redAuraActive) {
