@@ -33,7 +33,7 @@
 <div id="log" class="console-output"></div>
 
 <script>
-// Enhanced level loading with detailed logging
+// Load level data
 let puzzleData = {};
 document.getElementById("loadLevelButton").addEventListener("click", async () => {
     const level = document.getElementById("levelSelect").value;
@@ -58,8 +58,6 @@ function logMessage(message) {
     logDiv.appendChild(messageElement);
     logDiv.scrollTop = logDiv.scrollHeight;
 }
-
-// The rest of the code remains unchanged, so I’ll continue with the updated logging...
 
 function cloneData(data) {
     return JSON.parse(JSON.stringify(data));
