@@ -5,7 +5,9 @@
         "cyan": { "real": 0, "imag": 0 },
         "red": { "real": 0, "imag": 0 },
         "brown": { "real": 0, "imag": 0 },
-        "yellow": { "real": 0, "imag": 0 }
+        "yellow": { "real": 0, "imag": 0 },
+        "blue": { "real": 0, "imag": 0 },
+        "purple": { "real": 0, "imag": 0 }
     },
     "doors": [
         {
