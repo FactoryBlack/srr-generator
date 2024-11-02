@@ -28,7 +28,6 @@
 <label for="levelSelect">Select Level:</label>
 <select id="levelSelect">
     <option value="new_level.json">New Level</option>
-    <!-- Additional levels can be added here as needed -->
 </select>
 <button id="loadLevelButton">Load Level</button>
 <button id="startButton" disabled>Start Solver</button>
@@ -46,11 +45,25 @@ function logMessage(message) {
     logDiv.scrollTop = logDiv.scrollHeight;
 }
 
+// Function to ensure all required keys are defined
+function initializeKeys(data) {
+    const requiredKeys = ["green", "red", "blue", "cyan", "brown", "purple"];
+    data.keys = data.keys || {};
+
+    for (const color of requiredKeys) {
+        if (!data.keys[color]) {
+            console.warn(`Initializing missing key color '${color}' in data.keys.`);
+            data.keys[color] = { real: 0, imag: 0 };
+        }
+    }
+}
+
 // Function to fetch level data from JSON and log the loaded structure
 async function loadLevelData(levelFile) {
     try {
         const response = await fetch(levelFile);
         puzzleData = await response.json();
+        initializeKeys(puzzleData); // Ensure all necessary keys are defined
         console.log("Loaded puzzleData:", puzzleData); // Debugging line to inspect loaded data
         logMessage(`Loaded ${levelFile}`);
         document.getElementById("startButton").disabled = false;
@@ -149,6 +162,10 @@ function openDoor(data, door, auras) {
 
     for (const lock of door.locks) {
         const { color, cost } = lock;
+        if (!data.keys[color]) {
+            logMessage(`Error: Attempted to use undefined key color '${color}' for ${door.color} door.`);
+            return false;
+        }
         data.keys[color].real -= cost.real;
         data.keys[color].imag -= cost.imag;
         logMessage(`Used ${cost.real !== 0 ? cost.real : ''}${cost.imag !== 0 ? ' + ' + cost.imag + 'i' : ''} ${color} key(s) to open part of ${door.color} door.`);
