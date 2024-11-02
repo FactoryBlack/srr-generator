@@ -3,14 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Wanna Lockpick Puzzle Solver</title>
+    <title>Target Sum Finder</title>
     <style>
-        /* General styling for page layout */
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
             background-color: #f4f4f9;
             color: #333;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
         }
         #output {
             margin-top: 20px;
@@ -18,153 +36,84 @@
             padding: 15px;
             border-radius: 8px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-            max-height: 500px;
-            overflow-y: auto;
         }
-        /* Styling for buttons */
-        button {
-            margin: 10px 0;
-            padding: 10px 15px;
-            font-size: 16px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        /* Styling each solution block */
-        .solution {
+        .feasible-sum {
             background-color: #e9ecef;
             padding: 10px;
             margin-bottom: 10px;
             border-radius: 5px;
-            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        /* Styling for solution titles */
-        .solution h3 {
-            margin: 0;
-            font-size: 18px;
-            color: #333;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 5px;
-        }
-        /* Styling for output text */
-        .solution p {
-            margin: 5px 0;
-            line-height: 1.6;
-        }
-        /* Highlighting important information */
-        strong {
-            color: #0056b3;
-        }
-        /* Styling for headers */
-        h1 {
-            color: #333;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 10px;
         }
     </style>
 </head>
 <body>
-    <h1>I Wanna Lockpick Puzzle Solver</h1>
-    <p>Explore all possible states where the sum of pink and green equals 28, starting from (1, 1, 1) with additions and divisions.</p>
+    <h1>Target Sum Finder</h1>
+    <p>Identify feasible target sums that allow configurations to reach manageable values using the puzzle's addition and division mechanics.</p>
 
-    <label for="maxSteps">Maximum Exploration Depth (max steps):</label>
-    <input type="number" id="maxSteps" value="100" min="1">
-    <button onclick="exploreStates()">Explore States</button>
-    <button onclick="stopExploration()">Stop Exploration</button>
-
+    <button onclick="findFeasibleSums()">Find Feasible Sums</button>
     <div id="output">Output will appear here...</div>
 
     <script>
-        let stop = false;
-
-        function exploreStates() {
-            stop = false; // Reset stop flag
-            const maxSteps = parseInt(document.getElementById('maxSteps').value);
+        function findFeasibleSums() {
+            const maxSum = 50; // Define upper bound for testing possible target sums
+            const feasibleSums = [];
             const outputDiv = document.getElementById('output');
-            outputDiv.innerHTML = "Exploring states...";
+            outputDiv.innerHTML = "Exploring possible sums...";
 
-            const { solutions, explorationDepth } = bruteForceExplore(maxSteps);
-
-            if (solutions.length === 0) {
-                outputDiv.innerHTML = `<p>No solutions found within the exploration depth of <strong>${explorationDepth}</strong>.</p>`;
-            } else {
-                outputDiv.innerHTML = `
-                    <p><strong>Exploration Depth:</strong> ${explorationDepth}</p>
-                    <p><strong>Solutions Found:</strong> ${solutions.length}</p>
-                    ${solutions.map((sol, idx) => `
-                        <div class="solution">
-                            <h3>Solution ${idx + 1}</h3>
-                            <p><strong>Pink:</strong> ${sol.pink}, <strong>Green:</strong> ${sol.green}</p>
-                            <p><strong>Steps Required:</strong> ${sol.path.length}</p>
-                            <p><strong>Path:</strong> ${sol.path.join(" ➔ ")}</p>
-                        </div>
-                    `).join("")}
-                `;
+            // Run the algorithm for each possible target sum
+            for (let targetSum = 2; targetSum <= maxSum; targetSum++) {
+                if (exploreTargetSum(targetSum)) {
+                    feasibleSums.push(targetSum);
+                }
             }
+
+            // Display the results
+            outputDiv.innerHTML = `
+                <h3>Feasible Sums Found:</h3>
+                ${feasibleSums.length > 0 ? feasibleSums.map(sum => `
+                    <div class="feasible-sum">
+                        <strong>Target Sum:</strong> ${sum}
+                    </div>
+                `).join("") : "No feasible sums found."}
+            `;
         }
 
-        function stopExploration() {
-            stop = true;
-        }
+        function exploreTargetSum(targetSum) {
+            let pink = 1, green = 1, cyan = 1;
+            let states = new Set();
+            let foundTarget = false;
 
-        function bruteForceExplore(maxStep) {
-            const MAX_SET_SIZE = 10000;
-            const MAX_PINK_GREEN = 30; // Prune states where pink or green exceeds this threshold
-            const TARGET_SUM = 28;
-
-            let step = 0;
-            let workList = [[1, 1, 1, []]]; // Start with (pink, green, cyan, path)
-            let reachedStates = new Set(); // Record all reached states
-            let solutions = [];
-
-            while (step < maxStep && !stop) {
-                let nextWorkList = [];
-                for (let i = 0; i < workList.length; i++) {
-                    let [pink, green, cyan, path] = workList[i];
-                    let stateId = `${pink},${green},${cyan}`;
-
-                    // Only process new states to avoid redundancy
-                    if (reachedStates.has(stateId)) continue;
-
-                    // Check if we've hit the max set size to prevent overflow
-                    if (reachedStates.size >= MAX_SET_SIZE) {
-                        stop = true;
-                        return { solutions, explorationDepth: step };
-                    }
-
-                    // Prune states with pink or green greater than MAX_PINK_GREEN
-                    if (pink > MAX_PINK_GREEN || green > MAX_PINK_GREEN) continue;
-
-                    // Add the current state to the reached set
-                    reachedStates.add(stateId);
-
-                    // Check if we've reached a sum of 28
-                    if (pink + green === TARGET_SUM) {
-                        solutions.push({ pink, green, path }); // Record the solution and path
-                    }
-
-                    // Add operations
-                    nextWorkList.push([pink + cyan, green, cyan + 1, [...path, "add cyan to pink"]]);
-                    nextWorkList.push([pink, green + cyan, cyan + 1, [...path, "add cyan to green"]]);
-
-                    // Divide operations
-                    for (let j = 2; j <= Math.min(pink, green); j++) {
-                        if (pink % j === 0 && green % j === 0) {
-                            nextWorkList.push([pink / j, green / j, cyan, [...path, `divide by ${j}`]]);
-                        }
+            function explore(pink, green, cyan) {
+                // Check if we reach the target sum
+                if (pink + green === targetSum) {
+                    if (checkDivisibility(pink, green)) {
+                        foundTarget = true;
+                        return;
                     }
                 }
-                workList = nextWorkList;
-                step++;
+
+                // Avoid cycles by tracking visited states
+                const state = `${pink},${green},${cyan}`;
+                if (states.has(state) || foundTarget) return;
+                states.add(state);
+
+                // Recursive additions
+                explore(pink + cyan, green, cyan + 1); // Add cyan to pink
+                explore(pink, green + cyan, cyan + 1); // Add cyan to green
+
+                // Division operation if pink and cyan are both divisible by white (2)
+                if (pink % 2 === 0 && cyan % 2 === 0) {
+                    explore(pink / 2, green, cyan / 2);
+                }
             }
 
-            return { solutions, explorationDepth: step };
+            // Start exploring from initial values
+            explore(pink, green, cyan);
+            return foundTarget;
+        }
+
+        function checkDivisibility(pink, green) {
+            // Target configurations like (7, 21) or (21, 7) as manageable outcomes
+            return (pink === 7 && green === 21) || (pink === 21 && green === 7);
         }
     </script>
 </body>
