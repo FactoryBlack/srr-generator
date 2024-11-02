@@ -41,23 +41,20 @@
     </div>
 
     <script>
-        // Function to log messages directly to the output area
         function logToOutput(message) {
             const resultElement = document.getElementById('result');
             resultElement.innerHTML += message + '\n';
+            resultElement.scrollTop = resultElement.scrollHeight; // Auto-scroll to the latest message
         }
 
-        // Define initial state for the puzzle
         const initialState = {
             keys: { white: 0, cyan: 0, pink: 0, green: 0 },
-            steps: 0,  // Track the number of actions (collect or door interactions)
-            path: []   // Sequence of actions taken
+            steps: 0,
+            path: []
         };
 
-        // Define target condition for solution
-        const targetKeys = { cyan: 28, pink: 7, green: 21 };  // Adjust as necessary based on puzzle goal
+        const targetKeys = { cyan: 28, pink: 7, green: 21 };
 
-        // Collect a key of a specific color
         function collectKey(state, color) {
             const newState = JSON.parse(JSON.stringify(state));
             newState.keys[color]++;
@@ -67,7 +64,6 @@
             return newState;
         }
 
-        // Use a division machine to divide pink and green keys by white if possible
         function divideKeys(state) {
             const newState = JSON.parse(JSON.stringify(state));
             if (newState.keys.white > 0 && newState.keys.pink % newState.keys.white === 0 && newState.keys.green % newState.keys.white === 0) {
@@ -78,10 +74,9 @@
                 logToOutput(`Divided pink and green by white: pink = ${newState.keys.pink}, green = ${newState.keys.green}`);
                 return newState;
             }
-            return null; // Cannot divide if conditions are not met
+            return null;
         }
 
-        // Check if the state meets the target conditions
         function isGoalReached(state) {
             return (
                 state.keys.cyan === targetKeys.cyan &&
@@ -90,8 +85,7 @@
             );
         }
 
-        // Brute-force solver function
-        function bruteForceSolver(state) {
+        async function bruteForceSolver(state) {
             const solutions = [];
             const queue = [state];
             const visited = new Set();
@@ -100,34 +94,33 @@
                 const currentState = queue.shift();
                 const keys = JSON.stringify(currentState.keys);
 
-                // Skip if this state has been visited
                 if (visited.has(keys)) continue;
                 visited.add(keys);
 
-                // Check if goal is reached
                 if (isGoalReached(currentState)) {
                     solutions.push(currentState);
                     continue;
                 }
 
-                // Generate new states for actions: collect cyan key or use division machine
                 queue.push(collectKey(currentState, 'cyan'));
 
                 const dividedState = divideKeys(currentState);
                 if (dividedState) queue.push(dividedState);
+
+                // Yield control back to the browser every 100 iterations
+                if (queue.length % 100 === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
             }
 
             return solutions;
         }
 
-        // Start solver and display results
-        function startSolver() {
-            // Clear previous output
+        async function startSolver() {
             document.getElementById('result').innerHTML = '';
             logToOutput("Starting solver...");
 
-            const solutions = bruteForceSolver(initialState);
-            const resultElement = document.getElementById('result');
+            const solutions = await bruteForceSolver(initialState);
             solutions.sort((a, b) => a.steps - b.steps);
 
             if (solutions.length === 0) {
