@@ -29,14 +29,14 @@
 <div id="log" class="console-output"></div>
 
 <script>
-// Initial puzzle data with cursed door and brown key aura requirements
+// Initial puzzle data
 const puzzleData = {
     keys: {
         green: { real: 0, imag: 0 },
         red: { real: 0, imag: 0 },
         cyan: { real: 0, imag: 0 },
         brown: { real: 0, imag: 0 },
-        blue: { real: 0, imag: 0 } // Added blue for Painted doors
+        blue: { real: 0, imag: 0 }
     },
     doors: [
         { color: 'combo', type: 'normal', copies: 1, locks: [{ color: 'green', cost: { real: 5, imag: 0 } }, { color: 'red', cost: { real: 0, imag: 3 } }] },
@@ -52,10 +52,6 @@ const puzzleData = {
         { color: 'blue', amount: { real: 3, imag: 0 } },
         { color: 'cyan', amount: { real: -7, imag: 0 } },
         { color: 'brown', amount: { real: -1, imag: 0 } }
-    ],
-    specialKeys: [
-        { type: 'signflip', color: 'red' },
-        { type: 'rotor', color: 'cyan' }
     ],
     goal: { reached: false }
 };
@@ -81,7 +77,7 @@ function collectKey(data, color, amount) {
     data.keys[color].imag += amount.imag;
     logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? (amount.real !== 0 ? ' + ' : '') + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
 
-    // Check for aura activation
+    // Check for aura activation after each key collection
     checkAuras(data);
 }
 
@@ -107,7 +103,7 @@ function openDoor(data, door) {
     if (door.type === 'frozen' && door.corrupted) {
         if (data.keys.red.real >= 1) {
             logMessage(`Defrosted frozen ${door.color} door with red aura.`);
-            door.corrupted = false;
+            door.corrupted = false; // Door is no longer corrupted
         } else {
             logMessage(`Cannot defrost frozen ${door.color} door. Red aura not active.`);
             return false;
@@ -118,7 +114,7 @@ function openDoor(data, door) {
     if (door.type === 'eroded' && door.corrupted) {
         if (data.keys.green.real >= 5) {
             logMessage(`Healed eroded ${door.color} door with green aura.`);
-            door.corrupted = false;
+            door.corrupted = false; // Door is no longer corrupted
         } else {
             logMessage(`Cannot heal eroded ${door.color} door. Green aura not active.`);
             return false;
@@ -129,7 +125,7 @@ function openDoor(data, door) {
     if (door.type === 'painted' && door.corrupted) {
         if (data.keys.blue.real >= 3) {
             logMessage(`Cleaned painted ${door.color} door with blue aura.`);
-            door.corrupted = false;
+            door.corrupted = false; // Door is no longer corrupted
         } else {
             logMessage(`Cannot clean painted ${door.color} door. Blue aura not active.`);
             return false;
@@ -184,6 +180,7 @@ async function cursedDoorTest() {
     collectKey(testData, 'green', { real: 5, imag: 0 });
     collectKey(testData, 'red', { real: 1, imag: 0 });
     collectKey(testData, 'blue', { real: 3, imag: 0 });
+
     if (openDoor(testData, testData.doors[0])) {
         steps.push("Opened combo door (green and red complex requirements).");
     }
