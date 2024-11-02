@@ -29,20 +29,22 @@
 <div id="log" class="console-output"></div>
 
 <script>
-// Initial puzzle data
+// Initial puzzle data with frozen, eroded, and painted doors
 const puzzleData = {
     keys: {
         green: { real: 0, imag: 0 },
         red: { real: 0, imag: 0 },
-        cyan: { real: 0, imag: 0 },
-        brown: { real: 0, imag: 0 },
         blue: { real: 0, imag: 0 }
     },
     doors: [
-        { color: 'eroded', type: 'eroded', copies: 1, locks: [], corrupted: true } // Only eroded door for this test
+        { color: 'eroded', type: 'eroded', copies: 1, locks: [], corrupted: true },
+        { color: 'frozen', type: 'frozen', copies: 1, locks: [], corrupted: true },
+        { color: 'painted', type: 'painted', copies: 1, locks: [], corrupted: true }
     ],
     keysToCollect: [
-        { color: 'green', amount: { real: 5, imag: 0 } } // Only green keys to trigger green aura
+        { color: 'green', amount: { real: 5, imag: 0 } },  // For green aura (eroded)
+        { color: 'red', amount: { real: 1, imag: 0 } },     // For red aura (frozen)
+        { color: 'blue', amount: { real: 3, imag: 0 } }     // For blue aura (painted)
     ],
     goal: { reached: false }
 };
@@ -65,49 +67,73 @@ function collectKey(data, color, amount) {
 
 // Function to check aura activation
 function checkAuras(data) {
-    let greenAuraActive = false;
+    let auras = { greenAura: false, redAura: false, blueAura: false };
+    if (data.keys.red.real >= 1) {
+        logMessage("Red aura activated!");
+        auras.redAura = true;
+    }
     if (data.keys.green.real >= 5) {
         logMessage("Green aura activated!");
-        greenAuraActive = true;
+        auras.greenAura = true;
     }
-    return greenAuraActive;
+    if (data.keys.blue.real >= 3) {
+        logMessage("Blue aura activated!");
+        auras.blueAura = true;
+    }
+    return auras;
 }
 
-// Function to open eroded door with green aura check
-function openErodedDoor(data, greenAuraActive) {
-    const erodedDoor = data.doors[0];
-    logMessage(`Attempting to open eroded door, corrupted: ${erodedDoor.corrupted}, greenAuraActive: ${greenAuraActive}`);
+// Function to open doors with aura checks
+function openDoor(data, door, auras) {
+    logMessage(`Attempting to open ${door.type} door (${door.color}), corrupted: ${door.corrupted}`);
 
-    if (erodedDoor.corrupted && greenAuraActive) {
-        erodedDoor.corrupted = false;
+    if (door.type === 'eroded' && door.corrupted && auras.greenAura) {
+        door.corrupted = false;
         logMessage("Eroded door successfully healed with green aura.");
-    } else if (erodedDoor.corrupted && !greenAuraActive) {
+    } else if (door.type === 'eroded' && door.corrupted && !auras.greenAura) {
         logMessage("Failed to heal eroded door. Green aura not active.");
+    }
+
+    if (door.type === 'frozen' && door.corrupted && auras.redAura) {
+        door.corrupted = false;
+        logMessage("Frozen door successfully defrosted with red aura.");
+    } else if (door.type === 'frozen' && door.corrupted && !auras.redAura) {
+        logMessage("Failed to defrost frozen door. Red aura not active.");
+    }
+
+    if (door.type === 'painted' && door.corrupted && auras.blueAura) {
+        door.corrupted = false;
+        logMessage("Painted door successfully cleaned with blue aura.");
+    } else if (door.type === 'painted' && door.corrupted && !auras.blueAura) {
+        logMessage("Failed to clean painted door. Blue aura not active.");
     }
 }
 
 // Main function to simulate the test
 function cursedDoorTest() {
-    logMessage("Starting eroded door test...");
+    logMessage("Starting aura door test...");
 
     const testData = JSON.parse(JSON.stringify(puzzleData));
 
-    // Collect green keys to activate green aura
+    // Collect keys for each aura type
     for (const key of testData.keysToCollect) {
         collectKey(testData, key.color, key.amount);
     }
 
-    // Check if green aura is active
-    const greenAuraActive = checkAuras(testData);
+    // Check auras after collecting keys
+    const auras = checkAuras(testData);
 
-    // Try opening the eroded door
-    openErodedDoor(testData, greenAuraActive);
+    // Attempt to open each door
+    for (const door of testData.doors) {
+        openDoor(testData, door, auras);
+    }
 
     // Final goal check
-    if (!testData.doors[0].corrupted) {
-        logMessage("Test succeeded: Eroded door is open.");
+    const allDoorsOpen = testData.doors.every(door => !door.corrupted);
+    if (allDoorsOpen) {
+        logMessage("Test succeeded: All aura doors are open.");
     } else {
-        logMessage("Test failed: Eroded door remains closed.");
+        logMessage("Test failed: Some aura doors remain closed.");
     }
 }
 
