@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Wanna Lockpick Solver - Multi-Bot</title>
+    <title>I Wanna Lockpick Solver - Collaborative Multi-Bot</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,8 +41,8 @@
     </style>
 </head>
 <body>
-    <h1>I Wanna Lockpick Solver - Multi-Bot</h1>
-    <p>Click "Start All Bots" to run four solvers in parallel, each with its own log and stats.</p>
+    <h1>I Wanna Lockpick Solver - Collaborative Multi-Bot</h1>
+    <p>Click "Start All Bots" to run four collaborative solvers, each with its own log and stats.</p>
     <button onclick="startAllBots()">Start All Bots</button>
 
     <div id="solver-container">
@@ -70,6 +70,9 @@
     </div>
 
     <script>
+        // Shared knowledge pool for cross-bot learning
+        const knowledgePool = new Map();
+
         function logToOutput(botId, message) {
             const outputElement = document.getElementById(`output${botId}`);
             outputElement.innerHTML += message + '\n';
@@ -137,7 +140,8 @@
                     logToOutput(botId, `Goal reached in ${currentState.steps} steps!`);
                     solutions.push(currentState);
                     updateStats(botId, currentState.steps, currentState.keys);
-                    continue;  // Continue exploring even after finding a goal condition
+                    knowledgePool.set(keys, currentState); // Share this state with other bots
+                    continue;
                 }
 
                 if (currentState.steps % 100 === 0) {
@@ -153,6 +157,15 @@
                 ];
                 const dividedState = divideKeys(currentState);
                 if (dividedState) newStates.push(dividedState);
+
+                // Pull in knowledge from other bots
+                if (Math.random() < 0.1) {  // Occasionally check the knowledge pool
+                    for (const [_, sharedState] of knowledgePool) {
+                        if (!visited.has(JSON.stringify(sharedState.keys))) {
+                            newStates.push(sharedState);
+                        }
+                    }
+                }
 
                 newStates = newStates
                     .map(state => ({ state, reward: calculateReward(state) }))
