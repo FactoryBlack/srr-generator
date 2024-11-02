@@ -31,7 +31,7 @@
 <body>
     <div id="solver-container">
         <h1>I Wanna Lockpick Solver</h1>
-        <p>Click the button below to start the brute-force solver for "I Wanna Lockpick".</p>
+        <p>Click the button below to start the adaptive solver for "I Wanna Lockpick".</p>
         <button onclick="startSolver()">Start Solver</button>
 
         <div id="output">
@@ -53,7 +53,22 @@
             path: []
         };
 
-        const targetKeys = { cyan: 28, pink: 7, green: 21 };
+        // Determine if a state has reached a desired balance or condition
+        function isGoalCondition(state) {
+            // Example dynamic goal condition:
+            // Aim for at least a minimal number of keys for each color, or where a useful division is possible
+            const threshold = 5;
+            const balanced = Object.values(state.keys).every(count => count >= threshold);
+            const canDivide = state.keys.white > 0 && state.keys.pink % state.keys.white === 0 && state.keys.green % state.keys.white === 0;
+            return balanced || canDivide;
+        }
+
+        // Reward-based heuristic to evaluate the usefulness of a state
+        function calculateReward(state) {
+            const balanceScore = Object.values(state.keys).reduce((sum, count) => sum + Math.min(count, 5), 0);
+            const divisionScore = (state.keys.white > 0 && state.keys.pink % state.keys.white === 0 && state.keys.green % state.keys.white === 0) ? 10 : 0;
+            return balanceScore + divisionScore;
+        }
 
         function collectKey(state, color) {
             const newState = JSON.parse(JSON.stringify(state));
@@ -73,18 +88,8 @@
                 newState.path.push(`Divided pink and green keys by white (Total pink: ${newState.keys.pink}, green: ${newState.keys.green})`);
                 logToOutput(`Action ${newState.steps}: Divided pink and green by white. New pink: ${newState.keys.pink}, new green: ${newState.keys.green}`);
                 return newState;
-            } else {
-                logToOutput(`Action ${state.steps + 1}: Cannot divide pink and green by white (Condition not met)`);
             }
             return null;
-        }
-
-        function isGoalReached(state) {
-            return (
-                state.keys.cyan === targetKeys.cyan &&
-                state.keys.pink === targetKeys.pink &&
-                state.keys.green === targetKeys.green
-            );
         }
 
         async function processQueue(queue, visited, solutions) {
@@ -103,19 +108,28 @@
                 if (visited.has(keys)) continue;
                 visited.add(keys);
 
-                if (isGoalReached(currentState)) {
-                    logToOutput(`Goal reached in ${currentState.steps} steps!`);
+                if (isGoalCondition(currentState)) {
+                    logToOutput(`Goal condition reached in ${currentState.steps} steps!`);
                     solutions.push(currentState);
                     continue;
                 }
 
-                logToOutput(`Exploring new state with ${currentState.steps} steps taken. Current key counts: Cyan=${currentState.keys.cyan}, Pink=${currentState.keys.pink}, Green=${currentState.keys.green}, White=${currentState.keys.white}`);
+                logToOutput(`Exploring new state with ${currentState.steps} steps taken. Key counts: Cyan=${currentState.keys.cyan}, Pink=${currentState.keys.pink}, Green=${currentState.keys.green}, White=${currentState.keys.white}`);
 
-                // Add actions to queue
-                queue.push(collectKey(currentState, 'cyan'));
+                // Dynamically prioritize actions based on reward score
+                let newStates = [
+                    collectKey(currentState, 'cyan'),
+                    collectKey(currentState, 'pink'),
+                    collectKey(currentState, 'green'),
+                    collectKey(currentState, 'white')
+                ];
 
                 const dividedState = divideKeys(currentState);
-                if (dividedState) queue.push(dividedState);
+                if (dividedState) newStates.push(dividedState);
+
+                // Sort new states based on reward score
+                newStates.sort((a, b) => calculateReward(b) - calculateReward(a));
+                newStates.forEach(state => queue.push(state));
 
                 iterations++;
             }
@@ -134,7 +148,7 @@
             solutions.sort((a, b) => a.steps - b.steps);
 
             if (solutions.length === 0) {
-                logToOutput('No solutions found. Please check target key counts and ensure puzzle logic is correct.');
+                logToOutput('No solutions found. Adjust conditions or check if puzzle logic is correct.');
             } else {
                 solutions.forEach((solution, index) => {
                     logToOutput(`\nSolution ${index + 1} (Steps: ${solution.steps}):`);
