@@ -36,7 +36,7 @@ const puzzleData = {
         red: { real: 0, imag: 0 },
         cyan: { real: 0, imag: 0 },
         brown: { real: 0, imag: 0 },
-        blue: { real: 0, imag: 0 }
+        blue: { real: 0, imag: 0 } // Added blue for Painted doors
     },
     doors: [
         { color: 'combo', type: 'normal', copies: 1, locks: [{ color: 'green', cost: { real: 5, imag: 0 } }, { color: 'red', cost: { real: 0, imag: 3 } }] },
@@ -162,6 +162,17 @@ function openDoor(data, door) {
     return true;
 }
 
+// Check if all doors are open to reach the goal
+function checkGoal(data) {
+    const allDoorsOpen = data.doors.every(door => door.copies <= 0 || !door.corrupted);
+    if (allDoorsOpen) {
+        data.goal.reached = true;
+        logMessage("Goal reached! All doors are open.");
+    } else {
+        logMessage("Goal not yet reached.");
+    }
+}
+
 // Test function to simulate puzzle solving with aura requirements
 async function cursedDoorTest() {
     logMessage("Starting cursed door test...");
@@ -185,25 +196,26 @@ async function cursedDoorTest() {
     collectKey(testData, 'brown', { real: -1, imag: 0 });
     if (openDoor(testData, testData.doors[2])) {
         steps.push("Opened cursed brown door with negative aura.");
-
-        // Try opening each corrupted door with corresponding auras
-        openDoor(testData, testData.doors[3]); // frozen door
-        openDoor(testData, testData.doors[4]); // eroded door
-        openDoor(testData, testData.doors[5]); // painted door
-
-        // Step 4: Check if goal is reached
-        checkGoal(testData);
-
-        if (testData.goal.reached) {
-            logMessage("Test succeeded. Path: " + steps.join(" -> "));
-        } else {
-            logMessage("Test failed. Goal was not reached.");
-        }
     }
 
-    // Add event listener to the button to start the test
-    document.getElementById("startButton").addEventListener("click", cursedDoorTest);
+    // Try opening each corrupted door with corresponding auras
+    openDoor(testData, testData.doors[3]); // frozen door
+    openDoor(testData, testData.doors[4]); // eroded door
+    openDoor(testData, testData.doors[5]); // painted door
 
-    </script>
-    </body>
-    </html>
+    // Step 4: Check if goal is reached
+    checkGoal(testData);
+
+    if (testData.goal.reached) {
+        logMessage("Test succeeded. Path: " + steps.join(" -> "));
+    } else {
+        logMessage("Test failed. Goal was not reached.");
+    }
+}
+
+// Add event listener to the button to start the test
+document.getElementById("startButton").addEventListener("click", cursedDoorTest);
+
+</script>
+</body>
+</html>
