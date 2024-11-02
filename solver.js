@@ -1,19 +1,25 @@
-// Puzzle data setup for this specific level
 const puzzleData = {
     keys: {
-        white: 0, orange: 0, purple: 0, cyan: 0, pink: 0, black: 0,
-        red: 0, green: 0, blue: 0, brown: 0, master: 0, glitch: 0
+        green: 0,
+        red: 0,
+        cyan: 0,
+        black: 0,
+        pink: 0,
+        gold: 0 // Master key
     },
     doors: [
-        { color: 'green', type: 'normal', lock: { type: 'normal', cost: 5 }, copies: 99, position: "midway" },
-        { color: 'red', type: 'frozen', lock: { type: 'aura', cost: 1 }, copies: 99, position: "upper_left" },
-        // Define other doors as needed
+        { color: 'green', type: 'normal', copies: 99, lock: { type: 'normal', cost: 5 } },
+        { color: 'red', type: 'frozen', copies: 99, lock: { type: 'aura', cost: 1 } },
+        { color: 'pink', type: 'normal', copies: 99, lock: { type: 'normal', cost: 3 } },
+        { color: 'cyan', type: 'normal', copies: 99, lock: { type: 'normal', cost: 7 } },
+        { color: 'black', type: 'normal', copies: 99, lock: { type: 'normal', cost: 9 } },
+        // Additional doors as seen in the level
     ],
     keysToCollect: [
         { color: 'green', amount: 5, position: "start" },
         // Define additional key locations based on level layout
     ],
-    goal: { reached: false, position: "green_check" } // Green check position as goal
+    goal: { reached: false, position: "green_check" }
 };
 
 let logDiv = document.getElementById("log");
@@ -68,6 +74,7 @@ function openDoor(door, data) {
     // Check aura requirements for frozen, eroded, painted doors
     if (door.type === 'frozen' && data.keys.red >= 1) {
         data.keys.red -= 1; // Use red aura key to defrost
+        logMessage(`Defrosted red frozen door.`);
     }
 
     // For normal locks, check if we have enough keys
@@ -84,7 +91,7 @@ function openDoor(door, data) {
 
 // Function to check if the goal (reaching green check) has been met
 function checkGoal(data) {
-    // Explicitly check if the final goal position (green check) is reachable
+    // Verify if the path to the green check mark is clear
     const allDoorsOpen = data.doors.every(door => door.copies <= 0);
     if (allDoorsOpen && !data.goal.reached) {
         data.goal.reached = true;  // Mark goal as reached
