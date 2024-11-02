@@ -1,6 +1,5 @@
 // Puzzle data and solver setup
 
-// Sample data structure for the current level. Replace with actual data for each level.
 const puzzleData = {
     keys: {
         white: 0, orange: 0, purple: 0, cyan: 0, pink: 0, black: 0,
@@ -9,9 +8,9 @@ const puzzleData = {
     doors: [
         { color: 'green', type: 'normal', lock: { type: 'normal', cost: 5 }, copies: 99 },
         { color: 'red', type: 'frozen', lock: { type: 'aura', cost: 1 }, copies: 99 },
-        // Add more doors and details based on level specifics
+        // More doors here based on level specifics
     ],
-    // Define other level elements like gates or special doors if needed
+    goal: { reached: false } // Define the condition for reaching the goal
 };
 
 let logDiv = document.getElementById("log");
@@ -29,10 +28,8 @@ async function solvePuzzle() {
     logMessage("Starting puzzle solver...");
     const solutions = [];
 
-    // Implementing brute-force approach using async processing to avoid freezing
     await bruteForceSolve(puzzleData, solutions);
 
-    // Display solutions
     if (solutions.length > 0) {
         logMessage(`Found ${solutions.length} solution(s). Displaying the best solution...`);
         displaySolution(solutions[0]);
@@ -41,30 +38,63 @@ async function solvePuzzle() {
     }
 }
 
+// Attempt to open a door based on current keys
+function openDoor(door, keys) {
+    if (door.type === 'frozen' && keys.red >= 1) {
+        keys.red -= 1; // Use red aura key to defrost the door
+    }
+    if (door.lock.type === 'normal' && keys[door.color] >= door.lock.cost) {
+        keys[door.color] -= door.lock.cost;
+        door.copies -= 1;
+        return door.copies <= 0; // Return true if door is fully opened
+    }
+    return false;
+}
+
+// Simulate collecting a key
+function collectKey(keyType, amount, keys) {
+    keys[keyType] += amount;
+}
+
 // Brute-force solving with non-blocking iteration
 async function bruteForceSolve(data, solutions) {
     let stepCount = 0;
 
-    // Placeholder loop for exploring solutions (Replace with actual logic)
-    for (let i = 0; i < 100000; i++) {
-        // Simulate checking a possible solution
-        if (Math.random() < 0.00001) {  // Simulate finding a solution
-            solutions.push({ steps: i });
-            logMessage(`Solution found at step ${i}`);
+    while (!data.goal.reached) {
+        stepCount++;
+
+        // Example interactions
+        for (let door of data.doors) {
+            const doorOpened = openDoor(door, data.keys);
+            if (doorOpened) {
+                logMessage(`Opened ${door.color} door with lock cost ${door.lock.cost}.`);
+                checkGoal(data);
+            }
         }
 
-        // Every 1000 iterations, yield control back to the main thread
-        if (i % 1000 === 0) {
-            logMessage(`Checked ${i} paths...`);
+        // Simulate picking up a key as part of the path
+        collectKey('green', 5, data.keys);  // Example: Collecting a green key
+
+        // Log progress and allow yield
+        if (stepCount % 1000 === 0) {
+            logMessage(`Checked ${stepCount} paths...`);
             await new Promise(resolve => setTimeout(resolve, 0));
         }
 
-        // Stop early if a solution is found
-        if (solutions.length > 0) break;
+        // Stop if goal is reached or no more actions available
+        if (data.goal.reached || stepCount > 100000) break;
     }
 }
 
-// Display a solution (details can be expanded)
+// Define what reaching the goal means
+function checkGoal(data) {
+    // If the green tick is reached, update the goal state
+    if (data.keys.green >= 7) { // Placeholder for goal condition
+        data.goal.reached = true;
+    }
+}
+
+// Display a solution
 function displaySolution(solution) {
-    logMessage(`Best solution found with ${solution.steps} steps.`);
+    logMessage(`Best solution found in ${solution.steps} steps.`);
 }
