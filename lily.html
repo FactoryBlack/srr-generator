@@ -29,12 +29,13 @@
 <div id="log" class="console-output"></div>
 
 <script>
-// Initial puzzle data with a combo door requiring complex keys
+// Initial puzzle data with a combo door, aura-based doors, and a cursed door
 const puzzleData = {
     keys: {
         green: { real: 0, imag: 0 },
         red: { real: 0, imag: 0 },
-        blue: { real: 0, imag: 0 }
+        blue: { real: 0, imag: 0 },
+        brown: { real: 0, imag: 0 }
     },
     doors: [
         { color: 'combo', type: 'combo', copies: 1, locks: [
@@ -43,12 +44,14 @@ const puzzleData = {
         ]},
         { color: 'eroded', type: 'eroded', copies: 1, locks: [], corrupted: true },
         { color: 'frozen', type: 'frozen', copies: 1, locks: [], corrupted: true },
-        { color: 'painted', type: 'painted', copies: 1, locks: [], corrupted: true }
+        { color: 'painted', type: 'painted', copies: 1, locks: [], corrupted: true },
+        { color: 'cursed', type: 'cursed', copies: 1, locks: [], corrupted: true }
     ],
     keysToCollect: [
         { color: 'green', amount: { real: 5, imag: 0 } },  // Green keys for combo door
         { color: 'red', amount: { real: 0, imag: 3 } },     // Red imaginary keys for combo door
-        { color: 'blue', amount: { real: 3, imag: 0 } }     // Blue keys for blue aura (painted door)
+        { color: 'blue', amount: { real: 3, imag: 0 } },    // Blue keys for blue aura (painted door)
+        { color: 'brown', amount: { real: -1, imag: 0 } }   // Negative brown key for cursed door
     ],
     goal: { reached: false }
 };
@@ -72,9 +75,9 @@ function collectKey(data, color, amount) {
 
 // Function to check aura activation, accounting for both real and imaginary parts
 function checkAuras(data) {
-    let auras = { greenAura: false, redAura: false, blueAura: false };
+    let auras = { greenAura: false, redAura: false, blueAura: false, negativeBrownAura: false };
 
-    if (data.keys.red.real >= 1 || data.keys.red.imag >= 1) { // Check either real or imaginary part
+    if (data.keys.red.real >= 1 || data.keys.red.imag >= 1) {
         logMessage("Red aura activated!");
         auras.redAura = true;
     }
@@ -89,10 +92,15 @@ function checkAuras(data) {
         auras.blueAura = true;
     }
 
+    if (data.keys.brown.real < 0) {
+        logMessage("Negative brown aura activated!");
+        auras.negativeBrownAura = true;
+    }
+
     return auras;
 }
 
-// Function to open doors, including combo and aura-based doors
+// Function to open doors, including combo, aura-based, and cursed doors
 function openDoor(data, door, auras) {
     logMessage(`Attempting to open ${door.type} door (${door.color}), corrupted: ${door.corrupted}`);
 
@@ -138,11 +146,18 @@ function openDoor(data, door, auras) {
     } else if (door.type === 'painted' && door.corrupted && !auras.blueAura) {
         logMessage("Failed to clean painted door. Blue aura not active.");
     }
+
+    if (door.type === 'cursed' && auras.negativeBrownAura) {
+        door.copies -= 1;
+        logMessage("Cursed door opened successfully with negative brown aura.");
+    } else if (door.type === 'cursed' && !auras.negativeBrownAura) {
+        logMessage("Failed to open cursed door. Negative brown aura not active.");
+    }
 }
 
 // Main function to simulate the test
 function cursedDoorTest() {
-    logMessage("Starting combo door and aura test...");
+    logMessage("Starting cursed door and aura test...");
 
     const testData = JSON.parse(JSON.stringify(puzzleData));
 
@@ -162,7 +177,7 @@ function cursedDoorTest() {
     // Final goal check
     const allDoorsOpen = testData.doors.every(door => door.copies <= 0 || !door.corrupted);
     if (allDoorsOpen) {
-        logMessage("Test succeeded: All combo and aura doors are open.");
+        logMessage("Test succeeded: All doors, including cursed, are open.");
     } else {
         logMessage("Test failed: Some doors remain closed.");
     }
