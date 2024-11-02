@@ -34,14 +34,42 @@
 
         let pathCount = 0;
         let outputElement = document.getElementById("output");
+        let visitedStates = new Set();
 
         function logMessage(message) {
             outputElement.innerHTML += message + "<br>";
             outputElement.scrollTop = outputElement.scrollHeight;
         }
 
+        function isGoalState(state) {
+            // Define the goal as reaching the checkmark.
+            // This could be represented as a specific position in the puzzle or a set condition.
+            return state.reachedGoal === true;
+        }
+
+        function unlockDoor(state, doorRequirements) {
+            // Simulate unlocking a door by checking if the state has enough keys
+            const newState = JSON.parse(JSON.stringify(state));
+            let canUnlock = true;
+
+            for (const [keyColor, requiredAmount] of Object.entries(doorRequirements)) {
+                if ((newState.keys[keyColor] || 0) < requiredAmount) {
+                    canUnlock = false;
+                    break;
+                }
+                newState.keys[keyColor] -= requiredAmount;
+            }
+
+            if (canUnlock) {
+                newState.steps++;
+                newState.path.push(`Unlocked door with requirements: ${JSON.stringify(doorRequirements)}`);
+                return newState;
+            }
+            return null; // Cannot unlock this door
+        }
+
         function solvePuzzle() {
-            let queue = [{ keys: { green: 5 }, steps: 0 }]; // Example starting state
+            let queue = [{ keys: { cyan: 0, pink: 0, green: 0, white: 0 }, steps: 0, reachedGoal: false, path: [] }];
 
             return new Promise(resolve => {
                 async function processQueue() {
@@ -51,18 +79,38 @@
                         for (let state of batch) {
                             if (state.steps > MAX_DEPTH) continue;
 
+                            const stateKey = JSON.stringify(state.keys);
+                            if (visitedStates.has(stateKey)) continue;
+                            visitedStates.add(stateKey);
+
+                            if (isGoalState(state)) {
+                                logMessage("Goal reached! Successfully navigated to the checkmark.");
+                                resolve();
+                                return;
+                            }
+
                             if (pathCount % 1000 === 0) {
                                 logMessage(`Checked ${pathCount} paths...`);
                             }
 
-                            // Simulate door unlocking logic (replace with actual logic)
-                            if (state.keys.green > 0) {
-                                const newState = JSON.parse(JSON.stringify(state));
-                                newState.keys.green--;
-                                newState.steps++;
-                                pathCount++;
-                                queue.push(newState);
-                                logMessage(`Opened green door with lock cost 1. Remaining green: ${newState.keys.green}`);
+                            // Example doors to unlock, can be based on parsed puzzle data
+                            const doors = [
+                                { color: "green", requirements: { green: 5 } },
+                                { color: "pink", requirements: { pink: 3 } },
+                                { color: "cyan", requirements: { cyan: 4, white: 2 } }
+                            ];
+
+                            for (const door of doors) {
+                                const newState = unlockDoor(state, door.requirements);
+                                if (newState) {
+                                    // If reaching the checkmark door, mark goal reached
+                                    if (door.color === "green" && door.requirements.green === 5) {
+                                        newState.reachedGoal = true;
+                                    }
+                                    pathCount++;
+                                    queue.push(newState);
+                                    logMessage(`Opened ${door.color} door with lock requirements ${JSON.stringify(door.requirements)}. Keys now: ${JSON.stringify(newState.keys)}`);
+                                }
                             }
 
                             if (pathCount >= MAX_PATHS) {
@@ -81,6 +129,7 @@
 
         async function startSolver() {
             pathCount = 0;
+            visitedStates.clear();
             outputElement.innerHTML = "Starting solver...<br>";
             await solvePuzzle();
             logMessage("Solver finished.");
