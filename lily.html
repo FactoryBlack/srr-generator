@@ -29,13 +29,14 @@
 <div id="log" class="console-output"></div>
 
 <script>
-// Initial puzzle data with a combo door, aura-based doors, and a cursed door
+// Initial puzzle data with a combo door, aura-based doors, cursed door, and master key
 const puzzleData = {
     keys: {
         green: { real: 0, imag: 0 },
         red: { real: 0, imag: 0 },
         blue: { real: 0, imag: 0 },
-        brown: { real: 0, imag: 0 }
+        brown: { real: 0, imag: 0 },
+        master: { real: 1, imag: 0 }  // Assuming 1 master key for this test
     },
     doors: [
         { color: 'combo', type: 'combo', copies: 1, locks: [
@@ -48,10 +49,11 @@ const puzzleData = {
         { color: 'cursed', type: 'cursed', copies: 1, locks: [], corrupted: true }
     ],
     keysToCollect: [
-        { color: 'green', amount: { real: 5, imag: 0 } },  // Green keys for combo door
-        { color: 'red', amount: { real: 0, imag: 3 } },     // Red imaginary keys for combo door
-        { color: 'blue', amount: { real: 3, imag: 0 } },    // Blue keys for blue aura (painted door)
-        { color: 'brown', amount: { real: -1, imag: 0 } }   // Negative brown key for cursed door
+        { color: 'green', amount: { real: 5, imag: 0 } },
+        { color: 'red', amount: { real: 0, imag: 3 } },
+        { color: 'blue', amount: { real: 3, imag: 0 } },
+        { color: 'brown', amount: { real: -1, imag: 0 } },
+        { color: 'master', amount: { real: 1, imag: 0 } }  // Collecting 1 master key
     ],
     goal: { reached: false }
 };
@@ -73,7 +75,7 @@ function collectKey(data, color, amount) {
     logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? ' + ' + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
 }
 
-// Function to check aura activation, accounting for both real and imaginary parts
+// Function to check aura activation
 function checkAuras(data) {
     let auras = { greenAura: false, redAura: false, blueAura: false, negativeBrownAura: false };
 
@@ -100,7 +102,7 @@ function checkAuras(data) {
     return auras;
 }
 
-// Function to open doors, including combo, aura-based, and cursed doors
+// Function to open doors, including combo, aura-based, cursed, and master-keyed doors
 function openDoor(data, door, auras) {
     logMessage(`Attempting to open ${door.type} door (${door.color}), corrupted: ${door.corrupted}`);
 
@@ -155,9 +157,22 @@ function openDoor(data, door, auras) {
     }
 }
 
+// Function to use master keys on any door
+function useMasterKey(data, door) {
+    if (data.keys.master.real > 0 && door.copies > 0) {
+        door.copies -= 1;
+        data.keys.master.real -= 1;
+        logMessage(`Used 1 master key on ${door.color} door. Remaining copies: ${door.copies}`);
+    } else if (data.keys.master.real < 0) {
+        door.copies += 1;
+        data.keys.master.real += 1;
+        logMessage(`Used -1 master key on ${door.color} door. Increased copies to: ${door.copies}`);
+    }
+}
+
 // Main function to simulate the test
 function cursedDoorTest() {
-    logMessage("Starting cursed door and aura test...");
+    logMessage("Starting test with master key...");
 
     const testData = JSON.parse(JSON.stringify(puzzleData));
 
@@ -174,10 +189,15 @@ function cursedDoorTest() {
         openDoor(testData, door, auras);
     }
 
+    // Use master key on remaining doors
+    for (const door of testData.doors) {
+        if (door.copies > 0) useMasterKey(testData, door);
+    }
+
     // Final goal check
     const allDoorsOpen = testData.doors.every(door => door.copies <= 0 || !door.corrupted);
     if (allDoorsOpen) {
-        logMessage("Test succeeded: All doors, including cursed, are open.");
+        logMessage("Test succeeded: All doors, including master-keyed, are open.");
     } else {
         logMessage("Test failed: Some doors remain closed.");
     }
