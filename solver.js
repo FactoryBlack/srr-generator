@@ -9,7 +9,7 @@ const puzzleData = {
     },
     doors: [
         { color: 'green', type: 'normal', copies: 99, lock: { type: 'normal', cost: 5 } },
-        { color: 'red', type: 'frozen', copies: 99, lock: { type: 'aura', cost: 1 } },
+        { color: 'red', type: 'frozen', copies: 1, lock: { type: 'aura', cost: 1 } },
         { color: 'pink', type: 'normal', copies: 99, lock: { type: 'normal', cost: 3 } },
         { color: 'cyan', type: 'normal', copies: 99, lock: { type: 'normal', cost: 7 } },
         { color: 'black', type: 'normal', copies: 99, lock: { type: 'normal', cost: 9 } },
@@ -49,22 +49,30 @@ async function solvePuzzle() {
     }
 }
 
-// Helper function to prioritize and open doors if possible
+// Helper function to attempt opening each type of door based on conditions
 function openAvailableDoors(data) {
+    let doorOpened = false;
     for (const door of data.doors) {
         if (door.copies > 0) {
+            // Special handling for frozen doors
             if (door.type === 'frozen' && data.keys.red >= 1) {
                 data.keys.red -= 1; // Use red key to defrost
                 logMessage(`Defrosted red frozen door.`);
+                doorOpened = true;
+                continue;
             }
 
+            // Check if we have enough keys to open the door
             if (door.lock.type === 'normal' && data.keys[door.color] >= door.lock.cost) {
                 data.keys[door.color] -= door.lock.cost;
                 door.copies -= 1;
                 logMessage(`Opened ${door.color} door with lock cost ${door.lock.cost}. Remaining copies: ${door.copies}`);
+                doorOpened = true;
+                continue;
             }
         }
     }
+    return doorOpened;
 }
 
 // Helper function to collect necessary keys based on door requirements
@@ -109,10 +117,16 @@ async function explorePaths(data, solutions) {
         collectNecessaryKeys(data);
 
         // Try to open any available doors
-        openAvailableDoors(data);
+        const doorOpened = openAvailableDoors(data);
 
         // Check if the goal has been reached
         checkGoal(data);
+
+        // If no doors were opened and no more keys are needed, stop to prevent infinite loop
+        if (!doorOpened && data.keysToCollect.every(key => data.keys[key.color] >= getRequiredKeys(data, key.color))) {
+            logMessage("No more doors to open or keys to collect.");
+            break;
+        }
 
         // Log and yield every 1000 steps
         if (stepCount % 1000 === 0) {
@@ -120,8 +134,8 @@ async function explorePaths(data, solutions) {
             await new Promise(resolve => setTimeout(resolve, 0));
         }
 
-        // Stop if no progress is being made or if max steps reached
-        if (stepCount > 100000 || !data.doors.some(door => door.copies > 0)) break;
+        // Stop if max steps reached
+        if (stepCount > 100000) break;
     }
 }
 
