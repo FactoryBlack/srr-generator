@@ -29,17 +29,16 @@
 <div id="log" class="console-output"></div>
 
 <script>
-// Initial puzzle data with frozen doors and aura requirement
+// Initial puzzle data with a combo door requirement
 const puzzleData = {
     keys: { green: 0, red: 0, cyan: 0 },
     doors: [
-        { color: 'green', type: 'normal', copies: 1, lock: { type: 'normal', cost: 5 } },
-        { color: 'red', type: 'frozen', copies: 1, lock: { type: 'normal', cost: 3 }, defrosted: false },
-        { color: 'cyan', type: 'aura', copies: 1, lock: { type: 'normal', cost: 7 }, auraNeeded: true, auraActive: false }
+        { color: 'combo', type: 'normal', copies: 1, locks: [{ color: 'green', cost: 5 }, { color: 'red', cost: 3 }] },
+        { color: 'cyan', type: 'normal', copies: 1, locks: [{ color: 'cyan', cost: 7 }] }
     ],
     keysToCollect: [
         { color: 'green', amount: 5 },
-        { color: 'red', amount: 4 }, // Adjusted to ensure enough keys for defrosting and opening
+        { color: 'red', amount: 3 },
         { color: 'cyan', amount: 7 }
     ],
     goal: { reached: false }
@@ -66,41 +65,24 @@ function collectKey(data, color, amount) {
 
 // Open a door if possible and log result
 function openDoor(data, door) {
-    // Check if door is frozen and needs defrosting
-    if (door.type === 'frozen' && !door.defrosted) {
-        if (data.keys.red >= 1) {
-            data.keys.red -= 1;
-            door.defrosted = true;
-            logMessage(`Defrosted red frozen door.`);
-        } else {
-            logMessage(`Not enough red keys to defrost the frozen door.`);
+    for (const lock of door.locks) {
+        const { color, cost } = lock;
+        if (data.keys[color] < cost) {
+            logMessage(`Not enough ${color} keys to open ${door.color} door. Required: ${cost}, Available: ${data.keys[color]}`);
             return false;
         }
     }
 
-    // Check if door needs an aura to open
-    if (door.auraNeeded && !data.auraActive) {
-        logMessage(`Door requires aura effect to open.`);
-        return false;
+    // If all locks are met, open the door and deduct keys
+    for (const lock of door.locks) {
+        const { color, cost } = lock;
+        data.keys[color] -= cost;
+        logMessage(`Used ${cost} ${color} key(s) to open part of ${door.color} door.`);
     }
 
-    if (data.keys[door.color] >= door.lock.cost) {
-        data.keys[door.color] -= door.lock.cost;
-        door.copies -= 1;
-        logMessage(`Opened ${door.color} door. Remaining copies: ${door.copies}`);
-        return true;
-    } else {
-        logMessage(`Not enough ${door.color} keys to open the door.`);
-        return false;
-    }
-}
-
-// Activate aura if enough cyan keys are collected
-function checkAuraActivation(data) {
-    if (data.keys.cyan >= 7 && !data.auraActive) {
-        data.auraActive = true;
-        logMessage("Aura activated! Nearby doors can now be affected.");
-    }
+    door.copies -= 1;
+    logMessage(`Opened ${door.color} door. Remaining copies: ${door.copies}`);
+    return true;
 }
 
 // Check if all doors are open to reach the goal
@@ -114,33 +96,27 @@ function checkGoal(data) {
     }
 }
 
-// Test function to simulate puzzle solving with frozen doors and aura mechanic
-async function advancedTest() {
-    logMessage("Starting advanced test with frozen door and aura requirement...");
+// Test function to simulate puzzle solving with combo door logic
+async function comboDoorTest() {
+    logMessage("Starting combo door test...");
 
     const testData = cloneData(puzzleData);
     const steps = [];
 
-    // Step 1: Collect green keys and attempt to open the green door
+    // Step 1: Collect green keys and red keys to attempt to open the combo door
     collectKey(testData, 'green', 5);
+    collectKey(testData, 'red', 3);
     if (openDoor(testData, testData.doors[0])) {
-        steps.push("Opened green door.");
+        steps.push("Opened combo door (green and red requirements).");
     }
 
-    // Step 2: Collect red keys and attempt to defrost and open the red frozen door
-    collectKey(testData, 'red', 4); // Updated to ensure both defrosting and opening
-    if (openDoor(testData, testData.doors[1])) {
-        steps.push("Defrosted and opened red door.");
-    }
-
-    // Step 3: Collect cyan keys to activate aura and open the cyan door
+    // Step 2: Collect cyan keys and open the cyan door
     collectKey(testData, 'cyan', 7);
-    checkAuraActivation(testData);
-    if (openDoor(testData, testData.doors[2])) {
-        steps.push("Opened cyan door with aura.");
+    if (openDoor(testData, testData.doors[1])) {
+        steps.push("Opened cyan door.");
     }
 
-    // Step 4: Check if goal is reached
+    // Step 3: Check if goal is reached
     checkGoal(testData);
 
     if (testData.goal.reached) {
@@ -153,7 +129,7 @@ async function advancedTest() {
 // Add event listener to the button to start the test
 document.getElementById("startButton").addEventListener("click", () => {
     logDiv.textContent = ""; // Clear previous logs
-    advancedTest(); // Start the advanced test
+    comboDoorTest(); // Start the combo door test
 });
 </script>
 
