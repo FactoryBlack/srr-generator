@@ -3,30 +3,33 @@
         "green": { "real": 0, "imag": 0 },
         "red": { "real": 0, "imag": 0 },
         "blue": { "real": 0, "imag": 0 },
+        "cyan": { "real": 0, "imag": 0 },
         "brown": { "real": 0, "imag": 0 },
-        "master": { "real": 1, "imag": 0 }
+        "purple": { "real": 0, "imag": 0 }
     },
     "doors": [
         {
             "color": "combo",
             "type": "combo",
-            "copies": 1,
+            "copies": 99,
             "locks": [
                 { "color": "green", "cost": { "real": 5, "imag": 0 } },
                 { "color": "red", "cost": { "real": 0, "imag": 3 } }
             ]
         },
-        { "color": "eroded", "type": "eroded", "copies": 1, "locks": [], "corrupted": true },
-        { "color": "frozen", "type": "frozen", "copies": 1, "locks": [], "corrupted": true },
-        { "color": "painted", "type": "painted", "copies": 1, "locks": [], "corrupted": true },
-        { "color": "cursed", "type": "cursed", "copies": 1, "locks": [], "corrupted": true }
+        { "color": "cyan", "type": "normal", "copies": 99, "locks": [{ "color": "cyan", "cost": { "real": -7, "imag": 0 } }] },
+        { "color": "brown", "type": "cursed", "copies": 99, "locks": [{ "color": "brown", "cost": { "real": 1, "imag": 0 } }] },
+        { "color": "painted", "type": "painted", "copies": 99, "locks": [], "corrupted": true },
+        { "color": "frozen", "type": "frozen", "copies": 99, "locks": [], "corrupted": true },
+        { "color": "eroded", "type": "eroded", "copies": 99, "locks": [], "corrupted": true }
     ],
     "keysToCollect": [
         { "color": "green", "amount": { "real": 5, "imag": 0 } },
         { "color": "red", "amount": { "real": 0, "imag": 3 } },
         { "color": "blue", "amount": { "real": 3, "imag": 0 } },
+        { "color": "cyan", "amount": { "real": -7, "imag": 0 } },
         { "color": "brown", "amount": { "real": -1, "imag": 0 } },
-        { "color": "master", "amount": { "real": 1, "imag": 0 } }
+        { "color": "purple", "amount": { "real": 2, "imag": 1 } }
     ],
     "goal": { "reached": false }
 }
