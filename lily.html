@@ -66,26 +66,29 @@ function collectKey(data, color, amount) {
     }
     data.keys[color].real += amount.real;
     data.keys[color].imag += amount.imag;
-    logMessage(`Collected ${amount.real} + ${amount.imag}i ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
+    logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? (amount.real !== 0 ? ' + ' : '') + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
 }
 
 // Check auras with detailed logging
 function checkAuras(data) {
-    const auras = {
-        greenAuraActive: data.keys.green.real >= 5,
-        redAuraActive: data.keys.red.real >= 1,
-        blueAuraActive: data.keys.blue.real >= 3,
-        brownAuraActive: data.keys.brown.real < 0
-    };
+    let greenAuraActive = data.keys.green.real >= 5;
+    let redAuraActive = data.keys.red.real >= 1;
+    let blueAuraActive = data.keys.blue.real >= 3;
+    let brownAuraActive = data.keys.brown.real < 0;
 
-    logMessage(`Aura Status -> Red: ${auras.redAuraActive}, Green: ${auras.greenAuraActive}, Blue: ${auras.blueAuraActive}, Brown: ${auras.brownAuraActive}`);
-    return auras;
+    logMessage(`Aura Status -> Red: ${redAuraActive}, Green: ${greenAuraActive}, Blue: ${blueAuraActive}, Brown: ${brownAuraActive}`);
+
+    if (redAuraActive) logMessage("Red aura activated! Frozen doors can be defrosted.");
+    if (greenAuraActive) logMessage("Green aura activated! Eroded doors can be healed.");
+    if (blueAuraActive) logMessage("Blue aura activated! Painted doors can be cleaned.");
+    if (brownAuraActive) logMessage("Negative brown aura activated! Curses can now be removed from nearby doors.");
+
+    return { greenAuraActive, redAuraActive, blueAuraActive, brownAuraActive };
 }
 
 // Open doors with aura checks and logging
 function openDoor(data, door, auras) {
     logMessage(`Attempting to open ${door.color} door. Type: ${door.type}, Corrupted: ${door.corrupted ?? 'N/A'}`);
-    logMessage(`Current key state: Green: ${data.keys.green.real}, Red: ${data.keys.red.real}, Blue: ${data.keys.blue.real}, Brown: ${data.keys.brown.real}`);
 
     if (door.type === 'frozen' && door.corrupted) {
         if (auras.redAuraActive) {
@@ -135,13 +138,9 @@ function openDoor(data, door, auras) {
             logMessage(`Error: Key color '${color}' is not defined in data.keys.`);
             return false;
         }
-        if (data.keys[color].real < cost.real || data.keys[color].imag < cost.imag) {
-            logMessage(`Not enough ${color} keys to open part of ${door.color} door.`);
-            return false;
-        }
         data.keys[color].real -= cost.real;
         data.keys[color].imag -= cost.imag;
-        logMessage(`Used ${cost.real} + ${cost.imag}i ${color} key(s) to open part of ${door.color} door.`);
+        logMessage(`Used ${cost.real !== 0 ? cost.real : ''}${cost.imag !== 0 ? (cost.real !== 0 ? ' + ' : '') + cost.imag + 'i' : ''} ${color} key(s) to open part of ${door.color} door.`);
     }
 
     door.copies -= 1;
@@ -151,6 +150,11 @@ function openDoor(data, door, auras) {
 
 // Goal check with detailed logging
 function checkGoal(data) {
+    if (!data.goal || !Array.isArray(data.goal.required_doors)) {
+        logMessage("Error: required_doors is not defined in goal or is not an array.");
+        return;
+    }
+
     const remainingDoors = data.goal.required_doors.filter(color => {
         const door = data.doors.find(d => d.color === color);
         return door && (door.copies > 0 || door.corrupted);
@@ -160,28 +164,24 @@ function checkGoal(data) {
         data.goal.reached = true;
         logMessage("Goal reached! All necessary doors are open.");
     } else {
-        logMessage(`Goal not yet reached. Remaining doors to be opened or uncorrupted: ${remainingDoors.join(", ")}`);
+        logMessage("Goal not yet reached. Remaining doors to be opened or uncorrupted: " + remainingDoors.join(", "));
     }
 }
 
-// Solver function with iterative door processing and key usage control
+// Solver function
 async function cursedDoorTest() {
     logMessage("Starting solver...");
-    const testData = cloneData(puzzleData);
 
+    const testData = cloneData(puzzleData);
     for (const key of testData.keysToCollect) {
         collectKey(testData, key.color, key.amount);
     }
 
-    let progressMade = true;
-    while (progressMade) {
-        progressMade = false;
-        const auras = checkAuras(testData);
-        for (const door of testData.doors) {
-            if ((door.copies > 0 || door.corrupted) && openDoor(testData, door, auras)) {
-                progressMade = true;
-            }
-        }
+    const auras = checkAuras(testData);
+
+    for (const door of testData.doors) {
+        openDoor(testData, door, auras);
+        logMessage(`Current key state: Green: ${testData.keys.green.real}, Red: ${testData.keys.red.real}, Blue: ${testData.keys.blue.real}, Brown: ${testData.keys.brown.real}`);
     }
 
     checkGoal(testData);
