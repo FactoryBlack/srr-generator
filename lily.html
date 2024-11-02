@@ -70,21 +70,25 @@ function collectKey(data, color, amount) {
     logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? ' + ' + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
 }
 
-// Function to check aura activation
+// Function to check aura activation, accounting for both real and imaginary parts
 function checkAuras(data) {
     let auras = { greenAura: false, redAura: false, blueAura: false };
-    if (data.keys.red.real >= 1) {
+
+    if (data.keys.red.real >= 1 || data.keys.red.imag >= 1) { // Check either real or imaginary part
         logMessage("Red aura activated!");
         auras.redAura = true;
     }
+
     if (data.keys.green.real >= 5) {
         logMessage("Green aura activated!");
         auras.greenAura = true;
     }
+
     if (data.keys.blue.real >= 3) {
         logMessage("Blue aura activated!");
         auras.blueAura = true;
     }
+
     return auras;
 }
 
