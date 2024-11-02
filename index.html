@@ -2,115 +2,89 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Restless.gg | Room Creator</title>
-    <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Google Fonts for bold and clean typography -->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap">
+    <title>I Wanna Lockpick Puzzle Solver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+        }
+        #output {
+            background-color: #e9e9e9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-height: 400px;
+            overflow-y: scroll;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="#" class="nav-logo">Restless<span class="accent-color">.gg</span></a>
-            <!-- Future navigation items can be added here -->
-        </div>
-    </nav>
+    <h1>I Wanna Lockpick Puzzle Solver</h1>
+    <button onclick="startSolver()">Start Solver</button>
+    <div id="output"></div>
 
-    <div class="container">
-        <h1>Room Creator</h1>
+    <script>
+        const MAX_PATHS = 10000; // Limit on the number of paths to check
+        const MAX_DEPTH = 100;   // Limit on steps per path to avoid endless loops
+        const CHUNK_SIZE = 100;  // Number of paths to process before yielding
 
-        <!-- Room Creation and Joining Section -->
-        <div class="form-group">
-            <div class="form-row">
-                <input type="text" id="roomID" placeholder="XXXXXX" maxlength="6" minlength="3">
-            </div>
-            <div class="form-row inline-form">
-                <label class="custom-checkbox">
-                    <input type="checkbox" id="isPublic">
-                    <span class="checkbox-custom"></span>
-                    Public
-                </label>
-                <select id="teamSizeSelect">
-                    <option value="2">Teams of 2</option>
-                    <option value="3" selected>Teams of 3</option>
-                </select>
-                <button id="joinRoom" class="button-primary fixed-width">Join or Create Room</button>
-            </div>
-        </div>
+        let pathCount = 0;
+        let outputElement = document.getElementById("output");
 
-        <!-- Active Public Rooms -->
-        <h2>Active Public Rooms</h2>
-        <p id="noRoomsMessage" class="no-rooms-message hidden">There are no public rooms currently active.</p>
-        <ul id="roomsList"></ul>
+        function logMessage(message) {
+            outputElement.innerHTML += message + "<br>";
+            outputElement.scrollTop = outputElement.scrollHeight;
+        }
 
-        <!-- Member Information Section -->
-        <div id="memberInfoSection" class="hidden">
-            <h2 id="memberInfoTitle">Member Count</h2>
-            <p id="memberCount">
-                <span class="member-stat">Total Members: <span id="totalMembers">0</span></span><br>
-                <span class="member-stat">Named: <span id="namedMembers">0</span></span><br>
-                <span class="member-stat">Unnamed: <span id="unnamedMembers">0</span></span>
-            </p>
-        </div>
+        function solvePuzzle() {
+            let queue = [{ keys: { green: 5 }, steps: 0 }]; // Example starting state
 
-        <!-- Submit Name Section -->
-        <div class="form-group hidden" id="submitNameSection">
-            <div class="form-row inline-form">
-                <input type="text" id="nameInput" class="small-input" placeholder="Your name">
-                <label class="custom-checkbox">
-                    <input type="checkbox" id="afkqTool">
-                    <span class="checkbox-custom"></span>
-                    AFKQ Tool
-                </label>
-                <button id="submitName" class="button-primary fixed-width">Submit Name</button>
-            </div>
-        </div>
+            return new Promise(resolve => {
+                async function processQueue() {
+                    while (queue.length > 0 && pathCount < MAX_PATHS) {
+                        const batch = queue.splice(0, CHUNK_SIZE);
 
-        <!-- Creator Name Input Section -->
-        <div class="form-group hidden" id="creatorNameSection">
-            <div class="form-row inline-form">
-                <input type="text" id="creatorNameInput" class="small-input" placeholder="Enter name to add">
-                <button id="addName" class="button-primary fixed-width">Add Name</button>
-            </div>
-        </div>
+                        for (let state of batch) {
+                            if (state.steps > MAX_DEPTH) continue;
 
-        <!-- Team Generation Section -->
-        <div id="teamGenerationSection" class="hidden">
-            <div class="team-generation-header">
-                <h2>Team Generation</h2>
-                <div id="generateTeamsContainer" class="hidden">
-                    <!-- Button or confirmation content will be dynamically added here -->
-                </div>
-            </div>
-            <div id="nameList"></div>
-            <div id="teamList"></div>
-        </div>
+                            if (pathCount % 1000 === 0) {
+                                logMessage(`Checked ${pathCount} paths...`);
+                            }
 
-        <!-- Chat Section -->
-        <div id="chatSection" class="hidden">
-            <div class="chat-tabs">
-                <button id="roomChatTab" class="chat-tab active">Room Chat <span id="roomChatBadge" class="chat-badge hidden">0</span></button>
-                <button id="teamChatTab" class="chat-tab">Team Chat <span id="teamChatBadge" class="chat-badge hidden">0</span></button>
-            </div>
-            <div id="roomChat" class="chat-window">
-                <div id="roomChatMessages" class="chat-messages"></div>
-                <div class="chat-input">
-                    <input type="text" id="roomChatInput" placeholder="Type a message...">
-                    <button id="roomChatSend" class="button-primary fixed-width">Send</button>
-                </div>
-            </div>
-            <div id="teamChat" class="chat-window hidden">
-                <div id="teamChatMessages" class="chat-messages"></div>
-                <div class="chat-input">
-                    <input type="text" id="teamChatInput" placeholder="Type a message...">
-                    <button id="teamChatSend" class="button-primary fixed-width">Send</button>
-                </div>
-            </div>
-        </div>
-    </div>
+                            // Simulate door unlocking logic (replace with actual logic)
+                            if (state.keys.green > 0) {
+                                const newState = JSON.parse(JSON.stringify(state));
+                                newState.keys.green--;
+                                newState.steps++;
+                                pathCount++;
+                                queue.push(newState);
+                                logMessage(`Opened green door with lock cost 1. Remaining green: ${newState.keys.green}`);
+                            }
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="script.js"></script>
+                            if (pathCount >= MAX_PATHS) {
+                                logMessage("Reached maximum path limit. Ending search.");
+                                resolve();
+                                return;
+                            }
+                        }
+                        await new Promise(r => setTimeout(r, 0)); // Yield control to the browser
+                    }
+                    resolve();
+                }
+                processQueue();
+            });
+        }
+
+        async function startSolver() {
+            pathCount = 0;
+            outputElement.innerHTML = "Starting solver...<br>";
+            await solvePuzzle();
+            logMessage("Solver finished.");
+        }
+    </script>
 </body>
 </html>
