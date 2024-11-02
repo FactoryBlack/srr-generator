@@ -84,10 +84,17 @@ function collectKey(data, color, amount) {
 
 // Open a door if possible and log result, considering cursed status
 function openDoor(data, door) {
-    // Check if door is cursed and requires a negative brown aura
-    if (door.type === 'cursed' && data.keys.brown.real >= 0) {
-        logMessage(`Cannot open cursed ${door.color} door without negative brown aura.`);
-        return false;
+    // Check if door is cursed and can be opened with negative brown aura
+    if (door.type === 'cursed') {
+        if (data.keys.brown.real < 0) {
+            logMessage(`Opened cursed ${door.color} door using negative brown aura.`);
+            door.copies -= 1;
+            logMessage(`Remaining copies: ${door.copies}`);
+            return true;
+        } else {
+            logMessage(`Cannot open cursed ${door.color} door without negative brown aura.`);
+            return false;
+        }
     }
 
     // Check locks for real and imaginary parts
