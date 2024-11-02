@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Self-Discovering Target Sum Finder</title>
+    <meta charset="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exhaustive Puzzle Solution Finder</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -37,16 +36,16 @@
             border-radius: 8px;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
         }
-        .feasible-sum {
+        .solution {
             background-color: #e9ecef;
             padding: 10px;
             margin-bottom: 10px;
             border-radius: 5px;
         }
-        .feasible-sum h3 {
+        .solution h3 {
             color: #0056b3;
         }
-        .feasible-sum p {
+        .solution p {
             margin: 5px 0;
         }
         #progress {
@@ -57,113 +56,76 @@
     </style>
 </head>
 <body>
-    <h1>Self-Discovering Target Sum Finder</h1>
-    <p>Identify feasible target sums and calculate the steps required to reach each one without pre-defined target values.</p>
+    <h1>Exhaustive Puzzle Solution Finder</h1>
+    <p>Find and rank all reachable configurations by steps taken, without targeting specific values.</p>
 
-    <button onclick="findFeasibleSums()">Find Feasible Sums</button>
+    <button onclick="findAllConfigurations()">Find All Configurations</button>
     <div id="progress">Progress: Waiting to start...</div>
     <div id="output">Output will appear here...</div>
 
     <script>
-        function findFeasibleSums() {
-            const maxSum = 50; // Define upper bound for testing possible target sums
+        function findAllConfigurations() {
             const maxDepth = 50; // Limit the maximum depth of exploration
             const maxStates = 10000; // Limit the number of states to explore
-            const feasibleSums = [];
+            const configurations = {};
             const outputDiv = document.getElementById('output');
             const progressDiv = document.getElementById('progress');
-            outputDiv.innerHTML = "Exploring possible sums...";
+            outputDiv.innerHTML = "Exploring all configurations...";
             progressDiv.innerHTML = "Progress: Starting exploration...";
 
-            let targetSum = 2;
+            function exploreConfigurations() {
+                const queue = [{ pink: 1, green: 1, cyan: 1, path: [], depth: 0 }];
+                const states = new Set();
 
-            function exploreNextTarget() {
-                if (targetSum > maxSum) {
-                    displayResults(feasibleSums);
-                    progressDiv.innerHTML = "Progress: Exploration complete!";
-                    return;
-                }
+                while (queue.length > 0 && states.size < maxStates) {
+                    const { pink, green, cyan, path, depth } = queue.shift();
 
-                const result = exploreTargetSum(targetSum, maxDepth, maxStates);
-                if (result) feasibleSums.push(result);
+                    // Avoid cycles by tracking visited states
+                    const stateKey = `${pink},${green}`;
+                    if (states.has(stateKey) || depth > maxDepth) continue;
+                    states.add(stateKey);
 
-                // Update progress after exploring each target sum
-                progressDiv.innerHTML = `Progress: Checked target sum ${targetSum}. Feasible sums found: ${feasibleSums.length}`;
+                    // Track the shortest path to each unique configuration
+                    if (!configurations[stateKey] || configurations[stateKey].path.length > path.length) {
+                        configurations[stateKey] = { pink, green, path: path.slice() };
+                    }
 
-                targetSum++;
-                setTimeout(exploreNextTarget, 10); // Use setTimeout to keep the UI responsive
-            }
+                    // Add operations to queue for exploration
+                    queue.push({ pink: pink + cyan, green, cyan: cyan + 1, path: [...path, "add cyan to pink"], depth: depth + 1 });
+                    queue.push({ pink, green: green + cyan, cyan: cyan + 1, path: [...path, "add cyan to green"], depth: depth + 1 });
 
-            exploreNextTarget();
-        }
+                    // Division operation if pink and cyan are both divisible by 2
+                    if (pink % 2 === 0 && cyan % 2 === 0) {
+                        queue.push({ pink: pink / 2, green, cyan: cyan / 2, path: [...path, "divide pink and cyan by 2"], depth: depth + 1 });
+                    }
 
-        function displayResults(feasibleSums) {
-            const outputDiv = document.getElementById('output');
-            outputDiv.innerHTML = `
-                <h3>Feasible Sums Found:</h3>
-                ${feasibleSums.length > 0 ? feasibleSums.map((result, idx) => `
-                    <div class="feasible-sum">
-                        <h3>Solution ${idx + 1}</h3>
-                        <p><strong>Target Sum:</strong> ${result.sum}</p>
-                        <p><strong>Steps Required:</strong> ${result.path.length}</p>
-                        <p><strong>Path:</strong> ${result.path.join(" ➔ ")}</p>
-                    </div>
-                `).join("") : "No feasible sums found."}
-            `;
-        }
-
-        function exploreTargetSum(targetSum, maxDepth, maxStates) {
-            const queue = [{ pink: 1, green: 1, cyan: 1, path: [], depth: 0 }];
-            const states = new Set();
-            let foundTarget = false;
-            let solutionPath = [];
-
-            while (queue.length > 0 && states.size < maxStates) {
-                const { pink, green, cyan, path, depth } = queue.shift();
-
-                // Check if maximum depth is reached
-                if (depth > maxDepth) continue;
-
-                // Check if we reach the target sum and if the configuration is balanced
-                if (pink + green === targetSum) {
-                    if (isBalancedAndDivisible(pink, green)) {
-                        solutionPath = path.slice();
-                        foundTarget = true;
-                        break;
+                    // Update progress
+                    if (states.size % 100 === 0) {
+                        progressDiv.innerHTML = `Progress: Explored ${states.size} unique states.`;
                     }
                 }
 
-                // Avoid cycles by tracking visited states
-                const state = `${pink},${green},${cyan}`;
-                if (states.has(state)) continue;
-                states.add(state);
-
-                // Add operations to queue for exploration
-                queue.push({ pink: pink + cyan, green, cyan: cyan + 1, path: [...path, "add cyan to pink"], depth: depth + 1 });
-                queue.push({ pink, green: green + cyan, cyan: cyan + 1, path: [...path, "add cyan to green"], depth: depth + 1 });
-
-                // Division operation if pink and cyan are both divisible by white (2)
-                if (pink % 2 === 0 && cyan % 2 === 0) {
-                    queue.push({ pink: pink / 2, green, cyan: cyan / 2, path: [...path, "divide pink and cyan by 2"], depth: depth + 1 });
-                }
+                displayResults(configurations);
+                progressDiv.innerHTML = "Progress: Exploration complete!";
             }
 
-            return foundTarget ? { sum: targetSum, path: solutionPath } : null;
+            exploreConfigurations();
         }
 
-        function isBalancedAndDivisible(pink, green) {
-            // Check if pink and green can be reduced by the same factor (suggests balance)
-            const gcd = getGCD(pink, green);
-            return gcd > 1; // If they share a GCD > 1, they can be divided down, indicating manageability
-        }
-
-        function getGCD(a, b) {
-            while (b !== 0) {
-                const temp = b;
-                b = a % b;
-                a = temp;
-            }
-            return a;
+        function displayResults(configurations) {
+            const sortedConfigs = Object.values(configurations).sort((a, b) => a.path.length - b.path.length);
+            const outputDiv = document.getElementById('output');
+            outputDiv.innerHTML = `
+                <h3>Configurations Found (Ranked by Steps):</h3>
+                ${sortedConfigs.length > 0 ? sortedConfigs.map((config, idx) => `
+                    <div class="solution">
+                        <h3>Configuration ${idx + 1}</h3>
+                        <p><strong>Pink:</strong> ${config.pink}, <strong>Green:</strong> ${config.green}</p>
+                        <p><strong>Steps Required:</strong> ${config.path.length}</p>
+                        <p><strong>Path:</strong> ${config.path.join(" ➔ ")}</p>
+                    </div>
+                `).join("") : "No configurations found."}
+            `;
         }
     </script>
 </body>
