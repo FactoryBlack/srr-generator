@@ -61,13 +61,14 @@
     <script>
         function findFeasibleSums() {
             const maxSum = 50; // Define upper bound for testing possible target sums
+            const maxDepth = 50; // Limit the maximum depth of exploration
             const feasibleSums = [];
             const outputDiv = document.getElementById('output');
             outputDiv.innerHTML = "Exploring possible sums...";
 
             // Run the algorithm for each possible target sum
             for (let targetSum = 2; targetSum <= maxSum; targetSum++) {
-                const result = exploreTargetSum(targetSum);
+                const result = exploreTargetSum(targetSum, maxDepth);
                 if (result) {
                     feasibleSums.push(result);
                 }
@@ -87,44 +88,43 @@
             `;
         }
 
-        function exploreTargetSum(targetSum) {
-            let pink = 1, green = 1, cyan = 1;
-            let states = new Set();
+        function exploreTargetSum(targetSum, maxDepth) {
+            const stack = [{ pink: 1, green: 1, cyan: 1, path: [], depth: 0 }];
+            const states = new Set();
             let foundTarget = false;
             let solutionPath = [];
 
-            function explore(pink, green, cyan, path) {
+            while (stack.length > 0) {
+                const { pink, green, cyan, path, depth } = stack.pop();
+
+                // Check if maximum depth is reached
+                if (depth > maxDepth) continue;
+
                 // Check if we reach the target sum
                 if (pink + green === targetSum) {
                     if (checkDivisibility(pink, green)) {
-                        foundTarget = true;
                         solutionPath = path.slice();
-                        return;
+                        foundTarget = true;
+                        break;
                     }
                 }
 
                 // Avoid cycles by tracking visited states
                 const state = `${pink},${green},${cyan}`;
-                if (states.has(state) || foundTarget) return;
+                if (states.has(state)) continue;
                 states.add(state);
 
-                // Recursive additions
-                explore(pink + cyan, green, cyan + 1, [...path, "add cyan to pink"]); // Add cyan to pink
-                explore(pink, green + cyan, cyan + 1, [...path, "add cyan to green"]); // Add cyan to green
+                // Add operations to stack for exploration
+                stack.push({ pink: pink + cyan, green, cyan: cyan + 1, path: [...path, "add cyan to pink"], depth: depth + 1 });
+                stack.push({ pink, green: green + cyan, cyan: cyan + 1, path: [...path, "add cyan to green"], depth: depth + 1 });
 
                 // Division operation if pink and cyan are both divisible by white (2)
                 if (pink % 2 === 0 && cyan % 2 === 0) {
-                    explore(pink / 2, green, cyan / 2, [...path, "divide pink and cyan by 2"]);
+                    stack.push({ pink: pink / 2, green, cyan: cyan / 2, path: [...path, "divide pink and cyan by 2"], depth: depth + 1 });
                 }
             }
 
-            // Start exploring from initial values
-            explore(pink, green, cyan, []);
-            if (foundTarget) {
-                return { sum: targetSum, path: solutionPath };
-            } else {
-                return null;
-            }
+            return foundTarget ? { sum: targetSum, path: solutionPath } : null;
         }
 
         function checkDivisibility(pink, green) {
