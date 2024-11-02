@@ -29,7 +29,7 @@
 <div id="log" class="console-output"></div>
 
 <script>
-// Initial puzzle data with frozen, eroded, and painted doors
+// Initial puzzle data with a combo door requiring complex keys
 const puzzleData = {
     keys: {
         green: { real: 0, imag: 0 },
@@ -37,14 +37,18 @@ const puzzleData = {
         blue: { real: 0, imag: 0 }
     },
     doors: [
+        { color: 'combo', type: 'combo', copies: 1, locks: [
+            { color: 'green', cost: { real: 5, imag: 0 } },
+            { color: 'red', cost: { real: 0, imag: 3 } }
+        ]},
         { color: 'eroded', type: 'eroded', copies: 1, locks: [], corrupted: true },
         { color: 'frozen', type: 'frozen', copies: 1, locks: [], corrupted: true },
         { color: 'painted', type: 'painted', copies: 1, locks: [], corrupted: true }
     ],
     keysToCollect: [
-        { color: 'green', amount: { real: 5, imag: 0 } },  // For green aura (eroded)
-        { color: 'red', amount: { real: 1, imag: 0 } },     // For red aura (frozen)
-        { color: 'blue', amount: { real: 3, imag: 0 } }     // For blue aura (painted)
+        { color: 'green', amount: { real: 5, imag: 0 } },  // Green keys for combo door
+        { color: 'red', amount: { real: 0, imag: 3 } },     // Red imaginary keys for combo door
+        { color: 'blue', amount: { real: 3, imag: 0 } }     // Blue keys for blue aura (painted door)
     ],
     goal: { reached: false }
 };
@@ -62,7 +66,8 @@ function logMessage(message) {
 // Function to collect keys and log
 function collectKey(data, color, amount) {
     data.keys[color].real += amount.real;
-    logMessage(`Collected ${amount.real} ${color} key(s). Total: ${data.keys[color].real}`);
+    data.keys[color].imag += amount.imag;
+    logMessage(`Collected ${amount.real !== 0 ? amount.real : ''}${amount.imag !== 0 ? ' + ' + amount.imag + 'i' : ''} ${color} key(s). Total: ${data.keys[color].real} + ${data.keys[color].imag}i`);
 }
 
 // Function to check aura activation
@@ -83,9 +88,31 @@ function checkAuras(data) {
     return auras;
 }
 
-// Function to open doors with aura checks
+// Function to open doors, including combo and aura-based doors
 function openDoor(data, door, auras) {
     logMessage(`Attempting to open ${door.type} door (${door.color}), corrupted: ${door.corrupted}`);
+
+    if (door.type === 'combo') {
+        for (const lock of door.locks) {
+            const { color, cost } = lock;
+            const playerKey = data.keys[color];
+
+            if (playerKey.real < cost.real || playerKey.imag < cost.imag) {
+                logMessage(`Failed to open combo door. Insufficient ${color} keys. Required: ${cost.real} + ${cost.imag}i, Available: ${playerKey.real} + ${playerKey.imag}i`);
+                return false;
+            }
+        }
+
+        for (const lock of door.locks) {
+            const { color, cost } = lock;
+            data.keys[color].real -= cost.real;
+            data.keys[color].imag -= cost.imag;
+            logMessage(`Used ${cost.real !== 0 ? cost.real : ''}${cost.imag !== 0 ? ' + ' + cost.imag + 'i' : ''} ${color} key(s) to open combo door.`);
+        }
+
+        door.copies -= 1;
+        logMessage("Combo door opened successfully.");
+    }
 
     if (door.type === 'eroded' && door.corrupted && auras.greenAura) {
         door.corrupted = false;
@@ -111,11 +138,11 @@ function openDoor(data, door, auras) {
 
 // Main function to simulate the test
 function cursedDoorTest() {
-    logMessage("Starting aura door test...");
+    logMessage("Starting combo door and aura test...");
 
     const testData = JSON.parse(JSON.stringify(puzzleData));
 
-    // Collect keys for each aura type
+    // Collect keys for each requirement
     for (const key of testData.keysToCollect) {
         collectKey(testData, key.color, key.amount);
     }
@@ -129,11 +156,11 @@ function cursedDoorTest() {
     }
 
     // Final goal check
-    const allDoorsOpen = testData.doors.every(door => !door.corrupted);
+    const allDoorsOpen = testData.doors.every(door => door.copies <= 0 || !door.corrupted);
     if (allDoorsOpen) {
-        logMessage("Test succeeded: All aura doors are open.");
+        logMessage("Test succeeded: All combo and aura doors are open.");
     } else {
-        logMessage("Test failed: Some aura doors remain closed.");
+        logMessage("Test failed: Some doors remain closed.");
     }
 }
 
