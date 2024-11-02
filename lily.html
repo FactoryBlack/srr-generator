@@ -170,6 +170,11 @@ function openDoor(data, door, auras) {
 
 // Check if all necessary doors in required_doors are open to reach the goal
 function checkGoal(data) {
+    if (!data.goal || !Array.isArray(data.goal.required_doors)) {
+        logMessage("Error: required_doors is not defined in goal or is not an array.");
+        return;
+    }
+
     const pathClear = data.goal.required_doors.every(color => {
         const door = data.doors.find(d => d.color === color);
         return door && (door.copies <= 0 || !door.corrupted);
