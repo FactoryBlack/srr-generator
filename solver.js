@@ -116,7 +116,13 @@ async function explorePaths(data, solutions, seenStates) {
         stepCount++;
 
         const currentStateHash = stateHash(data);
-        if (seenStates.has(currentStateHash)) continue;
+
+        if (seenStates.has(currentStateHash)) {
+            console.log("Skipped duplicate state:", currentStateHash);
+            continue; // Skip already explored state
+        }
+
+        console.log("Exploring new state:", currentStateHash);
         seenStates.add(currentStateHash);
 
         collectNecessaryKeys(data, path);
