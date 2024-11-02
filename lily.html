@@ -135,6 +135,10 @@ function openDoor(data, door, auras) {
             logMessage(`Error: Key color '${color}' is not defined in data.keys.`);
             return false;
         }
+        if (data.keys[color].real < cost.real || data.keys[color].imag < cost.imag) {
+            logMessage(`Not enough ${color} keys to open part of ${door.color} door.`);
+            return false;
+        }
         data.keys[color].real -= cost.real;
         data.keys[color].imag -= cost.imag;
         logMessage(`Used ${cost.real} + ${cost.imag}i ${color} key(s) to open part of ${door.color} door.`);
@@ -160,7 +164,7 @@ function checkGoal(data) {
     }
 }
 
-// Solver function with iterative door processing
+// Solver function with iterative door processing and key usage control
 async function cursedDoorTest() {
     logMessage("Starting solver...");
     const testData = cloneData(puzzleData);
@@ -174,10 +178,8 @@ async function cursedDoorTest() {
         progressMade = false;
         const auras = checkAuras(testData);
         for (const door of testData.doors) {
-            if (door.copies > 0 || door.corrupted) {
-                if (openDoor(testData, door, auras)) {
-                    progressMade = true;
-                }
+            if ((door.copies > 0 || door.corrupted) && openDoor(testData, door, auras)) {
+                progressMade = true;
             }
         }
     }
