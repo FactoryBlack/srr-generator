@@ -25,28 +25,18 @@ const puzzleData = {
 let logDiv = document.getElementById("log");
 
 function logMessage(message) {
-    logDiv.textContent = message;
+    logDiv.textContent += message + "\n";
 }
 
 function cloneData(data) {
     return JSON.parse(JSON.stringify(data));
 }
 
-// Create a hash for the current state to avoid repeating it
-function stateHash(data) {
-    return JSON.stringify({
-        keys: data.keys,
-        doors: data.doors.map(d => ({ color: d.color, copies: d.copies })),
-        goalReached: data.goal.reached
-    });
-}
-
 async function solvePuzzle() {
     logMessage("Starting puzzle solver...");
     const solutions = [];
-    const seenStates = new Set();
 
-    await explorePaths(puzzleData, solutions, seenStates);
+    await explorePaths(puzzleData, solutions);
 
     if (solutions.length > 0) {
         logMessage(`Found ${solutions.length} solution(s). Displaying the best solution...`);
@@ -106,7 +96,7 @@ function checkGoal(data) {
     }
 }
 
-async function explorePaths(data, solutions, seenStates) {
+async function explorePaths(data, solutions) {
     let stepCount = 0;
     const states = [{ state: cloneData(data), path: [] }];
 
@@ -115,15 +105,8 @@ async function explorePaths(data, solutions, seenStates) {
         data = state;
         stepCount++;
 
-        const currentStateHash = stateHash(data);
-
-        if (seenStates.has(currentStateHash)) {
-            console.log("Skipped duplicate state:", currentStateHash);
-            continue; // Skip already explored state
-        }
-
-        console.log("Exploring new state:", currentStateHash);
-        seenStates.add(currentStateHash);
+        // Log the exploration step
+        logMessage(`Exploring step ${stepCount}, Path: ${path.join(" -> ")}`);
 
         collectNecessaryKeys(data, path);
         const doorOpened = openAvailableDoors(data, path);
