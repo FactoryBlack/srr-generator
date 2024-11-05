@@ -3,114 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <title>Restless.gg | Room Creator</title>
-    <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Google Fonts for bold and clean typography -->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+    <!-- Tailwind CDN for quick testing -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
+<body class="bg-gray-900 text-white font-montserrat">
+
     <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="#" class="nav-logo">Restless<span class="accent-color">.gg</span></a>
-            <!-- Future navigation items can be added here -->
+    <nav class="bg-gray-800 p-5">
+        <div class="container mx-auto flex items-center">
+            <a href="#" class="text-2xl font-bold text-white hover:text-pink-500">Restless<span class="text-pink-500">.gg</span></a>
         </div>
     </nav>
 
-    <div class="container">
-        <h1>Room Creator</h1>
+    <!-- Container -->
+    <div class="container mx-auto mt-10 p-8 bg-gray-800 rounded-lg shadow-lg max-w-lg">
+        <h1 class="text-4xl font-bold mb-6">Room Creator</h1>
 
         <!-- Room Creation and Joining Section -->
-        <div class="form-group">
-            <div class="form-row">
-                <input type="text" id="roomID" placeholder="XXXXXX" maxlength="6" minlength="3">
-            </div>
-            <div class="form-row inline-form">
-                <label class="custom-checkbox">
-                    <input type="checkbox" id="isPublic">
-                    <span class="checkbox-custom"></span>
-                    Public
+        <div class="space-y-4">
+            <input type="text" id="roomID" placeholder="XXXXXX" maxlength="6" minlength="3"
+                   class="w-full text-center text-4xl font-bold bg-transparent text-white border-b-4 border-pink-500 focus:outline-none placeholder-gray-500 mb-4">
+            <div class="flex items-center space-x-4">
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="isPublic" class="form-checkbox text-pink-500">
+                    <span>Public</span>
                 </label>
-                <select id="teamSizeSelect">
+                <select id="teamSizeSelect" class="flex-1 bg-gray-700 text-white rounded p-2 border-none">
                     <option value="2">Teams of 2</option>
                     <option value="3" selected>Teams of 3</option>
                 </select>
-                <button id="joinRoom" class="button-primary fixed-width">Join or Create Room</button>
+                <button id="joinRoom" class="bg-pink-500 text-white font-bold py-2 px-4 rounded hover:bg-white hover:text-pink-500 transition">Join or Create Room</button>
             </div>
         </div>
 
         <!-- Active Public Rooms -->
-        <h2>Active Public Rooms</h2>
-        <p id="noRoomsMessage" class="no-rooms-message hidden">There are no public rooms currently active.</p>
-        <ul id="roomsList"></ul>
+        <h2 class="text-2xl font-bold mt-10 mb-4">Active Public Rooms</h2>
+        <p id="noRoomsMessage" class="text-center text-gray-500 hidden">There are no public rooms currently active.</p>
+        <ul id="roomsList" class="space-y-2"></ul>
 
         <!-- Member Information Section -->
-        <div id="memberInfoSection" class="hidden">
-            <h2 id="memberInfoTitle">Member Count</h2>
+        <div id="memberInfoSection" class="hidden mt-10">
+            <h2 class="text-2xl font-bold mb-2" id="memberInfoTitle">Member Count</h2>
             <p id="memberCount">
-                <span class="member-stat">Total Members: <span id="totalMembers">0</span></span><br>
-                <span class="member-stat">Named: <span id="namedMembers">0</span></span><br>
-                <span class="member-stat">Unnamed: <span id="unnamedMembers">0</span></span>
+                <span class="font-semibold">Total Members: <span id="totalMembers" class="text-pink-500">0</span></span><br>
+                <span class="font-semibold">Named: <span id="namedMembers" class="text-pink-500">0</span></span><br>
+                <span class="font-semibold">Unnamed: <span id="unnamedMembers" class="text-pink-500">0</span></span>
             </p>
         </div>
 
         <!-- Submit Name Section -->
-        <div class="form-group hidden" id="submitNameSection">
-            <div class="form-row inline-form">
-                <input type="text" id="nameInput" class="small-input" placeholder="Your name">
-                <label class="custom-checkbox">
-                    <input type="checkbox" id="afkqTool">
-                    <span class="checkbox-custom"></span>
-                    AFKQ Tool
-                </label>
-                <button id="submitName" class="button-primary fixed-width">Submit Name</button>
-            </div>
+        <div id="submitNameSection" class="hidden mt-10 space-y-4">
+            <input type="text" id="nameInput" class="w-full p-2 text-lg bg-gray-700 text-white rounded" placeholder="Your name">
+            <label class="flex items-center space-x-2">
+                <input type="checkbox" id="afkqTool" class="form-checkbox text-pink-500">
+                <span>AFKQ Tool</span>
+            </label>
+            <button id="submitName" class="bg-pink-500 text-white font-bold py-2 px-4 rounded hover:bg-white hover:text-pink-500 transition w-full">Submit Name</button>
         </div>
 
         <!-- Creator Name Input Section -->
-        <div class="form-group hidden" id="creatorNameSection">
-            <div class="form-row inline-form">
-                <input type="text" id="creatorNameInput" class="small-input" placeholder="Enter name to add">
-                <button id="addName" class="button-primary fixed-width">Add Name</button>
-            </div>
+        <div id="creatorNameSection" class="hidden mt-10 space-y-4">
+            <input type="text" id="creatorNameInput" class="w-full p-2 text-lg bg-gray-700 text-white rounded" placeholder="Enter name to add">
+            <button id="addName" class="bg-pink-500 text-white font-bold py-2 px-4 rounded hover:bg-white hover:text-pink-500 transition w-full">Add Name</button>
         </div>
 
         <!-- Team Generation Section -->
-        <div id="teamGenerationSection" class="hidden">
-            <div class="team-generation-header">
-                <h2>Team Generation</h2>
-                <div id="generateTeamsContainer" class="hidden">
-                    <!-- Button or confirmation content will be dynamically added here -->
-                </div>
+        <div id="teamGenerationSection" class="hidden mt-10">
+            <h2 class="text-2xl font-bold mb-4">Team Generation</h2>
+            <div id="generateTeamsContainer" class="flex justify-center mb-4 hidden">
+                <!-- Dynamic content here -->
             </div>
-            <div id="nameList"></div>
-            <div id="teamList"></div>
+            <div id="nameList" class="space-y-4"></div>
+            <div id="teamList" class="space-y-4"></div>
         </div>
 
         <!-- Chat Section -->
-        <div id="chatSection" class="hidden">
-            <div class="chat-tabs">
-                <button id="roomChatTab" class="chat-tab active">Room Chat <span id="roomChatBadge" class="chat-badge hidden">0</span></button>
-                <button id="teamChatTab" class="chat-tab">Team Chat <span id="teamChatBadge" class="chat-badge hidden">0</span></button>
+        <div id="chatSection" class="hidden mt-10">
+            <div class="flex space-x-4 border-b border-gray-700">
+                <button id="roomChatTab" class="py-2 px-4 flex-1 text-center font-bold focus:outline-none">Room Chat</button>
+                <button id="teamChatTab" class="py-2 px-4 flex-1 text-center font-bold focus:outline-none">Team Chat</button>
             </div>
-            <div id="roomChat" class="chat-window">
-                <div id="roomChatMessages" class="chat-messages"></div>
-                <div class="chat-input">
-                    <input type="text" id="roomChatInput" placeholder="Type a message...">
-                    <button id="roomChatSend" class="button-primary fixed-width">Send</button>
-                </div>
-            </div>
-            <div id="teamChat" class="chat-window hidden">
-                <div id="teamChatMessages" class="chat-messages"></div>
-                <div class="chat-input">
-                    <input type="text" id="teamChatInput" placeholder="Type a message...">
-                    <button id="teamChatSend" class="button-primary fixed-width">Send</button>
+            <div id="roomChat" class="bg-gray-700 p-4 rounded-b-lg">
+                <div id="roomChatMessages" class="overflow-y-auto h-64 mb-2"></div>
+                <div class="flex items-center space-x-4">
+                    <input type="text" id="roomChatInput" placeholder="Type a message..." class="flex-1 bg-gray-800 text-white rounded px-4 py-2 focus:outline-none">
+                    <button id="roomChatSend" class="bg-pink-500 text-white font-bold py-2 px-4 rounded hover:bg-white hover:text-pink-500 transition">Send</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="script.js"></script>
+    <!-- Ensure JavaScript file is connected -->
+    <script src="script.js" defer></script>
 </body>
 </html>
