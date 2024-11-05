@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Styles (Optional) */
+
+/* Example: Custom class for kick-button */
+.kick-button {
+  @apply text-pink-500 font-bold cursor-pointer;
+}
+.kick-button:hover:not(:disabled) {
+  @apply underline;
+}
+
+/* Example: Custom class for badges */
+.badge {
+  @apply bg-pink-500 text-white px-2 py-1 rounded text-sm ml-2;
+}
