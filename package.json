@@ -3,10 +3,16 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build:css": "tailwindcss build src/styles.css -o public/styles.css"
   },
   "dependencies": {
     "express": "^4.17.1",
     "socket.io": "^4.0.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.0.0",
+    "autoprefixer": "^10.0.0",
+    "postcss": "^8.0.0"
   }
 }
