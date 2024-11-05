@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Restless.gg | Room Creator</title>
-    <!-- Include Tailwind CSS via CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css">
+    <!-- Link to the built Tailwind CSS -->
+    <link rel="stylesheet" href="/css/styles.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Restless.gg Room Creator">
+    <meta name="keywords" content="Restless.gg, Room Creator, Team Generator">
+    <meta name="author" content="Your Name or Company">
 </head>
 <body class="bg-gray-900 text-white font-sans">
     <!-- Navigation Bar -->
@@ -126,15 +128,15 @@
         <!-- Chat Section -->
         <div id="chatSection" class="hidden">
             <div class="flex border-b-2 border-gray-700">
-                <button id="roomChatTab" class="flex-1 py-2 text-center text-white font-bold border-b-2 border-pink-500">
-                    Room Chat <span id="roomChatBadge" class="bg-pink-500 text-white px-2 py-1 rounded-full text-sm ml-2 hidden">0</span>
+                <button id="roomChatTab" class="chat-tab flex-1 py-2 text-center text-white font-bold border-b-2 border-pink-500">
+                    Room Chat <span id="roomChatBadge" class="badge hidden">0</span>
                 </button>
-                <button id="teamChatTab" class="flex-1 py-2 text-center text-white font-bold">
-                    Team Chat <span id="teamChatBadge" class="bg-pink-500 text-white px-2 py-1 rounded-full text-sm ml-2 hidden">0</span>
+                <button id="teamChatTab" class="chat-tab flex-1 py-2 text-center text-white font-bold" disabled>
+                    Team Chat <span id="teamChatBadge" class="badge hidden">0</span>
                 </button>
             </div>
             <!-- Room Chat -->
-            <div id="roomChat" class="bg-gray-800 p-5 rounded-b-lg">
+            <div id="roomChat" class="chat-window bg-gray-800 p-5 rounded-b-lg">
                 <div id="roomChatMessages" class="h-64 overflow-y-auto mb-4 space-y-2"></div>
                 <div class="flex items-center space-x-4">
                     <input
@@ -152,7 +154,7 @@
                 </div>
             </div>
             <!-- Team Chat -->
-            <div id="teamChat" class="bg-gray-800 p-5 rounded-b-lg hidden">
+            <div id="teamChat" class="chat-window bg-gray-800 p-5 rounded-b-lg hidden">
                 <div id="teamChatMessages" class="h-64 overflow-y-auto mb-4 space-y-2"></div>
                 <div class="flex items-center space-x-4">
                     <input
@@ -173,6 +175,6 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="script.js"></script>
+    <script src="/js/script.js"></script>
 </body>
 </html>

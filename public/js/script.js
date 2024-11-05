@@ -1,4 +1,4 @@
-// script.js
+// public/js/script.js
 
 const socket = io();
 let isCreator = false;
@@ -388,7 +388,6 @@ function showConfirmRerollButtons() {
     container.appendChild(noButton);
 }
 
-/* Update Voted Members */
 /* Update Voted Members */
 function updateVotedMembers(votedUsernames) {
     // Update vote counter if creator
