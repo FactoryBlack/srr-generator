@@ -3,178 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <title>Restless.gg | Room Creator</title>
-    <!-- Link to the built Tailwind CSS -->
-    <link rel="stylesheet" href="/css/styles.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="Restless.gg Room Creator">
-    <meta name="keywords" content="Restless.gg, Room Creator, Team Generator">
-    <meta name="author" content="Your Name or Company">
+    <!-- Google Fonts for bold and clean typography -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap">
 </head>
-<body class="bg-gray-900 text-white font-sans">
+<body>
     <!-- Navigation Bar -->
-    <nav class="bg-gray-800 p-5">
-        <div class="max-w-6xl mx-auto flex items-center">
-            <a href="#" class="text-white text-2xl font-bold">
-                Restless<span class="text-pink-500">.gg</span>
-            </a>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">Restless<span class="accent-color">.gg</span></a>
+            <!-- Future navigation items can be added here -->
         </div>
     </nav>
 
-    <div class="max-w-2xl mx-auto my-10 p-10 bg-gray-800 rounded-lg shadow-lg">
-        <h1 class="text-4xl font-bold mb-8">Room Creator</h1>
+    <div class="container">
+        <h1>Room Creator</h1>
 
         <!-- Room Creation and Joining Section -->
-        <div class="mb-10">
-            <input
-                type="text"
-                id="roomID"
-                placeholder="XXXXXX"
-                maxlength="6"
-                minlength="3"
-                class="w-full text-6xl font-bold border-b-4 border-pink-500 bg-transparent text-white mb-8 tracking-widest py-5 text-center placeholder-gray-500 focus:outline-none focus:border-pink-700"
-            />
-
-            <div class="flex flex-wrap items-center space-x-4">
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="isPublic" class="form-checkbox text-pink-500">
-                    <span class="ml-2">Public</span>
+        <div class="form-group">
+            <div class="form-row">
+                <input type="text" id="roomID" placeholder="XXXXXX" maxlength="6" minlength="3">
+            </div>
+            <div class="form-row inline-form">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="isPublic">
+                    <span class="checkbox-custom"></span>
+                    Public
                 </label>
-
-                <select
-                    id="teamSizeSelect"
-                    class="mt-2 md:mt-0 bg-gray-700 text-white py-2 px-3 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
-                >
+                <select id="teamSizeSelect">
                     <option value="2">Teams of 2</option>
                     <option value="3" selected>Teams of 3</option>
                 </select>
-
-                <button
-                    id="joinRoom"
-                    class="mt-2 md:mt-0 bg-pink-500 text-white font-bold py-2 px-6 rounded hover:bg-pink-600 transition duration-300"
-                >
-                    Join or Create Room
-                </button>
+                <button id="joinRoom" class="button-primary fixed-width">Join or Create Room</button>
             </div>
         </div>
 
         <!-- Active Public Rooms -->
-        <h2 class="text-2xl font-bold mb-5">Active Public Rooms</h2>
-        <p id="noRoomsMessage" class="text-gray-500 text-center hidden">There are no public rooms currently active.</p>
-        <ul id="roomsList" class="space-y-4"></ul>
+        <h2>Active Public Rooms</h2>
+        <p id="noRoomsMessage" class="no-rooms-message hidden">There are no public rooms currently active.</p>
+        <ul id="roomsList"></ul>
 
         <!-- Member Information Section -->
         <div id="memberInfoSection" class="hidden">
-            <h2 id="memberInfoTitle" class="text-2xl font-bold mb-5">Member Count</h2>
-            <p id="memberCount" class="text-lg">
-                <span class="font-bold">Total Members: <span id="totalMembers">0</span></span><br>
-                <span class="font-bold">Named: <span id="namedMembers">0</span></span><br>
-                <span class="font-bold">Unnamed: <span id="unnamedMembers">0</span></span>
+            <h2 id="memberInfoTitle">Member Count</h2>
+            <p id="memberCount">
+                <span class="member-stat">Total Members: <span id="totalMembers">0</span></span><br>
+                <span class="member-stat">Named: <span id="namedMembers">0</span></span><br>
+                <span class="member-stat">Unnamed: <span id="unnamedMembers">0</span></span>
             </p>
         </div>
 
         <!-- Submit Name Section -->
-        <div id="submitNameSection" class="hidden mb-10">
-            <div class="flex flex-wrap items-center space-x-4">
-                <input
-                    type="text"
-                    id="nameInput"
-                    class="w-full md:w-auto bg-gray-700 text-white py-2 px-3 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    placeholder="Your name"
-                >
-                <label class="inline-flex items-center">
-                    <input type="checkbox" id="afkqTool" class="form-checkbox text-pink-500">
-                    <span class="ml-2">AFKQ Tool</span>
+        <div class="form-group hidden" id="submitNameSection">
+            <div class="form-row inline-form">
+                <input type="text" id="nameInput" class="small-input" placeholder="Your name">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="afkqTool">
+                    <span class="checkbox-custom"></span>
+                    AFKQ Tool
                 </label>
-                <button
-                    id="submitName"
-                    class="bg-pink-500 text-white font-bold py-2 px-6 rounded hover:bg-pink-600 transition duration-300"
-                >
-                    Submit Name
-                </button>
+                <button id="submitName" class="button-primary fixed-width">Submit Name</button>
             </div>
         </div>
 
         <!-- Creator Name Input Section -->
-        <div id="creatorNameSection" class="hidden mb-10">
-            <div class="flex flex-wrap items-center space-x-4">
-                <input
-                    type="text"
-                    id="creatorNameInput"
-                    class="w-full md:w-auto bg-gray-700 text-white py-2 px-3 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    placeholder="Enter name to add"
-                >
-                <button
-                    id="addName"
-                    class="bg-pink-500 text-white font-bold py-2 px-6 rounded hover:bg-pink-600 transition duration-300"
-                >
-                    Add Name
-                </button>
+        <div class="form-group hidden" id="creatorNameSection">
+            <div class="form-row inline-form">
+                <input type="text" id="creatorNameInput" class="small-input" placeholder="Enter name to add">
+                <button id="addName" class="button-primary fixed-width">Add Name</button>
             </div>
         </div>
 
         <!-- Team Generation Section -->
-        <div id="teamGenerationSection" class="hidden mb-10">
-            <div class="flex items-center justify-between mb-5">
-                <h2 class="text-2xl font-bold">Team Generation</h2>
-                <div id="generateTeamsContainer" class="hidden"></div>
+        <div id="teamGenerationSection" class="hidden">
+            <div class="team-generation-header">
+                <h2>Team Generation</h2>
+                <div id="generateTeamsContainer" class="hidden">
+                    <!-- Button or confirmation content will be dynamically added here -->
+                </div>
             </div>
-            <div id="nameList" class="flex flex-wrap gap-4"></div>
-            <div id="teamList" class="mt-8"></div>
+            <div id="nameList"></div>
+            <div id="teamList"></div>
         </div>
 
         <!-- Chat Section -->
         <div id="chatSection" class="hidden">
-            <div class="flex border-b-2 border-gray-700">
-                <button id="roomChatTab" class="chat-tab flex-1 py-2 text-center text-white font-bold border-b-2 border-pink-500">
-                    Room Chat <span id="roomChatBadge" class="badge hidden">0</span>
-                </button>
-                <button id="teamChatTab" class="chat-tab flex-1 py-2 text-center text-white font-bold" disabled>
-                    Team Chat <span id="teamChatBadge" class="badge hidden">0</span>
-                </button>
+            <div class="chat-tabs">
+                <button id="roomChatTab" class="chat-tab active">Room Chat <span id="roomChatBadge" class="chat-badge hidden">0</span></button>
+                <button id="teamChatTab" class="chat-tab">Team Chat <span id="teamChatBadge" class="chat-badge hidden">0</span></button>
             </div>
-            <!-- Room Chat -->
-            <div id="roomChat" class="chat-window bg-gray-800 p-5 rounded-b-lg">
-                <div id="roomChatMessages" class="h-64 overflow-y-auto mb-4 space-y-2"></div>
-                <div class="flex items-center space-x-4">
-                    <input
-                        type="text"
-                        id="roomChatInput"
-                        class="flex-1 bg-gray-700 text-white py-2 px-3 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
-                        placeholder="Type a message..."
-                    >
-                    <button
-                        id="roomChatSend"
-                        class="bg-pink-500 text-white font-bold py-2 px-6 rounded hover:bg-pink-600 transition duration-300"
-                    >
-                        Send
-                    </button>
+            <div id="roomChat" class="chat-window">
+                <div id="roomChatMessages" class="chat-messages"></div>
+                <div class="chat-input">
+                    <input type="text" id="roomChatInput" placeholder="Type a message...">
+                    <button id="roomChatSend" class="button-primary fixed-width">Send</button>
                 </div>
             </div>
-            <!-- Team Chat -->
-            <div id="teamChat" class="chat-window bg-gray-800 p-5 rounded-b-lg hidden">
-                <div id="teamChatMessages" class="h-64 overflow-y-auto mb-4 space-y-2"></div>
-                <div class="flex items-center space-x-4">
-                    <input
-                        type="text"
-                        id="teamChatInput"
-                        class="flex-1 bg-gray-700 text-white py-2 px-3 rounded focus:outline-none focus:ring-2 focus:ring-pink-500"
-                        placeholder="Type a message..."
-                    >
-                    <button
-                        id="teamChatSend"
-                        class="bg-pink-500 text-white font-bold py-2 px-6 rounded hover:bg-pink-600 transition duration-300"
-                    >
-                        Send
-                    </button>
+            <div id="teamChat" class="chat-window hidden">
+                <div id="teamChatMessages" class="chat-messages"></div>
+                <div class="chat-input">
+                    <input type="text" id="teamChatInput" placeholder="Type a message...">
+                    <button id="teamChatSend" class="button-primary fixed-width">Send</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
